@@ -1,0 +1,412 @@
+{
+  "excluded_by_design": [
+    "models and all checkpoint/adapter/weight files",
+    "vendored upstream and runtime source trees",
+    "virtual environments, caches, pycache, PID files, raw logs, generated media/audio, Docker layers, archives, and credentials",
+    "Git remotes, tags, releases, and publication actions"
+  ],
+  "file_count": 66,
+  "files": [
+    {
+      "path": ".argus_release_tree",
+      "sha256": "c65f2caf78c1035707782e03e1845b3d020c652284535a40ce30bda1ece00a70",
+      "size_bytes": 30,
+      "source": "generated:marker"
+    },
+    {
+      "path": ".gitignore",
+      "sha256": "fafeff66712d77b6b37364a69d32d166d72a7e092dd9bcf8e81bf14a280ce06b",
+      "size_bytes": 269,
+      "source": "generated:gitignore"
+    },
+    {
+      "path": "LICENSE",
+      "sha256": "8fdfe4ca37338420b26d07bc4faea15b8587dac59b321feda8110e949684a3d5",
+      "size_bytes": 460,
+      "source": "generated:license"
+    },
+    {
+      "path": "NOTICE",
+      "sha256": "42939e7a7bfac84625d3473ef74dd2701c31fa4e7fa70a0de9520e7f2499e77d",
+      "size_bytes": 733,
+      "source": "generated:notice"
+    },
+    {
+      "path": "README.md",
+      "sha256": "665b200b64f54d5eb787e8571d071076f1930ecb62b54cf27ba0be00ce72d8e7",
+      "size_bytes": 2765,
+      "source": "generated:readme"
+    },
+    {
+      "path": "code/pytest.py",
+      "sha256": "a1d8ed8814b7d007fd3e9261516181673f4dc74a3ab3b2ba5e05e6f36a936778",
+      "size_bytes": 16030,
+      "source": "code/pytest.py"
+    },
+    {
+      "path": "ports/minimax_h3_a6000/NOTICE",
+      "sha256": "abee1c1e6f96e69a4157249fe9f9e118f65c110b4b609c24fd257153722eaca1",
+      "size_bytes": 794,
+      "source": "ports/minimax_h3_a6000/NOTICE"
+    },
+    {
+      "path": "ports/minimax_h3_a6000/README.md",
+      "sha256": "f6e72ec80abc59e8d19e12773210837b289858024c9f9f65eeff617ff5f823b0",
+      "size_bytes": 9661,
+      "source": "ports/minimax_h3_a6000/README.md"
+    },
+    {
+      "path": "ports/minimax_h3_a6000/UPSTREAM.md",
+      "sha256": "a451ea13b6911c3b514655e9fae12ace0b53cb5a0da3dda6d8db72c4d6bbbf79",
+      "size_bytes": 4046,
+      "source": "ports/minimax_h3_a6000/UPSTREAM.md"
+    },
+    {
+      "path": "ports/minimax_h3_a6000/correctness_contract.md",
+      "sha256": "d408972b46ce9299ade409d436adcde08338b5536c47f15f056549794dcfd1a9",
+      "size_bytes": 5709,
+      "source": "ports/minimax_h3_a6000/correctness_contract.md"
+    },
+    {
+      "path": "ports/minimax_h3_a6000/gpu_exact_kernel_bench.py",
+      "sha256": "0c9efb44898478f39da800b0892e612b9cbf24e9389050054e710fe299e43915",
+      "size_bytes": 8482,
+      "source": "ports/minimax_h3_a6000/gpu_exact_kernel_bench.py"
+    },
+    {
+      "path": "ports/minimax_h3_a6000/gpu_exact_kernel_test.py",
+      "sha256": "d1594a6896b57fb26f7365a14548e1cc006f39701f1a8d88282acb990937dfb3",
+      "size_bytes": 11456,
+      "source": "ports/minimax_h3_a6000/gpu_exact_kernel_test.py"
+    },
+    {
+      "path": "ports/minimax_h3_a6000/gpu_sol_attn_sm86_harness.py",
+      "sha256": "b924380f0e53a66b5d632e9f11622338e38765a23a40d9d03ab922f445fbf569",
+      "size_bytes": 8501,
+      "source": "ports/minimax_h3_a6000/gpu_sol_attn_sm86_harness.py"
+    },
+    {
+      "path": "ports/minimax_h3_a6000/gpu_test_plan.md",
+      "sha256": "d786f0df9db6fce678f5dd0f1db82bec953106cff69705572fb1f588762e5074",
+      "size_bytes": 6169,
+      "source": "ports/minimax_h3_a6000/gpu_test_plan.md"
+    },
+    {
+      "path": "ports/minimax_h3_a6000/integration/r3/Dockerfile",
+      "sha256": "68ad73ad78d4324313dca9a7226a083a13cba660e980780fa14769edfe929622",
+      "size_bytes": 2633,
+      "source": "ports/minimax_h3_a6000/integration/r3/Dockerfile"
+    },
+    {
+      "path": "ports/minimax_h3_a6000/integration/r3/build_r3_overlay_image.sh",
+      "sha256": "0fbb19e9e44a7f4397019ed397fe889e86ef0a1bff1f4eaef0d3ed9cb3d40dc0",
+      "size_bytes": 1082,
+      "source": "ports/minimax_h3_a6000/integration/r3/build_r3_overlay_image.sh"
+    },
+    {
+      "path": "ports/minimax_h3_a6000/integration/r4/Dockerfile",
+      "sha256": "98370bd20f3965a755aba40fc95f9f9f8ae37df3d56fd91f9783442e95d410d5",
+      "size_bytes": 2633,
+      "source": "ports/minimax_h3_a6000/integration/r4/Dockerfile"
+    },
+    {
+      "path": "ports/minimax_h3_a6000/integration/r4/build_r4_overlay_image.sh",
+      "sha256": "b1f0a7a29e77857f98361a756190adc8883a6e92a4767415d93bccba4dd9ac11",
+      "size_bytes": 1082,
+      "source": "ports/minimax_h3_a6000/integration/r4/build_r4_overlay_image.sh"
+    },
+    {
+      "path": "ports/minimax_h3_a6000/integration/r6/Dockerfile",
+      "sha256": "70f2bb88ba64254cb35e56aff683f9a15eb5d9e38aa52d9572d7d0482d69adb3",
+      "size_bytes": 3707,
+      "source": "ports/minimax_h3_a6000/integration/r6/Dockerfile"
+    },
+    {
+      "path": "ports/minimax_h3_a6000/integration/r6/build_r6_overlay_image.sh",
+      "sha256": "440c9b71f17f2fc2cff741e7f4cc79f6eceb9cfd5b2a830355f08fce9533ec4a",
+      "size_bytes": 3571,
+      "source": "ports/minimax_h3_a6000/integration/r6/build_r6_overlay_image.sh"
+    },
+    {
+      "path": "ports/minimax_h3_a6000/integration/r6/dual_install_patch_files.py",
+      "sha256": "617ef05f8d37aa33d2833694a97d603b345cddd4526c9496236494bd17f57295",
+      "size_bytes": 6204,
+      "source": "ports/minimax_h3_a6000/integration/r6/dual_install_patch_files.py"
+    },
+    {
+      "path": "ports/minimax_h3_a6000/integration/run_gpu2_exact_ablation_5step_r4.sh",
+      "sha256": "b3cfd22422fd594098304421fa1e9cb4cf59af464eb337ba40f33ae55f874dda",
+      "size_bytes": 18351,
+      "source": "ports/minimax_h3_a6000/integration/run_gpu2_exact_ablation_5step_r4.sh"
+    },
+    {
+      "path": "ports/minimax_h3_a6000/integration/run_gpu2_exact_integration_5step.sh",
+      "sha256": "01a84d7b04fd1d8fdafd0232284eac4ee2aa24ce1d76445a06ad600d154e3edd",
+      "size_bytes": 8737,
+      "source": "ports/minimax_h3_a6000/integration/run_gpu2_exact_integration_5step.sh"
+    },
+    {
+      "path": "ports/minimax_h3_a6000/integration/run_gpu2_exact_integration_5step_r4.sh",
+      "sha256": "f9611dddb808cfb66aa6edf83fb34e644e9f240b58d6f7f60652332ef810670f",
+      "size_bytes": 9234,
+      "source": "ports/minimax_h3_a6000/integration/run_gpu2_exact_integration_5step_r4.sh"
+    },
+    {
+      "path": "ports/minimax_h3_a6000/integration/run_gpu2_sol_attn_h3_5step_diagnostic.sh",
+      "sha256": "5599cfe28fae570673521e0ba83534a777a6a4213d7ebea785f5c511cb60a9e9",
+      "size_bytes": 13985,
+      "source": "ports/minimax_h3_a6000/integration/run_gpu2_sol_attn_h3_5step_diagnostic.sh"
+    },
+    {
+      "path": "ports/minimax_h3_a6000/patches/vllm_omni_h3_a6000_opt_in.patch",
+      "sha256": "93ab829c352d2b0fdd20565087b43bac9933d90d18338eb8d55393cdca769c6a",
+      "size_bytes": 26828,
+      "source": "ports/minimax_h3_a6000/patches/vllm_omni_h3_a6000_opt_in.patch"
+    },
+    {
+      "path": "ports/minimax_h3_a6000/pyproject.toml",
+      "sha256": "208ef81a5323f80205a076b26a467a1fb12427ec04bec542f16f3b218319a04c",
+      "size_bytes": 371,
+      "source": "ports/minimax_h3_a6000/pyproject.toml"
+    },
+    {
+      "path": "ports/minimax_h3_a6000/src/minimax_h3_a6000/__init__.py",
+      "sha256": "4875097e065a0c1f3b12bb563ce8cecfec8952d72fb1ee423ef2bfca4370d1aa",
+      "size_bytes": 597,
+      "source": "ports/minimax_h3_a6000/src/minimax_h3_a6000/__init__.py"
+    },
+    {
+      "path": "ports/minimax_h3_a6000/src/minimax_h3_a6000/env.py",
+      "sha256": "f57827ef3db639c01d0809911d087151a8da1b109431dd0d5684c24015d21216",
+      "size_bytes": 1226,
+      "source": "ports/minimax_h3_a6000/src/minimax_h3_a6000/env.py"
+    },
+    {
+      "path": "ports/minimax_h3_a6000/src/minimax_h3_a6000/exact_kernels.py",
+      "sha256": "cef23329cf52f93d1022274f8444873a55c941e22f0f5a78617c025ab9faea5a",
+      "size_bytes": 45394,
+      "source": "ports/minimax_h3_a6000/src/minimax_h3_a6000/exact_kernels.py"
+    },
+    {
+      "path": "ports/minimax_h3_a6000/src/minimax_h3_a6000/patch_builder.py",
+      "sha256": "bd4e3b02da7fabc5542bd41fd9bf6f3a6fe9ea6ff0170f92ca312566a860786e",
+      "size_bytes": 1539,
+      "source": "ports/minimax_h3_a6000/src/minimax_h3_a6000/patch_builder.py"
+    },
+    {
+      "path": "ports/minimax_h3_a6000/src/minimax_h3_a6000/reference_ops.py",
+      "sha256": "222fa5926c2637e1dca734857b0a7d758e4c75f457db8ae98c8569a543baefce",
+      "size_bytes": 7741,
+      "source": "ports/minimax_h3_a6000/src/minimax_h3_a6000/reference_ops.py"
+    },
+    {
+      "path": "ports/minimax_h3_a6000/src/minimax_h3_a6000/sol_attn_backend.py",
+      "sha256": "676764e3f607c792adc1d1b1c7cff744ee0cda5a76f28e26fa108d517ffb18bb",
+      "size_bytes": 19409,
+      "source": "ports/minimax_h3_a6000/src/minimax_h3_a6000/sol_attn_backend.py"
+    },
+    {
+      "path": "ports/minimax_h3_a6000/src/minimax_h3_a6000/sol_attn_triton_sm86.py",
+      "sha256": "21639227a7b9cae661d18047f3460bd90fceba2f7c6b1f368f396201f7482cea",
+      "size_bytes": 18650,
+      "source": "ports/minimax_h3_a6000/src/minimax_h3_a6000/sol_attn_triton_sm86.py"
+    },
+    {
+      "path": "ports/minimax_h3_a6000/tests/test_exact_kernel_launchers_cpu.py",
+      "sha256": "85c72ac82f3df2ed59d44832cb5aea4a230d5e1d0bfc73b32ce27afa46e2c888",
+      "size_bytes": 13728,
+      "source": "ports/minimax_h3_a6000/tests/test_exact_kernel_launchers_cpu.py"
+    },
+    {
+      "path": "ports/minimax_h3_a6000/tests/test_exact_kernels_static.py",
+      "sha256": "be06f873a4f62ab48366c5fe3ff05962d126ec47e85522e27afe5a86708d0e49",
+      "size_bytes": 6982,
+      "source": "ports/minimax_h3_a6000/tests/test_exact_kernels_static.py"
+    },
+    {
+      "path": "ports/minimax_h3_a6000/tests/test_gpu_placeholders.py",
+      "sha256": "28fd2bbfa8d7119c39469b576c8403bdeff913f31177123c93f74cb0f4d5b9ce",
+      "size_bytes": 954,
+      "source": "ports/minimax_h3_a6000/tests/test_gpu_placeholders.py"
+    },
+    {
+      "path": "ports/minimax_h3_a6000/tests/test_patch_and_guards.py",
+      "sha256": "f26578d446e84d9612dfbe2bef389ffda8383319975ad1a77070b60dda7c03a5",
+      "size_bytes": 5054,
+      "source": "ports/minimax_h3_a6000/tests/test_patch_and_guards.py"
+    },
+    {
+      "path": "ports/minimax_h3_a6000/tests/test_r3_integration_static.py",
+      "sha256": "1a175f012293bddf074418ee1c3dabe201022e6419b3c7cef698cdfccba48074",
+      "size_bytes": 6740,
+      "source": "ports/minimax_h3_a6000/tests/test_r3_integration_static.py"
+    },
+    {
+      "path": "ports/minimax_h3_a6000/tests/test_r6_integration_static.py",
+      "sha256": "65b9326e78e6d185d682e93e9216c3851ff03a43dbcbc4f7ecac619bce227ac6",
+      "size_bytes": 6091,
+      "source": "ports/minimax_h3_a6000/tests/test_r6_integration_static.py"
+    },
+    {
+      "path": "ports/minimax_h3_a6000/tests/test_reference_ops.py",
+      "sha256": "db36f2791efc2f5f2b9c368998c0c94950a5630719dcf227fffe3b8362583185",
+      "size_bytes": 4625,
+      "source": "ports/minimax_h3_a6000/tests/test_reference_ops.py"
+    },
+    {
+      "path": "ports/minimax_h3_a6000/tests/test_sol_attn_backend.py",
+      "sha256": "91877c4033c6e8d3a4bb57b326764165dcc924c26a5311527e3848d223050b13",
+      "size_bytes": 8603,
+      "source": "ports/minimax_h3_a6000/tests/test_sol_attn_backend.py"
+    },
+    {
+      "path": "release/github_release_manifest.json",
+      "sha256": "f4d44aa1186fca01d9ae27058ef73a51aff6fd52020bc7d56bdab6ebbf7ce2fb",
+      "size_bytes": 3320,
+      "source": "release/github_release_manifest.json"
+    },
+    {
+      "path": "runtime/single_a6000_bf16/container_image.digest",
+      "sha256": "08d0b6213b997cf1fbff6e4bc725e13ef346e65f050a48a93a10b753b0cc481e",
+      "size_bytes": 72,
+      "source": "runtime/single_a6000_bf16/container_image.digest"
+    },
+    {
+      "path": "runtime/single_a6000_bf16/requirements.lock",
+      "sha256": "61f819c4f131d06e70e8b0dce7cb6b16e5483d81375d9ad7b5b38a058f9712d3",
+      "size_bytes": 6299,
+      "source": "runtime/single_a6000_bf16/requirements.lock"
+    },
+    {
+      "path": "runtime/single_a6000_bf16/sha256sums.txt",
+      "sha256": "eb04192d06c84e69a7c7a242c8ef233e338685176a984f99c62939accc31355e",
+      "size_bytes": 1093,
+      "source": "runtime/single_a6000_bf16/sha256sums.txt"
+    },
+    {
+      "path": "runtime/single_a6000_bf16/source_commit.json",
+      "sha256": "eab8e93298f389862306590635c57f3e11b1ea42d3d38396695d3f4aefaf527b",
+      "size_bytes": 1385,
+      "source": "runtime/single_a6000_bf16/source_commit.json"
+    },
+    {
+      "path": "schemas/minimax_h3_a6000_performance_report.schema.json",
+      "sha256": "bd89a8b2defd5244a748963be754dcb3a9fa94a0bc7c393c836bae0f9e78733b",
+      "size_bytes": 2995,
+      "source": "schemas/minimax_h3_a6000_performance_report.schema.json"
+    },
+    {
+      "path": "scripts/a6000_one_command.sh",
+      "sha256": "bfe6134791193f087e86bd10323951e8965696aa2e0a70683b0ed593681e1985",
+      "size_bytes": 2452,
+      "source": "generated:a6000_workflow"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/baseline_a6000/baseline_certification.json",
+      "sha256": "387a0a5fcac5af92b9a05fc2e23717deff3760afbad0ce10abfd21815e832fd7",
+      "size_bytes": 11043,
+      "source": "technical_report/evidence/minimax_h3_desktop/baseline_a6000/baseline_certification.json"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/baseline_a6000/baseline_contract.json",
+      "sha256": "046c6b622fd3e69c22b13810a44ad763d8dda57acdde615ab1ba9a9aa25e2ef9",
+      "size_bytes": 1474,
+      "source": "technical_report/evidence/minimax_h3_desktop/baseline_a6000/baseline_contract.json"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/delivery/argus_ir04_delivery_summary.json",
+      "sha256": "09cdbde23956b50e7fae742764707afdf2834fd782c0b913e0cac7e2b8d7c728",
+      "size_bytes": 16128,
+      "source": "technical_report/evidence/minimax_h3_desktop/delivery/argus_ir04_delivery_summary.json"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/dlo_autotune/detached_continuation/capacity_selection.json",
+      "sha256": "96a869e05db49bea5f623ba7ded43e67301a7583ccc0a20ed6aa843c940a24de",
+      "size_bytes": 1591,
+      "source": "technical_report/evidence/minimax_h3_desktop/dlo_autotune/detached_continuation/capacity_selection.json"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/dlo_autotune/resident_layer_candidates.json",
+      "sha256": "ca5774e50e82b6440136ee72f64e1c27abc4e58c34bb9c4ddd24affcafbacfb8",
+      "size_bytes": 5773,
+      "source": "technical_report/evidence/minimax_h3_desktop/dlo_autotune/resident_layer_candidates.json"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/hidden_cache_policy.json",
+      "sha256": "2058b1cf0bf95c57e329e77f6fbe8b366844c8c9fc15e5fde5724dc83c2cd715",
+      "size_bytes": 1547,
+      "source": "technical_report/evidence/minimax_h3_desktop/hidden_cache_policy.json"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/metadata/checkpoint_size_summary.json",
+      "sha256": "9b8753e4d1082639cbfa689da5ef168885fa748ce2e24acc31370cf044a50c1f",
+      "size_bytes": 26011,
+      "source": "technical_report/evidence/minimax_h3_desktop/metadata/checkpoint_size_summary.json"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/quantization_feasibility_a6000.md",
+      "sha256": "42cedf508431cf18913a7054af8fa72660860091010c75d6766e319921c7ff90",
+      "size_bytes": 20367,
+      "source": "technical_report/evidence/minimax_h3_desktop/quantization_feasibility_a6000.md"
+    },
+    {
+      "path": "technical_report/final_technical_report.md",
+      "sha256": "53018526542722f2f5cc63140a6f3da8755a55e8ef331c9836daef9e6b1a5957",
+      "size_bytes": 9523,
+      "source": "technical_report/final_technical_report.md"
+    },
+    {
+      "path": "technical_report/minimax_h3_a6000_performance.md",
+      "sha256": "27ca7c8fc69dedc74d4194c8b9b0fd20e42ab850d999e600acbf22818e2f44b2",
+      "size_bytes": 14285,
+      "source": "technical_report/minimax_h3_a6000_performance.md"
+    },
+    {
+      "path": "tests/test_github_release_tree_builder.py",
+      "sha256": "5dfcd5f1acc2d9abf264d2cf1cb7ac0e5e02300488055f15f950afbaa98d4786",
+      "size_bytes": 3751,
+      "source": "tests/test_github_release_tree_builder.py"
+    },
+    {
+      "path": "tests/test_minimax_h3_a6000_performance_report.py",
+      "sha256": "1c18275ecfdddc5b09fb1ef3fe44601f8efcdf43d54f8a72f61f92bc0f5a4293",
+      "size_bytes": 14497,
+      "source": "tests/test_minimax_h3_a6000_performance_report.py"
+    },
+    {
+      "path": "tests/test_publication_audit.py",
+      "sha256": "2a13415c1ad7eedeb1ffec26405e6f97b5deb12e679c78b854103086ce93215f",
+      "size_bytes": 2887,
+      "source": "tests/test_publication_audit.py"
+    },
+    {
+      "path": "tools/argus_ir04_aggregate.py",
+      "sha256": "4ed2cb4bcc357769bad6b96f993fa9084f595e460e158bc519b426d4ccc6f6ea",
+      "size_bytes": 48771,
+      "source": "tools/argus_ir04_aggregate.py"
+    },
+    {
+      "path": "tools/build_github_release_tree.py",
+      "sha256": "657fdb3b313d350f540588925e004a5cca1882f853ea80976b8a001daf929912",
+      "size_bytes": 21428,
+      "source": "tools/build_github_release_tree.py"
+    },
+    {
+      "path": "tools/minimax_h3_a6000_performance_report.py",
+      "sha256": "181ac2e0197befa55734d84ab3771b4502eb63f82f53e98584dfacfa737857fd",
+      "size_bytes": 62906,
+      "source": "tools/minimax_h3_a6000_performance_report.py"
+    },
+    {
+      "path": "tools/publication_audit.py",
+      "sha256": "70b17dfb97076f96d3c46911274f542e72ce66300609c133b66889bdeebc12e2",
+      "size_bytes": 8949,
+      "source": "tools/publication_audit.py"
+    }
+  ],
+  "manifest": "release/github_release_manifest.json",
+  "publication_audit_command": "python3 tools/publication_audit.py --root . --max-bytes 1000000 --prohibited-terms-file <local-file-not-committed>",
+  "release_name": "Argus-AiTeam/minimax-h3-desktop",
+  "schema_version": "argus-github-release-build-v1",
+  "source_root_name": "minimax-h3-desktop"
+}

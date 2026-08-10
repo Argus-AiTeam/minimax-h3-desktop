@@ -1,0 +1,130 @@
+{
+  "schema_version": "argus-github-release-manifest-v1",
+  "release_name": "Argus-AiTeam/minimax-h3-desktop",
+  "max_file_bytes": 1000000,
+  "generated": [
+    {
+      "kind": "readme",
+      "path": "README.md"
+    },
+    {
+      "kind": "license",
+      "path": "LICENSE"
+    },
+    {
+      "kind": "notice",
+      "path": "NOTICE"
+    },
+    {
+      "kind": "gitignore",
+      "path": ".gitignore"
+    },
+    {
+      "kind": "a6000_workflow",
+      "path": "scripts/a6000_one_command.sh"
+    }
+  ],
+  "files": [
+    {
+      "path": "release/github_release_manifest.json"
+    },
+    {
+      "path": "tools/build_github_release_tree.py"
+    },
+    {
+      "path": "tools/publication_audit.py"
+    },
+    {
+      "path": "tools/minimax_h3_a6000_performance_report.py"
+    },
+    {
+      "path": "tools/argus_ir04_aggregate.py"
+    },
+    {
+      "path": "code/pytest.py"
+    },
+    {
+      "path": "schemas/minimax_h3_a6000_performance_report.schema.json"
+    },
+    {
+      "path": "runtime/single_a6000_bf16/container_image.digest"
+    },
+    {
+      "path": "runtime/single_a6000_bf16/requirements.lock"
+    },
+    {
+      "path": "runtime/single_a6000_bf16/sha256sums.txt"
+    },
+    {
+      "path": "runtime/single_a6000_bf16/source_commit.json"
+    },
+    {
+      "path": "technical_report/final_technical_report.md"
+    },
+    {
+      "path": "technical_report/minimax_h3_a6000_performance.md"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/quantization_feasibility_a6000.md"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/baseline_a6000/baseline_certification.json"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/baseline_a6000/baseline_contract.json"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/delivery/argus_ir04_delivery_summary.json"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/dlo_autotune/resident_layer_candidates.json"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/dlo_autotune/detached_continuation/capacity_selection.json"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/hidden_cache_policy.json"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/metadata/checkpoint_size_summary.json"
+    },
+    {
+      "path": "tests/test_github_release_tree_builder.py"
+    },
+    {
+      "path": "tests/test_publication_audit.py"
+    },
+    {
+      "path": "tests/test_minimax_h3_a6000_performance_report.py"
+    }
+  ],
+  "trees": [
+    {
+      "path": "ports/minimax_h3_a6000",
+      "include": [
+        "*.md",
+        "NOTICE",
+        "UPSTREAM.md",
+        "pyproject.toml",
+        "*.py",
+        "patches/**/*",
+        "src/**/*.py",
+        "tests/*.py",
+        "integration/*.sh",
+        "integration/r3/*",
+        "integration/r4/*",
+        "integration/r6/*"
+      ],
+      "exclude": [
+        "evidence/**",
+        "**/__pycache__/**"
+      ]
+    }
+  ],
+  "excluded_by_design": [
+    "models and all checkpoint/adapter/weight files",
+    "vendored upstream and runtime source trees",
+    "virtual environments, caches, pycache, PID files, raw logs, generated media/audio, Docker layers, archives, and credentials",
+    "Git remotes, tags, releases, and publication actions"
+  ]
+}

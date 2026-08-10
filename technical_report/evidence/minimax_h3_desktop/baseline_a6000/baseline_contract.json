@@ -1,0 +1,43 @@
+{
+  "attention": "CUDNN_ATTN dense",
+  "cache": "none",
+  "checkpoint_revision": "6818f6c32d12b210915e44ad56a4228c2608f160",
+  "dtype": "bfloat16",
+  "frozen_at_utc": "2026-08-09T14:22:54+00:00",
+  "gpu_count": 1,
+  "gpu_model": "NVIDIA RTX A6000",
+  "measurement_state": "run1_first_e2e_and_run2_warm_e2e_only; N>=10 not yet certified",
+  "model_repo": "MiniMaxAI/MiniMax-H3",
+  "offload": {
+    "kind": "distributed_layerwise_no_allgather",
+    "resident_layers": 12,
+    "vae_tiling": true
+  },
+  "partition": "FL2VA",
+  "platform": "single_a6000_48gb_workstation",
+  "quantization": "none",
+  "runtime_image": "sha256:398a1af096063026b3d30511236b35fa47c40eb342c368abfbc3d6d282a93345",
+  "runtime_source_commit": "8e2e9b6b53e86e6a479ed2c0a53782f655f60e04",
+  "schema": "argus-minimax-h3-a6000-fidelity-baseline-v1",
+  "sm": "8.6",
+  "sol_attn": false,
+  "status": "frozen_candidate_pending_repeats",
+  "track": "fidelity_bf16_exact",
+  "workload": {
+    "audio_channels": 2,
+    "audio_flow_shift": 3.0,
+    "audio_sample_rate_hz": 32000,
+    "duration_seconds": 5.166667,
+    "expected_frames": 124,
+    "flow_shift": 12.0,
+    "fps": 24,
+    "height": 768,
+    "num_inference_steps": 50,
+    "prompt_sha256": "98f36b879692095e099ae824c18d9e93e7006a490e082fd474a5f531769dcf06",
+    "prompt_source": "NVlabs/Sana sol-engine t2va_example_1 at d00eef311670a58deb2c323fe072738fcb945600",
+    "quality": "lossless",
+    "seed": 0,
+    "task": "t2va",
+    "width": 1344
+  }
+}

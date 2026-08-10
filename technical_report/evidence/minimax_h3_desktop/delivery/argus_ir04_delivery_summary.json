@@ -1,0 +1,318 @@
+{
+  "claims": {
+    "accepted": [
+      {
+        "claim": "A single-A6000 internal BF16-exact baseline v2 is certified on physical GPU3 with N=13 total requests, N=10 true warm-primary requests, and three session-first requests.",
+        "evidence": [
+          "baseline_a6000/baseline_certification.json"
+        ],
+        "limits": "Internal same-device denominator only; not an optimized or external reproduction.",
+        "track": "fidelity_bf16_exact"
+      },
+      {
+        "claim": "The latest GPU3 paired Turbo timing run is accepted as the only practical speed result: two excluded warmups, paired N=10 per schedule, strict structural AV pass, and baseline-v2 warm N=10 denominator.",
+        "evidence": [
+          "turbo_merged/timing_repeats/LATEST_RUN_ID",
+          "turbo_merged/timing_repeats/gpu3_turbo_paired_n10_20260810T025102Z/timing_summary.json",
+          "turbo_merged/timing_repeats/gpu3_turbo_paired_n10_20260810T025102Z/merge_manifest.json"
+        ],
+        "limits": "Practical approximation only; semantic AV quality and human auditory listening remain pending; 8-step is the default candidate and 4-step is ultra-fast quality-cost experimental.",
+        "track": "practical_disclosed_approx"
+      },
+      {
+        "claim": "AdaLN is an N=1 exact-output candidate only; the original harness-tail failure is preserved and the single-run benefit is below baseline warm-run noise.",
+        "evidence": [
+          "sol_engine_port/r5_ablation_20260809T181515Z/adaln/quality_vs_dense.json",
+          "sol_engine_port/a6000_adaln_candidate_50step_20260809T190402Z/av_validation_posthoc.json",
+          "sol_engine_port/a6000_adaln_candidate_50step_20260809T190402Z/candidate_verdict.json"
+        ],
+        "limits": "Not an accepted N=10 speedup and not deployed as a certified fidelity path.",
+        "track": "practical_disclosed_approx"
+      }
+    ],
+    "blocked": [
+      {
+        "claim": "MiniMax-H3 DMD/DMD2 is a no-go after Turbo unless feasibility evidence changes.",
+        "evidence": [
+          "dmd_primary_source_note.md"
+        ],
+        "status": "blocked_research_only_no_go_after_turbo_unless_feasibility_changes"
+      },
+      {
+        "claim": "Turbo semantic AV quality and human-auditory quality are fully certified.",
+        "evidence": [
+          "turbo_merged/LATEST_QUALITY_SUITE_RUN_ID",
+          "turbo_merged/quality_suite_runs/gpu3_turbo_quality_20260810T005611Z/quality_suite_analysis.json",
+          "turbo_merged/quality_suite_runs/gpu3_turbo_quality_20260810T005611Z/human_review.md"
+        ],
+        "status": "blocked_human_auditory_listening_pending_semantic_quality_not_certified"
+      }
+    ],
+    "rejected": [
+      {
+        "claim": "Turbo merged LoRA is a BF16-exact/fidelity result.",
+        "evidence": [
+          "turbo_merged/timing_repeats/gpu3_turbo_paired_n10_20260810T025102Z/timing_summary.json"
+        ],
+        "reason": "Turbo is practical_disclosed_approx and uses a statically merged LoRA approximation."
+      },
+      {
+        "claim": "Treating the earlier GPU2 Turbo smoke run as an accepted speedup denominator/result.",
+        "evidence": [
+          "turbo_merged/runs/gpu2_turbo_20260809T195558Z/turbo_summary.json",
+          "turbo_merged/timing_repeats/gpu3_turbo_paired_n10_20260810T025102Z/timing_summary.json"
+        ],
+        "reason": "GPU2 smoke is retained only as bring-up evidence; the only speedup result uses same physical GPU3 paired timing against baseline v2 warm N=10."
+      },
+      {
+        "claim": "RoPE/all-exact kernels are accepted exact replacements.",
+        "evidence": [
+          "sol_engine_port/r5_ablation_20260809T181515Z/rope/quality_vs_dense.json",
+          "sol_engine_port/r5_ablation_20260809T181515Z/all_exact/quality_vs_dense.json"
+        ],
+        "reason": "Same-prompt diagnostic evidence shows non-zero video/audio drift."
+      },
+      {
+        "claim": "SwiGLU is a retained practical speed gain.",
+        "evidence": [
+          "sol_engine_port/r5_ablation_20260809T181515Z/swiglu/quality_vs_dense.json",
+          "sol_engine_port/r5_ablation_20260809T181515Z/swiglu/http_metrics.txt"
+        ],
+        "reason": "Current evidence is exact diagnostic output only; no retained speedup gain is accepted or deployed."
+      },
+      {
+        "claim": "Toy Sol-Attn is deployed or faster.",
+        "evidence": [
+          "sol_engine_port/sol_attn_gpu_20260809T173323Z/result.json"
+        ],
+        "reason": "Current toy harness is kernel-candidate-only, model_load=false, and sparse median is slower than dense."
+      }
+    ]
+  },
+  "input_root": "technical_report/evidence/minimax_h3_desktop",
+  "lanes": {
+    "fidelity_bf16_exact": {
+      "accepted_scope": "internal same-physical-GPU3 baseline only; warm-primary denominator is N=10 true warm requests, total all-request set is N=13 with three session-first requests",
+      "baseline": {
+        "all_requests": {
+          "cv_percent": 0.7777501736471782,
+          "mean_s": 1788.1300204615384,
+          "median_s": 1780.975666,
+          "n": 13
+        },
+        "claim_boundary": "Internal same-physical-device A6000 BF16 fidelity baseline. Warm N=10 is the primary speed denominator. Not an optimized result or external reproduction.",
+        "correction_note": "v1 incorrectly treated run03 as warm. Run03 was the first request of service session B. Run11 was likewise the first request of service session C despite its legacy filename. v2 classifies by actual service lifecycle and certifies ten true warm requests.",
+        "evidence_path": "baseline_a6000/baseline_certification.json",
+        "physical_device": {
+          "compute_capability": "8.6",
+          "host_gpu_index": 3,
+          "uuid": "GPU-ff0c8d25-2652-ce58-3ef7-e3a9aeeb3334"
+        },
+        "platform": "single_a6000_48gb_workstation",
+        "recomputed_from_run_latencies": true,
+        "schema": "argus-h3-a6000-fidelity-baseline-certification-v2",
+        "service_session_count": 3,
+        "session_first_requests": {
+          "mean_s": 1779.437883,
+          "median_s": 1778.809073,
+          "n": 3
+        },
+        "status": "certified_internal_same_physical_device_baseline",
+        "track": "fidelity_bf16_exact",
+        "warm_primary_denominator": {
+          "cv_percent": 0.8371622556580874,
+          "mean_s": 1790.7376617,
+          "median_s": 1792.2021025,
+          "n": 10
+        }
+      },
+      "must_not_include": [
+        "Turbo merged LoRA",
+        "DMD/DMD2",
+        "Sol-Attn approximations"
+      ]
+    },
+    "practical_disclosed_approx": {
+      "accepted_scope": "disclosed approximation/diagnostic lane only unless future evidence changes",
+      "dmd": {
+        "evidence_path": "dmd_primary_source_note.md",
+        "rationale": "No official reproducible MiniMax-H3 DMD/DMD2 recipe/checkpoint is present in the evidence note.",
+        "status": "blocked_research_only_no_go_after_turbo_unless_feasibility_changes",
+        "track_limit": "practical_disclosed_approx"
+      },
+      "sol_exact_and_sol_attn": {
+        "adaln": {
+          "audio_waveform_cosine": 0.9999999999999999,
+          "baseline_warm_cv_percent": 0.8371622556580874,
+          "harness_failure_disclosure": "post-generation validation here-doc quoting SyntaxError",
+          "n": 1,
+          "original_harness_exit_code": 1,
+          "posthoc_path": "sol_engine_port/a6000_adaln_candidate_50step_20260809T190402Z/av_validation_posthoc.json",
+          "quality_path": "sol_engine_port/r5_ablation_20260809T181515Z/adaln/quality_vs_dense.json",
+          "single_run_speedup": 1.0047683877255666,
+          "status": "exact_output_candidate_n1_rejected_for_speedup_acceptance_not_deployed",
+          "verdict_path": "sol_engine_port/a6000_adaln_candidate_50step_20260809T190402Z/candidate_verdict.json",
+          "video_mean_mse": 0.0
+        },
+        "all_exact": {
+          "audio_waveform_cosine": 0.9775986604966458,
+          "quality_path": "sol_engine_port/r5_ablation_20260809T181515Z/all_exact/quality_vs_dense.json",
+          "status": "rejected_for_output_drift_not_accepted_exact_kernel",
+          "video_mean_mse": 224.11484810613817
+        },
+        "rope": {
+          "audio_waveform_cosine": 0.9775986604966458,
+          "quality_path": "sol_engine_port/r5_ablation_20260809T181515Z/rope/quality_vs_dense.json",
+          "status": "rejected_for_output_drift_not_accepted_exact_kernel",
+          "video_mean_mse": 224.11484810613817
+        },
+        "swiglu": {
+          "audio_waveform_cosine": 0.9999999999999999,
+          "http_metrics_path": "sol_engine_port/r5_ablation_20260809T181515Z/swiglu/http_metrics.txt",
+          "quality_path": "sol_engine_port/r5_ablation_20260809T181515Z/swiglu/quality_vs_dense.json",
+          "status": "rejected_no_retained_speedup_gain_not_deployed",
+          "video_mean_mse": 0.0
+        },
+        "toy_sol_attn": {
+          "dense_median_ms": 0.12390399724245071,
+          "kernel_candidates_only_not_h3_e2e": true,
+          "model_load": false,
+          "result_path": "sol_engine_port/sol_attn_gpu_20260809T173323Z/result.json",
+          "sparse_median_ms": 0.40243199467658997,
+          "speedup_dense_over_sparse_median": 0.30788803793302966,
+          "status": "rejected_slower_not_deployed_kernel_candidate_only"
+        }
+      },
+      "turbo_merged": {
+        "baseline_denominator": {
+          "kind": "warm_requests_primary_denominator",
+          "median_s": 1792.2021025,
+          "n": 10,
+          "path": "technical_report/evidence/minimax_h3_desktop/baseline_a6000/baseline_certification.json",
+          "same_physical_device": true
+        },
+        "completed_shard_count": 13,
+        "excluded_warmups": {
+          "4step": {
+            "http_code": 200,
+            "latency_s": 153.297009,
+            "size_download_bytes": 6858247
+          },
+          "8step": {
+            "http_code": 200,
+            "latency_s": 291.018631,
+            "size_download_bytes": 5767966
+          }
+        },
+        "fidelity_claim": "rejected_not_fidelity_lane",
+        "gpu2_bringup_scope": "earlier GPU2 smoke is bring-up only and is not used as a speedup denominator/result",
+        "latest_pointer": "turbo_merged/timing_repeats/LATEST_RUN_ID",
+        "merge_manifest_path": "turbo_merged/timing_repeats/gpu3_turbo_paired_n10_20260810T025102Z/merge_manifest.json",
+        "merge_status": "completed",
+        "merge_strength": 1.0,
+        "paired_formal_n_per_schedule": 10,
+        "physical_device": {
+          "compute_capability": "8.6",
+          "host_gpu_index": 3,
+          "uuid": "GPU-ff0c8d25-2652-ce58-3ef7-e3a9aeeb3334"
+        },
+        "practical_default_candidate": "8-step",
+        "quality_certification": "structural_av_pass_semantic_quality_not_certified_human_listening_pending",
+        "quality_suite": {
+          "all_cases_structural_av_pass": true,
+          "analysis_path": "turbo_merged/quality_suite_runs/gpu3_turbo_quality_20260810T005611Z/quality_suite_analysis.json",
+          "audio_energy_envelopes_path": "turbo_merged/quality_suite_runs/gpu3_turbo_quality_20260810T005611Z/audio_energy_envelopes.json",
+          "baseline_seed0_comparison_path": "turbo_merged/quality_suite_runs/gpu3_turbo_quality_20260810T005611Z/baseline_seed0_quality_comparison.json",
+          "case_count": 24,
+          "human_auditory_listening": "pending",
+          "human_review_path": "turbo_merged/quality_suite_runs/gpu3_turbo_quality_20260810T005611Z/human_review.md",
+          "latest_pointer": "turbo_merged/LATEST_QUALITY_SUITE_RUN_ID",
+          "metric_limits": [
+            "No-reference health metrics detect empty, frozen, silent, clipped, or malformed output but do not prove prompt adherence.",
+            "4-step/8-step paired pixel and waveform metrics compare two Turbo schedules, not either schedule against BF16 fidelity.",
+            "Do not relabel this practical Turbo suite as fidelity evidence."
+          ],
+          "pair_count": 12,
+          "pending_human_review": true,
+          "quality_certification": "pending_human_review_and_prompt_matched_fidelity_references",
+          "review_contact_sheet_count": 6,
+          "run_dir": "turbo_merged/quality_suite_runs/gpu3_turbo_quality_20260810T005611Z",
+          "run_id": "gpu3_turbo_quality_20260810T005611Z",
+          "status": "structural_av_suite_pass_semantic_quality_not_certified",
+          "steps": {
+            "4": {
+              "baseline_seed0_audio_cosine": 0.4118406135095135,
+              "baseline_seed0_audio_rms_baseline": 0.06778160172011273,
+              "baseline_seed0_audio_rms_turbo": 0.03315401650882744,
+              "baseline_seed0_video_mse": 3473.0880501039564,
+              "baseline_seed0_video_psnr_db": 12.723645671368926,
+              "cv_percent": 1.4007310873978953,
+              "median_s": 147.754639,
+              "n": 12
+            },
+            "8": {
+              "baseline_seed0_audio_cosine": 0.8952344581116269,
+              "baseline_seed0_audio_rms_baseline": 0.06778160172011273,
+              "baseline_seed0_audio_rms_turbo": 0.048958173744363696,
+              "baseline_seed0_video_mse": 2946.248375431184,
+              "baseline_seed0_video_psnr_db": 13.438110048065415,
+              "cv_percent": 0.9191746754862262,
+              "median_s": 286.6195985,
+              "n": 12
+            }
+          }
+        },
+        "run_dir": "turbo_merged/timing_repeats/gpu3_turbo_paired_n10_20260810T025102Z",
+        "run_id": "gpu3_turbo_paired_n10_20260810T025102Z",
+        "steps": {
+          "4": {
+            "cv_percent": 0.033194157523981374,
+            "mean_s": 149.6224431,
+            "median_s": 149.6191865,
+            "n": 10,
+            "speedup_denominator_s": 1792.2021025,
+            "speedup_vs_same_gpu3_bf16_warm_n10_median": 11.978424321268447,
+            "strict_av_pass": true
+          },
+          "8": {
+            "cv_percent": 0.04878312051625522,
+            "mean_s": 290.9859656,
+            "median_s": 290.9976015,
+            "n": 10,
+            "speedup_denominator_s": 1792.2021025,
+            "speedup_vs_same_gpu3_bf16_warm_n10_median": 6.158820874336313,
+            "strict_av_pass": true
+          }
+        },
+        "structural_av_pass_count": 20,
+        "timing_summary_path": "turbo_merged/timing_repeats/gpu3_turbo_paired_n10_20260810T025102Z/timing_summary.json",
+        "track": "practical_disclosed_approx",
+        "ultra_fast_quality_cost_experimental": "4-step"
+      }
+    }
+  },
+  "operator_commands": [
+    "PYTHONPATH=code:. python3 -m pytest -q tests ports/minimax_h3_a6000/tests",
+    "python3 tools/verify_run.py tests/fixtures/minimal_av_case/run_record.json",
+    "python3 tools/turbo_quality_suite_runner.py --dry-run --config technical_report/evidence/minimax_h3_desktop/turbo_merged/quality_suite_config.json --out technical_report/evidence/minimax_h3_desktop/turbo_merged/quality_suite_dry_run",
+    "python3 tools/argus_ir04_aggregate.py --strict --input technical_report/evidence/minimax_h3_desktop --out technical_report/evidence/minimax_h3_desktop/delivery/argus_ir04_delivery_summary.json --report-out technical_report/final_technical_report.md --manifest-out technical_report/evidence/minimax_h3_desktop/delivery/package_manifest.json"
+  ],
+  "package_manifest": {
+    "entry_count": 58,
+    "missing_optional_paths": [],
+    "path": "technical_report/evidence/minimax_h3_desktop/delivery/package_manifest.json"
+  },
+  "quality_suite_runner": {
+    "config_path": "turbo_merged/quality_suite_config.json",
+    "default_mode": "dry_run_fail_closed",
+    "dry_run_plan_dir": "turbo_merged/quality_suite_dry_run",
+    "execution_status": "not_run_by_aggregator"
+  },
+  "schema_version": "argus-ir04-delivery-aggregation-v1",
+  "status": "pass_strict_evidence_grounded",
+  "test_policy": {
+    "cpu_static_tests_are_the_only_tests_counted_in_this_delivery": true,
+    "gpu_docker_inference_tests_counted_as_passed": false,
+    "skipped_gpu_placeholders_counted_as_coverage": false
+  }
+}

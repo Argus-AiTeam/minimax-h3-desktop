@@ -1,0 +1,9 @@
+MiniMax-H3 A6000 Sol-Engine overlay
+
+This overlay is licensed under the Apache License, Version 2.0.
+
+This product includes original adaptation/reference harness code written for the local MiniMax-H3 A6000 port under Apache-2.0-compatible terms.
+
+This product also includes an adapted pointer-backed Triton Sol-Attn candidate derived from local pinned NVlabs/Sana Sol-Engine Apache-2.0 source files listed in UPSTREAM.md.
+
+This product was informed by local pinned upstream source snapshots listed in UPSTREAM.md, including NVLabs Sana/Sol-Engine code and vLLM-Omni code. Those upstream works remain credited to their respective projects and contributors. This NOTICE does not reassign NVLabs, vLLM, SGLang, MiniMax, Hugging Face, or other upstream authorship to any individual adapter author.

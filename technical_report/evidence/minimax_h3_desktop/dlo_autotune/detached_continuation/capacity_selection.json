@@ -1,0 +1,43 @@
+{
+  "candidates": [
+    {
+      "baseline_rl12_5step_s": 188.098444,
+      "candidate_5step_s": 186.773476,
+      "improvement_percent": 0.7093983730323661,
+      "max_gpu_memory_used_mib": 28060.0,
+      "ratio_candidate_over_control": 0.9929559863876385,
+      "resident_layers": 13,
+      "run_id": "a6000_dlo_capacity_5step_rl13_20260810T072019Z"
+    },
+    {
+      "baseline_rl12_5step_s": 203.826102,
+      "candidate_5step_s": 192.861848,
+      "improvement_percent": 5.685030042852213,
+      "max_gpu_memory_used_mib": null,
+      "ratio_candidate_over_control": 0.9462078021783491,
+      "resident_layers": 16,
+      "run_id": "a6000_dlo_capacity_5step_rl16_20260810T113157Z"
+    },
+    {
+      "baseline_rl12_5step_s": 199.452334,
+      "candidate_5step_s": 196.474893,
+      "improvement_percent": 1.515430778221627,
+      "max_gpu_memory_used_mib": null,
+      "ratio_candidate_over_control": 0.9850719169824305,
+      "resident_layers": 18,
+      "run_id": "a6000_dlo_capacity_5step_rl18_20260810T134526Z"
+    }
+  ],
+  "schema": "argus-ir04-dlo-capacity-selection-v1",
+  "selected_for_50step": {
+    "baseline_rl12_5step_s": 203.826102,
+    "candidate_5step_s": 192.861848,
+    "improvement_percent": 5.685030042852213,
+    "max_gpu_memory_used_mib": null,
+    "ratio_candidate_over_control": 0.9462078021783491,
+    "resident_layers": 16,
+    "run_id": "a6000_dlo_capacity_5step_rl16_20260810T113157Z"
+  },
+  "selection_rule": "minimum candidate/control latency ratio among hash-exact capacity gates; 50-step remains a separate gate",
+  "status": "capacity_candidates_exact"
+}

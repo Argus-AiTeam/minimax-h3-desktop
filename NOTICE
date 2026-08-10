@@ -1,0 +1,5 @@
+MiniMax-H3 desktop code-only release tree
+
+This export contains original local adaptation, packaging, verification, and reporting code for a MiniMax-H3 A6000 desktop/workstation path. It does not include model weights, adapter weights, generated media, Docker layers, vendored upstream source trees, credentials, or private caches.
+
+Attribution is preserved for upstream work that informed or is patched by this tree, including the NVLabs/Sol-Engine team, vLLM-Omni, MiniMax, Hugging Face ecosystem packages, PyTorch, Triton, and related open-source dependencies. The local A6000 overlay NOTICE and patch files retain additional file-level attribution. This NOTICE does not reassign upstream authorship to the Argus adapter authors.

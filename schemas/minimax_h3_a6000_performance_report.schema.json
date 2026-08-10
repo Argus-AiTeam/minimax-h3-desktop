@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://argus.local/schemas/minimax_h3_a6000_performance_report.schema.json",
+  "title": "ARGUS-IR-04 MiniMax-H3 A6000 CPU-only performance report payload",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "status",
+    "input_root",
+    "non_execution_notice",
+    "lanes",
+    "sections",
+    "pending_items",
+    "blockers",
+    "evidence_index"
+  ],
+  "properties": {
+    "schema_version": {"const": "argus-minimax-h3-a6000-performance-report-v1"},
+    "status": {"const": "generated_cpu_evidence_reader"},
+    "input_root": {"type": "string", "minLength": 1},
+    "non_execution_notice": {"type": "string", "minLength": 1},
+    "lanes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fidelity", "practical"],
+      "properties": {
+        "fidelity": {"const": "fidelity_bf16_exact"},
+        "practical": {"const": "practical_disclosed_approx"}
+      }
+    },
+    "sections": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["workload", "baseline", "turbo", "dlo", "exact_kernels", "sol_attn", "dmd"],
+      "properties": {
+        "workload": {"$ref": "#/$defs/section"},
+        "baseline": {"$ref": "#/$defs/section"},
+        "turbo": {"$ref": "#/$defs/section"},
+        "dlo": {"$ref": "#/$defs/section"},
+        "exact_kernels": {"$ref": "#/$defs/section"},
+        "sol_attn": {"$ref": "#/$defs/section"},
+        "dmd": {"$ref": "#/$defs/section"}
+      }
+    },
+    "pending_items": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/status_item"}
+    },
+    "blockers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": ["scope", "status", "reason"],
+        "properties": {
+          "scope": {"type": "string", "minLength": 1},
+          "status": {"type": "string", "minLength": 1},
+          "reason": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "evidence_index": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    }
+  },
+  "$defs": {
+    "section": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["status", "evidence", "data", "notes"],
+      "properties": {
+        "status": {"enum": ["present", "partial", "pending", "invalid"]},
+        "reason": {"type": "string"},
+        "evidence": {"type": "array", "items": {"type": "string"}},
+        "data": {"type": "object", "additionalProperties": true},
+        "notes": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "status_item": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["section", "status", "reason"],
+      "properties": {
+        "section": {"type": "string", "minLength": 1},
+        "status": {"type": "string", "minLength": 1},
+        "reason": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}

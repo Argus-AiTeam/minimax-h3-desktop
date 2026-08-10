@@ -1,0 +1,34 @@
+{
+  "schema_version": "argus-minimax-h3-hidden-cache-policy-v1",
+  "status": "framework_created_no_real_runs",
+  "purpose": "Prevent hidden warm-cache or undeclared artifact reuse from contaminating MiniMax-H3 baseline, fidelity, or practical results.",
+  "declared_cache_roots_template": [
+    "technical_report/evidence/minimax_h3_desktop/cache/<run_id>",
+    "technical_report/evidence/minimax_h3_desktop/model_cache/<authorization_id>",
+    "technical_report/evidence/minimax_h3_desktop/container_cache/<image_digest>"
+  ],
+  "forbidden_implicit_cache_roots": [
+    "~/.cache/huggingface",
+    "~/.cache/torch",
+    "~/.cache/triton",
+    "~/.cache/nv",
+    "/tmp/minimax-h3-hidden-cache",
+    "/tmp/torch_extensions",
+    "/var/tmp/minimax-h3-hidden-cache"
+  ],
+  "required_snapshots_per_run": {
+    "pre_run_snapshot": "directory existence, file count, total bytes, and optional manifest before model/container/run command",
+    "post_run_snapshot": "same fields after command; unexplained growth outside declared roots is a verifier failure",
+    "clean_room_snapshot": "required before retained speedup/quality claims; must prove cache invalidation or fresh roots"
+  },
+  "verifier_integration": {
+    "schema": "schemas/minimax_h3_run.schema.json",
+    "cli": "python3 tools/verify_run.py --run-record <run_record.json>",
+    "fixture": "tests/fixtures/minimal_av_case/run_record.json"
+  },
+  "pre_gate_state": {
+    "real_model_cache_created": false,
+    "real_output_cache_created": false,
+    "mock_fixture_cache_total_bytes": 0
+  }
+}

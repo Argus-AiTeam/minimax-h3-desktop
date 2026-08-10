@@ -1,0 +1,674 @@
+diff --git a/vllm_omni/diffusion/attention/backends/registry.py b/vllm_omni/diffusion/attention/backends/registry.py
+--- a/vllm_omni/diffusion/attention/backends/registry.py
++++ b/vllm_omni/diffusion/attention/backends/registry.py
+@@ -66,6 +66,7 @@
+     FLASH_ATTN_3_HUB = "vllm_omni.diffusion.attention.backends.flash_attn_hub.FlashAttention3HubBackend"
+     TRTLLM_ATTN = "vllm_omni.diffusion.attention.backends.trtllm_attn.TrtllmAttentionBackend"
+     RAINFUSION_ATTN = "vllm_omni.diffusion.attention.backends.rainfusion_attn.RainFusionAttentionBackend"
++    H3_A6000_SOL_ATTN = "vllm_omni.diffusion.attention.backends.sol_attn_h3_a6000.SolAttnH3A6000Backend"
+
+     def get_path(self, include_classname: bool = True) -> str:
+         """Get the class path for this backend (respects overrides).
+diff --git a/vllm_omni/diffusion/attention/backends/sol_attn_h3_a6000.py b/vllm_omni/diffusion/attention/backends/sol_attn_h3_a6000.py
+new file mode 100644
+--- /dev/null
++++ b/vllm_omni/diffusion/attention/backends/sol_attn_h3_a6000.py
+@@ -0,0 +1,424 @@
++# SPDX-License-Identifier: Apache-2.0
++# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++"""Opt-in MiniMax-H3 A6000 Sol-Attn backend.
++
++This backend is fail-closed and default-off.  It accepts only the source-backed
++MiniMax-H3 packed-token metadata published by the vLLM-Omni H3 call path:
++``AttentionMetadata.video_layout`` for ``[prefix | video tail | padding]`` plus
++``extra.valid_kv_length``, ``extra.h3_denoise_step_index``, and
++``extra.h3_layer_index``.  If any field is absent or inconsistent, execution
++falls back to dense SDPA and telemetry records a stable blocker reason.  The
++Triton Sol-Attn candidate is reached only after explicit overlay/Sol-Attn env
++gates, cache-off policy, BF16 BSND shape checks, CUDA SM86 guard, and metadata
++validation all pass.
++"""
++
++from __future__ import annotations
++
++import atexit
++import json
++import os
++from dataclasses import dataclass, field
++from typing import Any, Mapping
++
++import torch
++
++from vllm_omni.diffusion.attention.backends.abstract import (
++    AttentionBackend,
++    AttentionImpl,
++    AttentionMetadata,
++)
++
++DEFAULT_ENV_SWITCHES = {
++    "MINIMAX_H3_A6000_ENABLE_OVERLAY": "0",
++    "MINIMAX_H3_A6000_ENABLE_TRITON_CANDIDATES": "0",
++    "MINIMAX_H3_A6000_ENABLE_SOL_ATTN": "0",
++    "MINIMAX_H3_A6000_ENABLE_TELEMETRY": "0",
++    "MINIMAX_H3_A6000_TELEMETRY_ATEXIT": "0",
++    "MINIMAX_H3_A6000_TELEMETRY_JSON": "",
++    "MINIMAX_H3_A6000_SOL_ATTN_CACHE": "0",
++    "MINIMAX_H3_A6000_SOL_ATTN_STRICT": "0",
++    "MINIMAX_H3_A6000_SOL_ATTN_TELEMETRY_JSON": "",
++}
++
++MISSING_H3_HOOK_METADATA_PREFIX = "missing_h3_hook_metadata"
++
++
++def _env_enabled(name: str) -> bool:
++    return os.environ.get(name, DEFAULT_ENV_SWITCHES.get(name, "0")) == "1"
++
++
++def _strict_enabled() -> bool:
++    return _env_enabled("MINIMAX_H3_A6000_SOL_ATTN_STRICT")
++
++
++@dataclass
++class H3A6000SolAttnTelemetry:
++    dense_calls: int = 0
++    sparse_candidate_calls: int = 0
++    sparse_calls: int = 0
++    fallback_calls: int = 0
++    prefix_query_dense_calls: int = 0
++    decline_reasons: dict[str, int] = field(default_factory=dict)
++    fallback_reasons: dict[str, int] = field(default_factory=dict)
++    sink_ranges: list[tuple[int, int]] = field(default_factory=list)
++    density_samples: list[dict[str, Any]] = field(default_factory=list)
++
++    def decline(self, reason: str) -> None:
++        self.dense_calls += 1
++        self.decline_reasons[reason] = self.decline_reasons.get(reason, 0) + 1
++
++    def fallback(self, reason: str) -> None:
++        self.fallback_calls += 1
++        self.fallback_reasons[reason] = self.fallback_reasons.get(reason, 0) + 1
++        self.decline(reason)
++
++    def merge_wrapper(self, wrapper_telemetry: Any) -> None:
++        self.dense_calls += int(getattr(wrapper_telemetry, "dense_calls", 0))
++        self.sparse_candidate_calls += int(getattr(wrapper_telemetry, "sparse_candidate_calls", 0))
++        self.sparse_calls += int(getattr(wrapper_telemetry, "sparse_calls", 0))
++        self.fallback_calls += int(getattr(wrapper_telemetry, "fallback_calls", 0))
++        self.prefix_query_dense_calls += int(getattr(wrapper_telemetry, "prefix_query_dense_calls", 0))
++        for name, count in getattr(wrapper_telemetry, "decline_reasons", {}).items():
++            self.decline_reasons[str(name)] = self.decline_reasons.get(str(name), 0) + int(count)
++        for name, count in getattr(wrapper_telemetry, "fallback_reasons", {}).items():
++            self.fallback_reasons[str(name)] = self.fallback_reasons.get(str(name), 0) + int(count)
++        self.sink_ranges.extend(list(getattr(wrapper_telemetry, "sink_ranges", [])))
++        self.density_samples.extend(list(getattr(wrapper_telemetry, "density_samples", [])))
++
++
++_TELEMETRY = H3A6000SolAttnTelemetry()
++
++
++def get_h3_a6000_sol_attn_telemetry() -> H3A6000SolAttnTelemetry:
++    return _TELEMETRY
++
++
++def _sol_attn_telemetry_json() -> dict[str, Any]:
++    return {
++        "schema_version": "minimax_h3_a6000_sol_attn_telemetry_v2",
++        "density_sample_kind": "static_exact_block_lower_bound",
++        "dense_calls": _TELEMETRY.dense_calls,
++        "sparse_candidate_calls": _TELEMETRY.sparse_candidate_calls,
++        "sparse_calls": _TELEMETRY.sparse_calls,
++        "fallback_calls": _TELEMETRY.fallback_calls,
++        "prefix_query_dense_calls": _TELEMETRY.prefix_query_dense_calls,
++        "decline_reasons": dict(_TELEMETRY.decline_reasons),
++        "fallback_reasons": dict(_TELEMETRY.fallback_reasons),
++        "sink_ranges": list(_TELEMETRY.sink_ranges),
++        "density_samples": list(_TELEMETRY.density_samples),
++    }
++
++
++def _write_sol_attn_telemetry_at_exit() -> None:
++    path = os.environ.get("MINIMAX_H3_A6000_SOL_ATTN_TELEMETRY_JSON") or os.environ.get(
++        "MINIMAX_H3_A6000_TELEMETRY_JSON"
++    )
++    if path:
++        with open(path + ".sol_attn.json", "w", encoding="utf-8") as f:
++            json.dump(_sol_attn_telemetry_json(), f, indent=2, sort_keys=True)
++
++
++if _env_enabled("MINIMAX_H3_A6000_ENABLE_TELEMETRY") and _env_enabled("MINIMAX_H3_A6000_TELEMETRY_ATEXIT"):
++    atexit.register(_write_sol_attn_telemetry_at_exit)
++
++
++@dataclass(frozen=True)
++class _SolAttnSparseMetadata:
++    step_index: int
++    layer_index: int
++    prefix_len: int
++    latent_grid: tuple[int, int, int]
++    valid_length: int
++    total_length: int
++
++    @property
++    def video_rows(self) -> int:
++        t, h, w = self.latent_grid
++        return t * h * w
++
++
++def _field(source: Any, name: str) -> Any:
++    if isinstance(source, Mapping):
++        return source.get(name)
++    return getattr(source, name, None)
++
++
++def _metadata_extra(attn_metadata: AttentionMetadata | None) -> Mapping[str, Any]:
++    extra = _field(attn_metadata, "extra") if attn_metadata is not None else None
++    return extra if isinstance(extra, Mapping) else {}
++
++
++def _read_int(source: Mapping[str, Any] | Any, *names: str) -> int | None:
++    for name in names:
++        value = _field(source, name)
++        if value is None:
++            continue
++        try:
++            return int(value)
++        except (TypeError, ValueError):
++            return None
++    return None
++
++
++def _missing_hook_reason(detail: str) -> str:
++    return f"{MISSING_H3_HOOK_METADATA_PREFIX}:{detail}"
++
++
++def _extract_sparse_metadata(
++    attn_metadata: AttentionMetadata | None,
++    total_length: int,
++) -> tuple[_SolAttnSparseMetadata | None, str | None]:
++    if int(total_length) <= 0:
++        return None, _missing_hook_reason("invalid_total_length")
++    if attn_metadata is None:
++        return None, _missing_hook_reason("missing_attention_metadata")
++    layout = getattr(attn_metadata, "video_layout", None)
++    if layout is None:
++        return None, _missing_hook_reason("missing_packed_video_layout")
++    prefix_len = _read_int(layout, "prefix_len")
++    latent_grid_raw = _field(layout, "latent_grid")
++    if prefix_len is None or latent_grid_raw is None:
++        return None, _missing_hook_reason("invalid_packed_video_layout")
++    try:
++        latent_grid = tuple(int(x) for x in latent_grid_raw)
++    except (TypeError, ValueError):
++        return None, _missing_hook_reason("invalid_packed_video_layout")
++    if len(latent_grid) != 3 or any(x <= 0 for x in latent_grid):
++        return None, _missing_hook_reason("invalid_packed_video_layout")
++
++    extra = _metadata_extra(attn_metadata)
++    valid = _read_int(extra, "h3_valid_kv_length", "valid_kv_length")
++    if valid is None:
++        return None, _missing_hook_reason("missing_valid_kv_length_metadata")
++    step_index = _read_int(extra, "h3_denoise_step_index", "denoise_step_index", "step_index")
++    layer_index = _read_int(extra, "h3_layer_index", "layer_index")
++    if step_index is None or layer_index is None:
++        return None, _missing_hook_reason("missing_step_layer_metadata")
++    if step_index < 0 or layer_index < 0:
++        return None, _missing_hook_reason("invalid_step_layer_metadata")
++
++    video_rows = latent_grid[0] * latent_grid[1] * latent_grid[2]
++    if valid != prefix_len + video_rows or valid <= 0 or valid > int(total_length):
++        return None, _missing_hook_reason("invalid_packed_video_layout")
++    return (
++        _SolAttnSparseMetadata(
++            step_index=step_index,
++            layer_index=layer_index,
++            prefix_len=prefix_len,
++            latent_grid=latent_grid,
++            valid_length=valid,
++            total_length=int(total_length),
++        ),
++        None,
++    )
++
++
++def _dense_sdpa_raw(
++    query: torch.Tensor,
++    key: torch.Tensor,
++    value: torch.Tensor,
++    scale: float,
++    attn_mask: torch.Tensor | None = None,
++) -> torch.Tensor:
++    q, k, v = (x.permute(0, 2, 1, 3) for x in (query, key, value))
++    out = torch.nn.functional.scaled_dot_product_attention(
++        q,
++        k,
++        v,
++        attn_mask=attn_mask,
++        dropout_p=0.0,
++        is_causal=False,
++        scale=scale,
++    )
++    return out.permute(0, 2, 1, 3).contiguous()
++
++
++def _valid_kv_length(attn_metadata: AttentionMetadata | None) -> int | None:
++    return _read_int(_metadata_extra(attn_metadata), "h3_valid_kv_length", "valid_kv_length")
++
++
++def _dense_sdpa(
++    query: torch.Tensor,
++    key: torch.Tensor,
++    value: torch.Tensor,
++    scale: float,
++    attn_metadata: AttentionMetadata | None,
++) -> torch.Tensor:
++    attn_mask = getattr(attn_metadata, "attn_mask", None)
++    valid = _valid_kv_length(attn_metadata)
++    if attn_mask is None and valid is not None and query.shape == key.shape == value.shape and 0 < valid <= key.shape[1]:
++        output = torch.zeros_like(value)
++        output[:, :valid] = _dense_sdpa_raw(query[:, :valid], key[:, :valid], value[:, :valid], scale)
++        return output
++    return _dense_sdpa_raw(query, key, value, scale, attn_mask=attn_mask)
++
++
++def _device_capability(query: torch.Tensor) -> tuple[int, int] | None:
++    if query.device.type != "cuda":
++        return None
++    try:
++        cap = torch.cuda.get_device_capability(query.device)
++    except Exception:
++        return None
++    return (int(cap[0]), int(cap[1]))
++
++
++def _sm86_guard(query: torch.Tensor) -> bool:
++    return _device_capability(query) == (8, 6)
++
++
++class SolAttnH3A6000Backend(AttentionBackend):
++    """vLLM-Omni backend class; opt-in sparse candidate with dense fallback."""
++
++    supports_prefix_kv_slicing = True
++    supported_platforms = ("cuda",)
++
++    @classmethod
++    def validate_available(cls) -> None:
++        # Backend selection itself is allowed on a disposable integration tree;
++        # all optional sparse dependencies are imported lazily by forward_cuda.
++        return None
++
++    @staticmethod
++    def get_name() -> str:
++        return "H3_A6000_SOL_ATTN"
++
++    @staticmethod
++    def get_impl_cls() -> type["SolAttnH3A6000Impl"]:
++        return SolAttnH3A6000Impl
++
++    @staticmethod
++    def get_metadata_cls() -> type[AttentionMetadata]:
++        return AttentionMetadata
++
++    @staticmethod
++    def get_builder_cls() -> None:
++        return None
++
++    @staticmethod
++    def get_supported_head_sizes() -> list[int]:
++        return [128]
++
++
++class SolAttnH3A6000Impl(AttentionImpl[AttentionMetadata]):
++    def __init__(
++        self,
++        num_heads: int,
++        head_size: int,
++        softmax_scale: float,
++        causal: bool = False,
++        num_kv_heads: int | None = None,
++        prefix: str = "",
++        qkv_layout: str | None = None,
++        backend_kwargs: dict[str, Any] | None = None,
++        **extra_impl_args: Any,
++    ) -> None:
++        del num_heads, num_kv_heads, backend_kwargs, extra_impl_args
++        if causal:
++            raise ValueError("MiniMax-H3 Sol-Attn expects non-causal self attention")
++        if head_size != 128:
++            raise ValueError(f"MiniMax-H3 Sol-Attn supports head_size=128, got {head_size}")
++        if qkv_layout not in (None, "BSND"):
++            raise ValueError(f"MiniMax-H3 Sol-Attn expects BSND qkv layout, got {qkv_layout!r}")
++        self.softmax_scale = float(softmax_scale)
++        self.prefix = prefix
++        self.dense_first_steps = 10
++        self.dense_first_layers = 2
++
++    def _decline_reason(
++        self,
++        query: torch.Tensor,
++        key: torch.Tensor,
++        value: torch.Tensor,
++        attn_metadata: AttentionMetadata | None,
++    ) -> str | None:
++        if not (
++            _env_enabled("MINIMAX_H3_A6000_ENABLE_OVERLAY")
++            and _env_enabled("MINIMAX_H3_A6000_ENABLE_TRITON_CANDIDATES")
++            and _env_enabled("MINIMAX_H3_A6000_ENABLE_SOL_ATTN")
++        ):
++            return "env_disabled"
++        if _env_enabled("MINIMAX_H3_A6000_SOL_ATTN_CACHE"):
++            return "cache_disabled_by_contract"
++        if query.shape != key.shape or query.shape != value.shape:
++            return "qkv_shape_mismatch"
++        if query.ndim != 4 or query.shape[-1] != 128:
++            return "unsupported_qkv_layout"
++        if query.dtype != torch.bfloat16 or key.dtype != query.dtype or value.dtype != query.dtype:
++            return "unsupported_dtype"
++        if query.device.type != "cuda" or key.device != query.device or value.device != query.device:
++            return "unsupported_device"
++        if not (query.is_contiguous() and key.is_contiguous() and value.is_contiguous()):
++            return "unsupported_contiguity"
++        if not _sm86_guard(query):
++            return "unsupported_or_unprobed_sm"
++        sparse_metadata, reason = _extract_sparse_metadata(attn_metadata, query.shape[1])
++        if reason is not None:
++            return reason
++        assert sparse_metadata is not None
++        if sparse_metadata.step_index < self.dense_first_steps:
++            return "dense_first_steps"
++        if sparse_metadata.layer_index < self.dense_first_layers:
++            return "dense_first_layers"
++        return None
++
++    def forward_cuda(
++        self,
++        query: torch.Tensor,
++        key: torch.Tensor,
++        value: torch.Tensor,
++        attn_metadata: AttentionMetadata | None = None,
++    ) -> torch.Tensor:
++        reason = self._decline_reason(query, key, value, attn_metadata)
++        if reason is not None:
++            _TELEMETRY.decline(reason)
++            return _dense_sdpa(query, key, value, self.softmax_scale, attn_metadata)
++
++        sparse_metadata, reason = _extract_sparse_metadata(attn_metadata, query.shape[1])
++        if reason is not None or sparse_metadata is None:
++            _TELEMETRY.decline(reason or "metadata_lost_after_decline_check")
++            return _dense_sdpa(query, key, value, self.softmax_scale, attn_metadata)
++
++        try:
++            from minimax_h3_a6000.sol_attn_backend import (  # type: ignore[import-not-found]
++                PackedH3Metadata,
++                SolAttnPolicy,
++                SolAttnTelemetry,
++                sol_attn_h3_sparse_candidate,
++            )
++        except Exception as exc:  # noqa: BLE001 - fail closed if overlay package is absent
++            reason = f"overlay_package_unavailable:{type(exc).__name__}"
++            _TELEMETRY.fallback(reason)
++            if _strict_enabled():
++                raise RuntimeError("MiniMax-H3 Sol-Attn overlay package is unavailable") from exc
++            return _dense_sdpa(query, key, value, self.softmax_scale, attn_metadata)
++
++        packed = PackedH3Metadata(
++            prefix_len=sparse_metadata.prefix_len,
++            latent_grid=sparse_metadata.latent_grid,
++            valid_length=sparse_metadata.valid_length,
++            total_length=sparse_metadata.total_length,
++        )
++        policy = SolAttnPolicy.from_env()
++        wrapper_telemetry = SolAttnTelemetry()
++        try:
++            out = sol_attn_h3_sparse_candidate(
++                query,
++                key,
++                value,
++                metadata=packed,
++                step_index=sparse_metadata.step_index,
++                layer_index=sparse_metadata.layer_index,
++                policy=policy,
++                telemetry=wrapper_telemetry,
++                device_capability=_device_capability(query),
++                softmax_scale=self.softmax_scale,
++            )
++        except Exception as exc:  # noqa: BLE001 - fail closed unless strict was requested
++            reason = f"wrapper_error:{type(exc).__name__}"
++            _TELEMETRY.fallback(reason)
++            if _strict_enabled():
++                raise RuntimeError(f"MiniMax-H3 Sol-Attn wrapper failed: {type(exc).__name__}: {exc}") from exc
++            return _dense_sdpa(query, key, value, self.softmax_scale, attn_metadata)
++        _TELEMETRY.merge_wrapper(wrapper_telemetry)
++        return out
+diff --git a/vllm_omni/diffusion/models/minimax_h3/minimax_h3_transformer.py b/vllm_omni/diffusion/models/minimax_h3/minimax_h3_transformer.py
+--- a/vllm_omni/diffusion/models/minimax_h3/minimax_h3_transformer.py
++++ b/vllm_omni/diffusion/models/minimax_h3/minimax_h3_transformer.py
+@@ -9,6 +9,8 @@
+ from __future__ import annotations
+
+ import math
++import atexit
++import os
+ from collections.abc import Iterable, Mapping
+ from dataclasses import dataclass
+ from typing import TYPE_CHECKING, Any
+@@ -29,6 +31,7 @@
+ from vllm_omni.diffusion.attention.backends.abstract import AttentionMetadata, VideoTokenLayout
+ from vllm_omni.diffusion.attention.layer import Attention
+ from vllm_omni.diffusion.cache.cachedit import CacheDiTAdapterConfig
++from vllm_omni.diffusion.forward_context import get_forward_context, is_forward_context_available
+ from vllm_omni.diffusion.distributed.sp_plan import (
+     SequenceParallelInput,
+     SequenceParallelOutput,
+@@ -44,6 +47,101 @@
+     from vllm_omni.diffusion.data import OmniDiffusionConfig
+
+ logger = init_logger(__name__)
++
++
++_H3_A6000_EXACT_DEFAULTS = {
++    "MINIMAX_H3_A6000_ENABLE_OVERLAY": "0",
++    "MINIMAX_H3_A6000_ENABLE_TRITON_CANDIDATES": "0",
++    "MINIMAX_H3_A6000_EXACT_INDEXED_STRATEGY": "auto",
++    "MINIMAX_H3_A6000_ENABLE_FUSED_ADALN": "0",
++    "MINIMAX_H3_A6000_ENABLE_FUSED_ADALN_MODULATE": "0",
++    "MINIMAX_H3_A6000_ENABLE_FUSED_ADALN_GATE": "0",
++    "MINIMAX_H3_A6000_ENABLE_FUSED_ROPE": "0",
++    "MINIMAX_H3_A6000_ENABLE_FUSED_SWIGLU": "0",
++    "MINIMAX_H3_A6000_ENABLE_SOL_ATTN": "0",
++    "MINIMAX_H3_A6000_SOL_ATTN_CACHE": "0",
++    "MINIMAX_H3_A6000_ENABLE_TELEMETRY": "0",
++    "MINIMAX_H3_A6000_TELEMETRY_ATEXIT": "0",
++    "MINIMAX_H3_A6000_TELEMETRY_JSON": "",
++    "MINIMAX_H3_A6000_ENABLE_SHADOW": "0",
++    "MINIMAX_H3_A6000_SHADOW_CALLS": "3",
++    "MINIMAX_H3_A6000_SHADOW_STRICT": "0",
++}
++
++
++_H3_A6000_EXACT_TELEMETRY_ATEXIT_REGISTERED = False
++_H3_A6000_EXACT_TELEMETRY_LOGGED: set[str] = set()
++
++
++def _h3_a6000_env_enabled(name: str) -> bool:
++    return os.environ.get(name, _H3_A6000_EXACT_DEFAULTS.get(name, "0")) == "1"
++
++
++def _h3_a6000_any_env_enabled(names: str | tuple[str, ...]) -> bool:
++    if isinstance(names, str):
++        return _h3_a6000_env_enabled(names)
++    return any(_h3_a6000_env_enabled(name) for name in names)
++
++
++def _h3_a6000_layer_index_from_prefix(prefix: str) -> int | None:
++    parts = prefix.split(".")
++    if len(parts) >= 2 and parts[0] == "blocks" and parts[1].isdigit():
++        return int(parts[1])
++    return None
++
++
++def _h3_a6000_register_exact_telemetry_logger(h3_a6000_exact: Any) -> None:
++    global _H3_A6000_EXACT_TELEMETRY_ATEXIT_REGISTERED
++    if _H3_A6000_EXACT_TELEMETRY_ATEXIT_REGISTERED:
++        return
++    if not (_h3_a6000_env_enabled("MINIMAX_H3_A6000_ENABLE_TELEMETRY") and _h3_a6000_env_enabled("MINIMAX_H3_A6000_TELEMETRY_ATEXIT")):
++        return
++
++    def _log_summary() -> None:
++        try:
++            logger.info("MiniMax-H3 A6000 exact telemetry: %s", h3_a6000_exact.get_exact_kernel_telemetry())
++        except Exception:
++            logger.debug("MiniMax-H3 A6000 exact telemetry summary failed", exc_info=True)
++
++    atexit.register(_log_summary)
++    _H3_A6000_EXACT_TELEMETRY_ATEXIT_REGISTERED = True
++
++
++def _h3_a6000_log_exact_once(fn_name: str, h3_a6000_exact: Any) -> None:
++    if not _h3_a6000_env_enabled("MINIMAX_H3_A6000_ENABLE_TELEMETRY"):
++        return
++    if fn_name in _H3_A6000_EXACT_TELEMETRY_LOGGED:
++        return
++    _H3_A6000_EXACT_TELEMETRY_LOGGED.add(fn_name)
++    try:
++        op = h3_a6000_exact.get_exact_kernel_telemetry()["ops"].get(fn_name, {})
++        logger.info("MiniMax-H3 A6000 exact wrapper observed %s telemetry=%s", fn_name, op)
++    except Exception:
++        logger.debug("MiniMax-H3 A6000 exact wrapper telemetry log failed for %s", fn_name, exc_info=True)
++
++
++def _h3_a6000_try_exact(op_env: str | tuple[str, ...], fn_name: str, *args: Any, **kwargs: Any) -> torch.Tensor | None:
++    if not (
++        _h3_a6000_env_enabled("MINIMAX_H3_A6000_ENABLE_OVERLAY")
++        and _h3_a6000_env_enabled("MINIMAX_H3_A6000_ENABLE_TRITON_CANDIDATES")
++        and _h3_a6000_any_env_enabled(op_env)
++    ):
++        return None
++    try:
++        from minimax_h3_a6000 import exact_kernels as h3_a6000_exact
++    except Exception:
++        logger.debug("MiniMax-H3 A6000 exact wrapper package is unavailable", exc_info=True)
++        return None
++    _h3_a6000_register_exact_telemetry_logger(h3_a6000_exact)
++    try:
++        candidate = getattr(h3_a6000_exact, fn_name)(*args, enable=True, strict=False, **kwargs)
++        _h3_a6000_log_exact_once(fn_name, h3_a6000_exact)
++        return candidate
++    except Exception as exc:
++        if exc.__class__.__name__ == "ShadowMismatchError":
++            raise
++        logger.debug("MiniMax-H3 A6000 exact wrapper %s declined", fn_name, exc_info=True)
++        return None
+
+
+ @dataclass
+@@ -187,6 +285,17 @@
+     dtype: torch.dtype,
+ ) -> torch.Tensor:
+     # Apply per-index affine modulation: x * (1 + scale[idx]) + shift[idx].
++    if dtype == _BF16_DTYPE:
++        candidate = _h3_a6000_try_exact(
++            ("MINIMAX_H3_A6000_ENABLE_FUSED_ADALN", "MINIMAX_H3_A6000_ENABLE_FUSED_ADALN_MODULATE"),
++            "indexed_modulate_bf16",
++            x,
++            scale,
++            shift,
++            indices,
++        )
++        if candidate is not None:
++            return candidate
+     return (x * (1.0 + scale.index_select(0, indices)) + shift.index_select(0, indices)).to(dtype)
+
+
+@@ -199,6 +308,17 @@
+     dtype: torch.dtype,
+ ) -> torch.Tensor:
+     # Apply the per-index gated residual: x + gate[idx] * other.
++    if dtype == _BF16_DTYPE:
++        candidate = _h3_a6000_try_exact(
++            ("MINIMAX_H3_A6000_ENABLE_FUSED_ADALN", "MINIMAX_H3_A6000_ENABLE_FUSED_ADALN_GATE"),
++            "indexed_gate_bf16",
++            x,
++            gate,
++            other,
++            indices,
++        )
++        if candidate is not None:
++            return candidate
+     return (x + gate.index_select(0, indices) * other).to(dtype)
+
+
+@@ -358,6 +478,7 @@
+             skip_sequence_parallel=skip_sequence_parallel,
+             prefix=prefix,
+         )
++        self._h3_a6000_layer_index = _h3_a6000_layer_index_from_prefix(prefix)
+
+     def _apply_rope(self, x: torch.Tensor, freqs: torch.Tensor) -> torch.Tensor:
+         """Rotate the first rot_dim head dims; pass the rest through.
+@@ -365,6 +486,14 @@
+         x: [T, heads, head_dim]; freqs: [T, rot_dim]. In the unfused path, cos/sin
+         are cast to the activation dtype before the elementwise math.
+         """
++        candidate = _h3_a6000_try_exact(
++            "MINIMAX_H3_A6000_ENABLE_FUSED_ROPE",
++            "apply_rope_bf16",
++            x,
++            freqs,
++        )
++        if candidate is not None:
++            return candidate
+         rot_dim = freqs.shape[-1]
+         x_rot, x_pass = x[..., :rot_dim], x[..., rot_dim:]
+         cos = torch.cos(freqs).to(x.dtype)  # [T, rot_dim]
+@@ -407,15 +536,25 @@
+         )
+         if used < packed_total and not prefix_slice:
+             attn_mask = torch.arange(packed_total, device=q.device)[None] < used
++        extra: dict[str, Any] = {
++            "cu_seqlens_q": cu_seqlens,
++            "cu_seqlens_k": cu_seqlens,
++            "max_seqlen_q": max_seqlen,
++            "max_seqlen_k": max_seqlen,
++            "valid_kv_length": used,
++        }
++        if video_layout is not None:
++            extra["h3_token_layout"] = "prefix_video_tail_padding"
++            extra["h3_valid_kv_length"] = used
++        if self._h3_a6000_layer_index is not None:
++            extra["h3_layer_index"] = self._h3_a6000_layer_index
++        if is_forward_context_available():
++            step_idx = get_forward_context().denoise_step_idx
++            if step_idx is not None:
++                extra["h3_denoise_step_index"] = int(step_idx)
+         metadata = AttentionMetadata(
+             attn_mask=attn_mask,
+-            extra={
+-                "cu_seqlens_q": cu_seqlens,
+-                "cu_seqlens_k": cu_seqlens,
+-                "max_seqlen_q": max_seqlen,
+-                "max_seqlen_k": max_seqlen,
+-                "valid_kv_length": used,
+-            },
++            extra=extra,
+             video_layout=video_layout,
+         )
+         return self.attention(
+@@ -513,8 +652,17 @@
+
+     def forward(self, x: torch.Tensor) -> torch.Tensor:
+         hidden, _ = self.fc1(x)
+-        gate, up = hidden.chunk(2, dim=-1)
+-        hidden = nn.functional.silu(gate) * up
++        candidate = _h3_a6000_try_exact(
++            "MINIMAX_H3_A6000_ENABLE_FUSED_SWIGLU",
++            "swiglu_bf16",
++            hidden,
++            order="gate_up",
++        )
++        if candidate is None:
++            gate, up = hidden.chunk(2, dim=-1)
++            hidden = nn.functional.silu(gate) * up
++        else:
++            hidden = candidate
+         out, _ = self.fc2(hidden)
+         return out

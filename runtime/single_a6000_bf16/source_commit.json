@@ -1,0 +1,29 @@
+{
+  "authorization_id": "AUTHZ-IR04-P0-RUNTIME-20260809",
+  "base_image": "docker.io/vllm/vllm-openai@sha256:770fe65b2c73ee74a5c42165cf3433de4048cc2cd9c57a937ca4e35aba5aa87b",
+  "base_image_local_id": "sha256:da9136512c307bc38bee3054b983787cd1d2e5f9fd68a9659154a97ade6faea2",
+  "built_at_utc": "2026-08-09T13:36:42+00:00",
+  "derived_image_id": "sha256:398a1af096063026b3d30511236b35fa47c40eb342c368abfbc3d6d282a93345",
+  "derived_image_local_tag": "argus/minimax-h3-vllm-omni:8e2e9b6b53e8-r2",
+  "derived_image_size_bytes": 19569460276,
+  "dockerfile": "docker/Dockerfile.cuda",
+  "schema_version": "argus-minimax-h3-runtime-source-lock-v1",
+  "source_commit": "8e2e9b6b53e86e6a479ed2c0a53782f655f60e04",
+  "source_describe": "v0.26.0-59-g8e2e9b6b",
+  "source_repo": "https://github.com/vllm-project/vllm-omni",
+  "status": "built_zero_gpu_not_a6000_validated",
+  "validation": {
+    "cli_help_limitation": "vLLM device inference fails when zero CUDA devices are exposed; source flags verified statically; real CLI parse deferred to P1 GPU gate",
+    "cli_help_without_device_exit_code": 1,
+    "gpu_visible": false,
+    "import_versions": "validation/import_versions_r2.log",
+    "model_loaded": false,
+    "network_disabled": true
+  },
+  "versions": {
+    "cuda_userspace": "13.0",
+    "torch": "2.11.0+cu130",
+    "vllm": "0.26.0",
+    "vllm_omni": "0.26.1.dev59+g8e2e9b6b5"
+  }
+}

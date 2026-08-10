@@ -1,0 +1,247 @@
+{
+  "all_requests": {
+    "cv_percent": 0.7777501736471782,
+    "max_s": 1813.755594,
+    "mean_s": 1788.1300204615384,
+    "median_s": 1780.975666,
+    "min_s": 1772.948497,
+    "n": 13,
+    "p95_nearest_rank_s": 1813.755594,
+    "sample_std_s": 13.907184339176938
+  },
+  "certified_at_utc": "2026-08-10T00:55:53+00:00",
+  "claim_boundary": "Internal same-physical-device A6000 BF16 fidelity baseline. Warm N=10 is the primary speed denominator. Not an optimized result or external reproduction.",
+  "contract_sha256": "046c6b622fd3e69c22b13810a44ad763d8dda57acdde615ab1ba9a9aa25e2ef9",
+  "correction_note": "v1 incorrectly treated run03 as warm. Run03 was the first request of service session B. Run11 was likewise the first request of service session C despite its legacy filename. v2 classifies by actual service lifecycle and certifies ten true warm requests.",
+  "physical_device": {
+    "compute_capability": "8.6",
+    "host_gpu_index": 3,
+    "uuid": "GPU-ff0c8d25-2652-ce58-3ef7-e3a9aeeb3334"
+  },
+  "platform": "single_a6000_48gb_workstation",
+  "resource": {
+    "max_gpu_mem_mib": 26836.0,
+    "max_host_used_gib": 204.83538436889648,
+    "max_power_w": 302.23,
+    "max_swap_used_gib": 3.4815330505371094,
+    "max_temp_c": 84.0,
+    "samples": 4735
+  },
+  "runs": [
+    {
+      "av_validation": "technical_report/evidence/minimax_h3_desktop/baseline_a6000/runs/a6000_fidelity_baseline_candidate_20260809T142324Z/run1_first_e2e_av_validation.json",
+      "http_metrics": "technical_report/evidence/minimax_h3_desktop/baseline_a6000/runs/a6000_fidelity_baseline_candidate_20260809T142324Z/run1_first_e2e_http_metrics.txt",
+      "kind": "session_first",
+      "latency_s": 1778.52891,
+      "legacy_artifact_stem": "run1_first_e2e",
+      "run": "run01",
+      "run_index": 1,
+      "service_session": "A",
+      "sha256": "d1d6280b40d7a8df543caa45509aa531a3d0dfdf71081ea7284b7e8acc1855f1",
+      "structural_av_pass": true
+    },
+    {
+      "av_validation": "technical_report/evidence/minimax_h3_desktop/baseline_a6000/runs/a6000_fidelity_baseline_candidate_20260809T142324Z/run2_warm_e2e_av_validation.json",
+      "http_metrics": "technical_report/evidence/minimax_h3_desktop/baseline_a6000/runs/a6000_fidelity_baseline_candidate_20260809T142324Z/run2_warm_e2e_http_metrics.txt",
+      "kind": "warm",
+      "latency_s": 1772.948497,
+      "legacy_artifact_stem": "run2_warm_e2e",
+      "run": "run02",
+      "run_index": 2,
+      "service_session": "A",
+      "sha256": "6c987ae83c02e53fa922d974a159dbd34778211cef4925c6bab6af6883362cb9",
+      "structural_av_pass": true
+    },
+    {
+      "av_validation": "technical_report/evidence/minimax_h3_desktop/baseline_a6000/runs/a6000_fidelity_baseline_repeats_20260809T153953Z/run03_warm_e2e_av_validation.json",
+      "http_metrics": "technical_report/evidence/minimax_h3_desktop/baseline_a6000/runs/a6000_fidelity_baseline_repeats_20260809T153953Z/run03_warm_e2e_http_metrics.txt",
+      "kind": "session_first",
+      "latency_s": 1780.975666,
+      "legacy_artifact_stem": "run03_warm_e2e",
+      "run": "run03",
+      "run_index": 3,
+      "service_session": "B",
+      "sha256": "d1d6280b40d7a8df543caa45509aa531a3d0dfdf71081ea7284b7e8acc1855f1",
+      "structural_av_pass": true
+    },
+    {
+      "av_validation": "technical_report/evidence/minimax_h3_desktop/baseline_a6000/runs/a6000_fidelity_baseline_repeats_20260809T153953Z/run04_warm_e2e_av_validation.json",
+      "http_metrics": "technical_report/evidence/minimax_h3_desktop/baseline_a6000/runs/a6000_fidelity_baseline_repeats_20260809T153953Z/run04_warm_e2e_http_metrics.txt",
+      "kind": "warm",
+      "latency_s": 1792.459992,
+      "legacy_artifact_stem": "run04_warm_e2e",
+      "run": "run04",
+      "run_index": 4,
+      "service_session": "B",
+      "sha256": "6c987ae83c02e53fa922d974a159dbd34778211cef4925c6bab6af6883362cb9",
+      "structural_av_pass": true
+    },
+    {
+      "av_validation": "technical_report/evidence/minimax_h3_desktop/baseline_a6000/runs/a6000_fidelity_baseline_repeats_20260809T153953Z/run05_warm_e2e_av_validation.json",
+      "http_metrics": "technical_report/evidence/minimax_h3_desktop/baseline_a6000/runs/a6000_fidelity_baseline_repeats_20260809T153953Z/run05_warm_e2e_http_metrics.txt",
+      "kind": "warm",
+      "latency_s": 1799.894081,
+      "legacy_artifact_stem": "run05_warm_e2e",
+      "run": "run05",
+      "run_index": 5,
+      "service_session": "B",
+      "sha256": "6c987ae83c02e53fa922d974a159dbd34778211cef4925c6bab6af6883362cb9",
+      "structural_av_pass": true
+    },
+    {
+      "av_validation": "technical_report/evidence/minimax_h3_desktop/baseline_a6000/runs/a6000_fidelity_baseline_repeats_20260809T153953Z/run06_warm_e2e_av_validation.json",
+      "http_metrics": "technical_report/evidence/minimax_h3_desktop/baseline_a6000/runs/a6000_fidelity_baseline_repeats_20260809T153953Z/run06_warm_e2e_http_metrics.txt",
+      "kind": "warm",
+      "latency_s": 1802.605693,
+      "legacy_artifact_stem": "run06_warm_e2e",
+      "run": "run06",
+      "run_index": 6,
+      "service_session": "B",
+      "sha256": "6c987ae83c02e53fa922d974a159dbd34778211cef4925c6bab6af6883362cb9",
+      "structural_av_pass": true
+    },
+    {
+      "av_validation": "technical_report/evidence/minimax_h3_desktop/baseline_a6000/runs/a6000_fidelity_baseline_repeats_20260809T153953Z/run07_warm_e2e_av_validation.json",
+      "http_metrics": "technical_report/evidence/minimax_h3_desktop/baseline_a6000/runs/a6000_fidelity_baseline_repeats_20260809T153953Z/run07_warm_e2e_http_metrics.txt",
+      "kind": "warm",
+      "latency_s": 1774.722536,
+      "legacy_artifact_stem": "run07_warm_e2e",
+      "run": "run07",
+      "run_index": 7,
+      "service_session": "B",
+      "sha256": "6c987ae83c02e53fa922d974a159dbd34778211cef4925c6bab6af6883362cb9",
+      "structural_av_pass": true
+    },
+    {
+      "av_validation": "technical_report/evidence/minimax_h3_desktop/baseline_a6000/runs/a6000_fidelity_baseline_repeats_20260809T153953Z/run08_warm_e2e_av_validation.json",
+      "http_metrics": "technical_report/evidence/minimax_h3_desktop/baseline_a6000/runs/a6000_fidelity_baseline_repeats_20260809T153953Z/run08_warm_e2e_http_metrics.txt",
+      "kind": "warm",
+      "latency_s": 1806.868671,
+      "legacy_artifact_stem": "run08_warm_e2e",
+      "run": "run08",
+      "run_index": 8,
+      "service_session": "B",
+      "sha256": "6c987ae83c02e53fa922d974a159dbd34778211cef4925c6bab6af6883362cb9",
+      "structural_av_pass": true
+    },
+    {
+      "av_validation": "technical_report/evidence/minimax_h3_desktop/baseline_a6000/runs/a6000_fidelity_baseline_repeats_20260809T153953Z/run09_warm_e2e_av_validation.json",
+      "http_metrics": "technical_report/evidence/minimax_h3_desktop/baseline_a6000/runs/a6000_fidelity_baseline_repeats_20260809T153953Z/run09_warm_e2e_http_metrics.txt",
+      "kind": "warm",
+      "latency_s": 1813.755594,
+      "legacy_artifact_stem": "run09_warm_e2e",
+      "run": "run09",
+      "run_index": 9,
+      "service_session": "B",
+      "sha256": "6c987ae83c02e53fa922d974a159dbd34778211cef4925c6bab6af6883362cb9",
+      "structural_av_pass": true
+    },
+    {
+      "av_validation": "technical_report/evidence/minimax_h3_desktop/baseline_a6000/runs/a6000_fidelity_baseline_repeats_20260809T153953Z/run10_warm_e2e_av_validation.json",
+      "http_metrics": "technical_report/evidence/minimax_h3_desktop/baseline_a6000/runs/a6000_fidelity_baseline_repeats_20260809T153953Z/run10_warm_e2e_http_metrics.txt",
+      "kind": "warm",
+      "latency_s": 1791.944213,
+      "legacy_artifact_stem": "run10_warm_e2e",
+      "run": "run10",
+      "run_index": 10,
+      "service_session": "B",
+      "sha256": "6c987ae83c02e53fa922d974a159dbd34778211cef4925c6bab6af6883362cb9",
+      "structural_av_pass": true
+    },
+    {
+      "av_validation": "technical_report/evidence/minimax_h3_desktop/baseline_a6000/runs/a6000_fidelity_baseline_repeats_11_13_20260809T232023Z/run11_warm_e2e_av_validation.json",
+      "http_metrics": "technical_report/evidence/minimax_h3_desktop/baseline_a6000/runs/a6000_fidelity_baseline_repeats_11_13_20260809T232023Z/run11_warm_e2e_http_metrics.txt",
+      "kind": "session_first",
+      "latency_s": 1778.809073,
+      "legacy_artifact_stem": "run11_warm_e2e",
+      "run": "run11",
+      "run_index": 11,
+      "service_session": "C",
+      "sha256": "d1d6280b40d7a8df543caa45509aa531a3d0dfdf71081ea7284b7e8acc1855f1",
+      "structural_av_pass": true
+    },
+    {
+      "av_validation": "technical_report/evidence/minimax_h3_desktop/baseline_a6000/runs/a6000_fidelity_baseline_repeats_11_13_20260809T232023Z/run12_warm_e2e_av_validation.json",
+      "http_metrics": "technical_report/evidence/minimax_h3_desktop/baseline_a6000/runs/a6000_fidelity_baseline_repeats_11_13_20260809T232023Z/run12_warm_e2e_http_metrics.txt",
+      "kind": "warm",
+      "latency_s": 1775.251523,
+      "legacy_artifact_stem": "run12_warm_e2e",
+      "run": "run12",
+      "run_index": 12,
+      "service_session": "C",
+      "sha256": "6c987ae83c02e53fa922d974a159dbd34778211cef4925c6bab6af6883362cb9",
+      "structural_av_pass": true
+    },
+    {
+      "av_validation": "technical_report/evidence/minimax_h3_desktop/baseline_a6000/runs/a6000_fidelity_baseline_repeats_11_13_20260809T232023Z/run13_warm_e2e_av_validation.json",
+      "http_metrics": "technical_report/evidence/minimax_h3_desktop/baseline_a6000/runs/a6000_fidelity_baseline_repeats_11_13_20260809T232023Z/run13_warm_e2e_http_metrics.txt",
+      "kind": "warm",
+      "latency_s": 1776.925817,
+      "legacy_artifact_stem": "run13_warm_e2e",
+      "run": "run13",
+      "run_index": 13,
+      "service_session": "C",
+      "sha256": "6c987ae83c02e53fa922d974a159dbd34778211cef4925c6bab6af6883362cb9",
+      "structural_av_pass": true
+    }
+  ],
+  "schema": "argus-h3-a6000-fidelity-baseline-certification-v2",
+  "service_sessions": {
+    "classification": {
+      "A": {
+        "session_first": [
+          1
+        ],
+        "warm": [
+          2
+        ]
+      },
+      "B": {
+        "session_first": [
+          3
+        ],
+        "warm": [
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10
+        ]
+      },
+      "C": {
+        "session_first": [
+          11
+        ],
+        "warm": [
+          12,
+          13
+        ]
+      }
+    },
+    "count": 3
+  },
+  "session_first_requests": {
+    "cv_percent": 0.07525444684534618,
+    "max_s": 1780.975666,
+    "mean_s": 1779.437883,
+    "median_s": 1778.809073,
+    "min_s": 1778.52891,
+    "n": 3,
+    "p95_nearest_rank_s": 1780.975666,
+    "sample_std_s": 1.3391061358081886
+  },
+  "status": "certified_internal_same_physical_device_baseline",
+  "track": "fidelity_bf16_exact",
+  "warm_requests_primary_denominator": {
+    "cv_percent": 0.8371622556580874,
+    "max_s": 1813.755594,
+    "mean_s": 1790.7376617,
+    "median_s": 1792.2021025,
+    "min_s": 1772.948497,
+    "n": 10,
+    "p95_nearest_rank_s": 1813.755594,
+    "sample_std_s": 14.99137980160661
+  }
+}

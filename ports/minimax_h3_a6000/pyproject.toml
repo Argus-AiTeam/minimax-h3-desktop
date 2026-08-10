@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "minimax-h3-a6000"
+version = "0.0.0"
+description = "Default-off MiniMax-H3 A6000 exact-kernel overlay candidates"
+requires-python = ">=3.10"
+license = {text = "Apache-2.0"}
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]

@@ -1,0 +1,1099 @@
+{
+  "fetched_at_utc": "2026-08-09T11:32:25.374518+00:00",
+  "hf_model_id": "MiniMaxAI/MiniMax-H3",
+  "hf_revision_sha": "6818f6c32d12b210915e44ad56a4228c2608f160",
+  "hf_last_modified": "2026-08-09T10:05:11.000Z",
+  "top_level": {
+    ".gitattributes": {
+      "files": 1,
+      "bytes": 1645,
+      "lfs_files": 0,
+      "lfs_bytes": 0,
+      "gib": 2e-06,
+      "lfs_gib": 0.0
+    },
+    "FL2VA": {
+      "files": 81,
+      "bytes": 144051182625,
+      "lfs_files": 29,
+      "lfs_bytes": 144016376436,
+      "gib": 134.158118,
+      "lfs_gib": 134.125702
+    },
+    "LICENSE": {
+      "files": 1,
+      "bytes": 17604,
+      "lfs_files": 0,
+      "lfs_bytes": 0,
+      "gib": 1.6e-05,
+      "lfs_gib": 0.0
+    },
+    "README.md": {
+      "files": 1,
+      "bytes": 38479,
+      "lfs_files": 0,
+      "lfs_bytes": 0,
+      "gib": 3.6e-05,
+      "lfs_gib": 0.0
+    },
+    "Ref2VA": {
+      "files": 81,
+      "bytes": 144051182613,
+      "lfs_files": 29,
+      "lfs_bytes": 144016376436,
+      "gib": 134.158118,
+      "lfs_gib": 134.125702
+    },
+    "assets": {
+      "files": 17,
+      "bytes": 40536016,
+      "lfs_files": 17,
+      "lfs_bytes": 40536016,
+      "gib": 0.037752,
+      "lfs_gib": 0.037752
+    },
+    "audio_scheduler": {
+      "files": 1,
+      "bytes": 96,
+      "lfs_files": 0,
+      "lfs_bytes": 0,
+      "gib": 0.0,
+      "lfs_gib": 0.0
+    },
+    "audio_vae": {
+      "files": 2,
+      "bytes": 605431611,
+      "lfs_files": 1,
+      "lfs_bytes": 605429340,
+      "gib": 0.563852,
+      "lfs_gib": 0.56385
+    },
+    "docs": {
+      "files": 3,
+      "bytes": 43243,
+      "lfs_files": 0,
+      "lfs_bytes": 0,
+      "gib": 4e-05,
+      "lfs_gib": 0.0
+    },
+    "model_index.json": {
+      "files": 1,
+      "bytes": 2936,
+      "lfs_files": 0,
+      "lfs_bytes": 0,
+      "gib": 3e-06,
+      "lfs_gib": 0.0
+    },
+    "modular_model_index.json": {
+      "files": 1,
+      "bytes": 2935,
+      "lfs_files": 0,
+      "lfs_bytes": 0,
+      "gib": 3e-06,
+      "lfs_gib": 0.0
+    },
+    "processor": {
+      "files": 7,
+      "bytes": 11498352,
+      "lfs_files": 0,
+      "lfs_bytes": 0,
+      "gib": 0.010709,
+      "lfs_gib": 0.0
+    },
+    "scheduler": {
+      "files": 1,
+      "bytes": 97,
+      "lfs_files": 0,
+      "lfs_bytes": 0,
+      "gib": 0.0,
+      "lfs_gib": 0.0
+    },
+    "scripts": {
+      "files": 18,
+      "bytes": 35067,
+      "lfs_files": 0,
+      "lfs_bytes": 0,
+      "gib": 3.3e-05,
+      "lfs_gib": 0.0
+    },
+    "text_encoder": {
+      "files": 23,
+      "bytes": 66726510529,
+      "lfs_files": 14,
+      "lfs_bytes": 66714912872,
+      "gib": 62.143906,
+      "lfs_gib": 62.133104
+    },
+    "tokenizer": {
+      "files": 4,
+      "bytes": 11492078,
+      "lfs_files": 0,
+      "lfs_bytes": 0,
+      "gib": 0.010703,
+      "lfs_gib": 0.0
+    },
+    "transformer": {
+      "files": 16,
+      "bytes": 66280569250,
+      "lfs_files": 14,
+      "lfs_bytes": 66280504216,
+      "gib": 61.72859,
+      "lfs_gib": 61.72853
+    },
+    "transformer_ref": {
+      "files": 16,
+      "bytes": 66280569250,
+      "lfs_files": 14,
+      "lfs_bytes": 66280504216,
+      "gib": 61.72859,
+      "lfs_gib": 61.72853
+    },
+    "vae": {
+      "files": 5,
+      "bytes": 10415635127,
+      "lfs_files": 3,
+      "lfs_bytes": 10415558888,
+      "gib": 9.700316,
+      "lfs_gib": 9.700245
+    }
+  },
+  "components": {
+    ".gitattributes": {
+      "files": 1,
+      "bytes": 1645,
+      "lfs_files": 0,
+      "lfs_bytes": 0,
+      "gib": 2e-06,
+      "lfs_gib": 0.0
+    },
+    "FL2VA/audio_vae": {
+      "files": 13,
+      "bytes": 605461455,
+      "lfs_files": 1,
+      "lfs_bytes": 605429308,
+      "gib": 0.56388,
+      "lfs_gib": 0.56385
+    },
+    "FL2VA/model_index.json": {
+      "files": 1,
+      "bytes": 719,
+      "lfs_files": 0,
+      "lfs_bytes": 0,
+      "gib": 1e-06,
+      "lfs_gib": 0.0
+    },
+    "FL2VA/processor": {
+      "files": 7,
+      "bytes": 11498352,
+      "lfs_files": 0,
+      "lfs_bytes": 0,
+      "gib": 0.010709,
+      "lfs_gib": 0.0
+    },
+    "FL2VA/text_encoder": {
+      "files": 23,
+      "bytes": 66726510529,
+      "lfs_files": 14,
+      "lfs_bytes": 66714912872,
+      "gib": 62.143906,
+      "lfs_gib": 62.133104
+    },
+    "FL2VA/tokenizer": {
+      "files": 4,
+      "bytes": 11492078,
+      "lfs_files": 0,
+      "lfs_bytes": 0,
+      "gib": 0.010703,
+      "lfs_gib": 0.0
+    },
+    "FL2VA/transformer": {
+      "files": 15,
+      "bytes": 66280524863,
+      "lfs_files": 13,
+      "lfs_bytes": 66280485936,
+      "gib": 61.728549,
+      "lfs_gib": 61.728513
+    },
+    "FL2VA/video_vae": {
+      "files": 18,
+      "bytes": 10415694629,
+      "lfs_files": 1,
+      "lfs_bytes": 10415548320,
+      "gib": 9.700372,
+      "lfs_gib": 9.700235
+    },
+    "LICENSE": {
+      "files": 1,
+      "bytes": 17604,
+      "lfs_files": 0,
+      "lfs_bytes": 0,
+      "gib": 1.6e-05,
+      "lfs_gib": 0.0
+    },
+    "README.md": {
+      "files": 1,
+      "bytes": 38479,
+      "lfs_files": 0,
+      "lfs_bytes": 0,
+      "gib": 3.6e-05,
+      "lfs_gib": 0.0
+    },
+    "Ref2VA/audio_vae": {
+      "files": 13,
+      "bytes": 605461455,
+      "lfs_files": 1,
+      "lfs_bytes": 605429308,
+      "gib": 0.56388,
+      "lfs_gib": 0.56385
+    },
+    "Ref2VA/model_index.json": {
+      "files": 1,
+      "bytes": 707,
+      "lfs_files": 0,
+      "lfs_bytes": 0,
+      "gib": 1e-06,
+      "lfs_gib": 0.0
+    },
+    "Ref2VA/processor": {
+      "files": 7,
+      "bytes": 11498352,
+      "lfs_files": 0,
+      "lfs_bytes": 0,
+      "gib": 0.010709,
+      "lfs_gib": 0.0
+    },
+    "Ref2VA/text_encoder": {
+      "files": 23,
+      "bytes": 66726510529,
+      "lfs_files": 14,
+      "lfs_bytes": 66714912872,
+      "gib": 62.143906,
+      "lfs_gib": 62.133104
+    },
+    "Ref2VA/tokenizer": {
+      "files": 4,
+      "bytes": 11492078,
+      "lfs_files": 0,
+      "lfs_bytes": 0,
+      "gib": 0.010703,
+      "lfs_gib": 0.0
+    },
+    "Ref2VA/transformer": {
+      "files": 15,
+      "bytes": 66280524863,
+      "lfs_files": 13,
+      "lfs_bytes": 66280485936,
+      "gib": 61.728549,
+      "lfs_gib": 61.728513
+    },
+    "Ref2VA/video_vae": {
+      "files": 18,
+      "bytes": 10415694629,
+      "lfs_files": 1,
+      "lfs_bytes": 10415548320,
+      "gib": 9.700372,
+      "lfs_gib": 9.700235
+    },
+    "assets/fl2va.mp4": {
+      "files": 1,
+      "bytes": 1064614,
+      "lfs_files": 1,
+      "lfs_bytes": 1064614,
+      "gib": 0.000991,
+      "lfs_gib": 0.000991
+    },
+    "assets/full-arch.png": {
+      "files": 1,
+      "bytes": 420645,
+      "lfs_files": 1,
+      "lfs_bytes": 420645,
+      "gib": 0.000392,
+      "lfs_gib": 0.000392
+    },
+    "assets/h3_direct_2k.mp4": {
+      "files": 1,
+      "bytes": 8946498,
+      "lfs_files": 1,
+      "lfs_bytes": 8946498,
+      "gib": 0.008332,
+      "lfs_gib": 0.008332
+    },
+    "assets/h3_direct_768p.mp4": {
+      "files": 1,
+      "bytes": 2385173,
+      "lfs_files": 1,
+      "lfs_bytes": 2385173,
+      "gib": 0.002221,
+      "lfs_gib": 0.002221
+    },
+    "assets/i2va.mp4": {
+      "files": 1,
+      "bytes": 1064614,
+      "lfs_files": 1,
+      "lfs_bytes": 1064614,
+      "gib": 0.000991,
+      "lfs_gib": 0.000991
+    },
+    "assets/i2va_2k.mp4": {
+      "files": 1,
+      "bytes": 3334690,
+      "lfs_files": 1,
+      "lfs_bytes": 3334690,
+      "gib": 0.003106,
+      "lfs_gib": 0.003106
+    },
+    "assets/i2va_direct_2k.mp4": {
+      "files": 1,
+      "bytes": 4569735,
+      "lfs_files": 1,
+      "lfs_bytes": 4569735,
+      "gib": 0.004256,
+      "lfs_gib": 0.004256
+    },
+    "assets/i2va_direct_768p.mp4": {
+      "files": 1,
+      "bytes": 1448158,
+      "lfs_files": 1,
+      "lfs_bytes": 1448158,
+      "gib": 0.001349,
+      "lfs_gib": 0.001349
+    },
+    "assets/minimax-h3.png": {
+      "files": 1,
+      "bytes": 705139,
+      "lfs_files": 1,
+      "lfs_bytes": 705139,
+      "gib": 0.000657,
+      "lfs_gib": 0.000657
+    },
+    "assets/overview.png": {
+      "files": 1,
+      "bytes": 212889,
+      "lfs_files": 1,
+      "lfs_bytes": 212889,
+      "gib": 0.000198,
+      "lfs_gib": 0.000198
+    },
+    "assets/r2va.mp4": {
+      "files": 1,
+      "bytes": 850734,
+      "lfs_files": 1,
+      "lfs_bytes": 850734,
+      "gib": 0.000792,
+      "lfs_gib": 0.000792
+    },
+    "assets/r2va_2k.mp4": {
+      "files": 1,
+      "bytes": 2788329,
+      "lfs_files": 1,
+      "lfs_bytes": 2788329,
+      "gib": 0.002597,
+      "lfs_gib": 0.002597
+    },
+    "assets/r2va_direct_2k.mp4": {
+      "files": 1,
+      "bytes": 3134612,
+      "lfs_files": 1,
+      "lfs_bytes": 3134612,
+      "gib": 0.002919,
+      "lfs_gib": 0.002919
+    },
+    "assets/r2va_direct_768p.mp4": {
+      "files": 1,
+      "bytes": 1121153,
+      "lfs_files": 1,
+      "lfs_bytes": 1121153,
+      "gib": 0.001044,
+      "lfs_gib": 0.001044
+    },
+    "assets/ref2va.mp4": {
+      "files": 1,
+      "bytes": 850734,
+      "lfs_files": 1,
+      "lfs_bytes": 850734,
+      "gib": 0.000792,
+      "lfs_gib": 0.000792
+    },
+    "assets/t2va.mp4": {
+      "files": 1,
+      "bytes": 1637373,
+      "lfs_files": 1,
+      "lfs_bytes": 1637373,
+      "gib": 0.001525,
+      "lfs_gib": 0.001525
+    },
+    "assets/t2va_2k.mp4": {
+      "files": 1,
+      "bytes": 6000926,
+      "lfs_files": 1,
+      "lfs_bytes": 6000926,
+      "gib": 0.005589,
+      "lfs_gib": 0.005589
+    },
+    "audio_scheduler/scheduler_config.json": {
+      "files": 1,
+      "bytes": 96,
+      "lfs_files": 0,
+      "lfs_bytes": 0,
+      "gib": 0.0,
+      "lfs_gib": 0.0
+    },
+    "audio_vae/config.json": {
+      "files": 1,
+      "bytes": 2271,
+      "lfs_files": 0,
+      "lfs_bytes": 0,
+      "gib": 2e-06,
+      "lfs_gib": 0.0
+    },
+    "audio_vae/diffusion_pytorch_model.safetensors": {
+      "files": 1,
+      "bytes": 605429340,
+      "lfs_files": 1,
+      "lfs_bytes": 605429340,
+      "gib": 0.56385,
+      "lfs_gib": 0.56385
+    },
+    "docs/QA-about-License.md": {
+      "files": 1,
+      "bytes": 3917,
+      "lfs_files": 0,
+      "lfs_bytes": 0,
+      "gib": 4e-06,
+      "lfs_gib": 0.0
+    },
+    "docs/VIDEO_PROMPT_WRITING_GUIDE_base_en.md": {
+      "files": 1,
+      "bytes": 15773,
+      "lfs_files": 0,
+      "lfs_bytes": 0,
+      "gib": 1.5e-05,
+      "lfs_gib": 0.0
+    },
+    "docs/VIDEO_PROMPT_WRITING_GUIDE_ref_en.md": {
+      "files": 1,
+      "bytes": 23553,
+      "lfs_files": 0,
+      "lfs_bytes": 0,
+      "gib": 2.2e-05,
+      "lfs_gib": 0.0
+    },
+    "model_index.json": {
+      "files": 1,
+      "bytes": 2936,
+      "lfs_files": 0,
+      "lfs_bytes": 0,
+      "gib": 3e-06,
+      "lfs_gib": 0.0
+    },
+    "modular_model_index.json": {
+      "files": 1,
+      "bytes": 2935,
+      "lfs_files": 0,
+      "lfs_bytes": 0,
+      "gib": 3e-06,
+      "lfs_gib": 0.0
+    },
+    "processor/chat_template.json": {
+      "files": 1,
+      "bytes": 5499,
+      "lfs_files": 0,
+      "lfs_bytes": 0,
+      "gib": 5e-06,
+      "lfs_gib": 0.0
+    },
+    "processor/merges.txt": {
+      "files": 1,
+      "bytes": 1671839,
+      "lfs_files": 0,
+      "lfs_bytes": 0,
+      "gib": 0.001557,
+      "lfs_gib": 0.0
+    },
+    "processor/preprocessor_config.json": {
+      "files": 1,
+      "bytes": 390,
+      "lfs_files": 0,
+      "lfs_bytes": 0,
+      "gib": 0.0,
+      "lfs_gib": 0.0
+    },
+    "processor/tokenizer.json": {
+      "files": 1,
+      "bytes": 7032403,
+      "lfs_files": 0,
+      "lfs_bytes": 0,
+      "gib": 0.006549,
+      "lfs_gib": 0.0
+    },
+    "processor/tokenizer_config.json": {
+      "files": 1,
+      "bytes": 11003,
+      "lfs_files": 0,
+      "lfs_bytes": 0,
+      "gib": 1e-05,
+      "lfs_gib": 0.0
+    },
+    "processor/video_preprocessor_config.json": {
+      "files": 1,
+      "bytes": 385,
+      "lfs_files": 0,
+      "lfs_bytes": 0,
+      "gib": 0.0,
+      "lfs_gib": 0.0
+    },
+    "processor/vocab.json": {
+      "files": 1,
+      "bytes": 2776833,
+      "lfs_files": 0,
+      "lfs_bytes": 0,
+      "gib": 0.002586,
+      "lfs_gib": 0.0
+    },
+    "scheduler/scheduler_config.json": {
+      "files": 1,
+      "bytes": 97,
+      "lfs_files": 0,
+      "lfs_bytes": 0,
+      "gib": 0.0,
+      "lfs_gib": 0.0
+    },
+    "scripts/readme": {
+      "files": 18,
+      "bytes": 35067,
+      "lfs_files": 0,
+      "lfs_bytes": 0,
+      "gib": 3.3e-05,
+      "lfs_gib": 0.0
+    },
+    "text_encoder/chat_template.json": {
+      "files": 1,
+      "bytes": 5499,
+      "lfs_files": 0,
+      "lfs_bytes": 0,
+      "gib": 5e-06,
+      "lfs_gib": 0.0
+    },
+    "text_encoder/config.json": {
+      "files": 1,
+      "bytes": 1474,
+      "lfs_files": 0,
+      "lfs_bytes": 0,
+      "gib": 1e-06,
+      "lfs_gib": 0.0
+    },
+    "text_encoder/merges.txt": {
+      "files": 1,
+      "bytes": 1671839,
+      "lfs_files": 0,
+      "lfs_bytes": 0,
+      "gib": 0.001557,
+      "lfs_gib": 0.0
+    },
+    "text_encoder/model-00001-of-00014.safetensors": {
+      "files": 1,
+      "bytes": 4932328944,
+      "lfs_files": 1,
+      "lfs_bytes": 4932328944,
+      "gib": 4.593589,
+      "lfs_gib": 4.593589
+    },
+    "text_encoder/model-00002-of-00014.safetensors": {
+      "files": 1,
+      "bytes": 4875990528,
+      "lfs_files": 1,
+      "lfs_bytes": 4875990528,
+      "gib": 4.54112,
+      "lfs_gib": 4.54112
+    },
+    "text_encoder/model-00003-of-00014.safetensors": {
+      "files": 1,
+      "bytes": 4875990552,
+      "lfs_files": 1,
+      "lfs_bytes": 4875990552,
+      "gib": 4.54112,
+      "lfs_gib": 4.54112
+    },
+    "text_encoder/model-00004-of-00014.safetensors": {
+      "files": 1,
+      "bytes": 4875990584,
+      "lfs_files": 1,
+      "lfs_bytes": 4875990584,
+      "gib": 4.54112,
+      "lfs_gib": 4.54112
+    },
+    "text_encoder/model-00005-of-00014.safetensors": {
+      "files": 1,
+      "bytes": 4875990584,
+      "lfs_files": 1,
+      "lfs_bytes": 4875990584,
+      "gib": 4.54112,
+      "lfs_gib": 4.54112
+    },
+    "text_encoder/model-00006-of-00014.safetensors": {
+      "files": 1,
+      "bytes": 4875990584,
+      "lfs_files": 1,
+      "lfs_bytes": 4875990584,
+      "gib": 4.54112,
+      "lfs_gib": 4.54112
+    },
+    "text_encoder/model-00007-of-00014.safetensors": {
+      "files": 1,
+      "bytes": 4875990584,
+      "lfs_files": 1,
+      "lfs_bytes": 4875990584,
+      "gib": 4.54112,
+      "lfs_gib": 4.54112
+    },
+    "text_encoder/model-00008-of-00014.safetensors": {
+      "files": 1,
+      "bytes": 4875990584,
+      "lfs_files": 1,
+      "lfs_bytes": 4875990584,
+      "gib": 4.54112,
+      "lfs_gib": 4.54112
+    },
+    "text_encoder/model-00009-of-00014.safetensors": {
+      "files": 1,
+      "bytes": 4875990584,
+      "lfs_files": 1,
+      "lfs_bytes": 4875990584,
+      "gib": 4.54112,
+      "lfs_gib": 4.54112
+    },
+    "text_encoder/model-00010-of-00014.safetensors": {
+      "files": 1,
+      "bytes": 4875990584,
+      "lfs_files": 1,
+      "lfs_bytes": 4875990584,
+      "gib": 4.54112,
+      "lfs_gib": 4.54112
+    },
+    "text_encoder/model-00011-of-00014.safetensors": {
+      "files": 1,
+      "bytes": 4875990584,
+      "lfs_files": 1,
+      "lfs_bytes": 4875990584,
+      "gib": 4.54112,
+      "lfs_gib": 4.54112
+    },
+    "text_encoder/model-00012-of-00014.safetensors": {
+      "files": 1,
+      "bytes": 4875990584,
+      "lfs_files": 1,
+      "lfs_bytes": 4875990584,
+      "gib": 4.54112,
+      "lfs_gib": 4.54112
+    },
+    "text_encoder/model-00013-of-00014.safetensors": {
+      "files": 1,
+      "bytes": 4875990584,
+      "lfs_files": 1,
+      "lfs_bytes": 4875990584,
+      "gib": 4.54112,
+      "lfs_gib": 4.54112
+    },
+    "text_encoder/model-00014-of-00014.safetensors": {
+      "files": 1,
+      "bytes": 3270697008,
+      "lfs_files": 1,
+      "lfs_bytes": 3270697008,
+      "gib": 3.046074,
+      "lfs_gib": 3.046074
+    },
+    "text_encoder/model.safetensors.index.json": {
+      "files": 1,
+      "bytes": 97831,
+      "lfs_files": 0,
+      "lfs_bytes": 0,
+      "gib": 9.1e-05,
+      "lfs_gib": 0.0
+    },
+    "text_encoder/preprocessor_config.json": {
+      "files": 1,
+      "bytes": 390,
+      "lfs_files": 0,
+      "lfs_bytes": 0,
+      "gib": 0.0,
+      "lfs_gib": 0.0
+    },
+    "text_encoder/tokenizer.json": {
+      "files": 1,
+      "bytes": 7032403,
+      "lfs_files": 0,
+      "lfs_bytes": 0,
+      "gib": 0.006549,
+      "lfs_gib": 0.0
+    },
+    "text_encoder/tokenizer_config.json": {
+      "files": 1,
+      "bytes": 11003,
+      "lfs_files": 0,
+      "lfs_bytes": 0,
+      "gib": 1e-05,
+      "lfs_gib": 0.0
+    },
+    "text_encoder/video_preprocessor_config.json": {
+      "files": 1,
+      "bytes": 385,
+      "lfs_files": 0,
+      "lfs_bytes": 0,
+      "gib": 0.0,
+      "lfs_gib": 0.0
+    },
+    "text_encoder/vocab.json": {
+      "files": 1,
+      "bytes": 2776833,
+      "lfs_files": 0,
+      "lfs_bytes": 0,
+      "gib": 0.002586,
+      "lfs_gib": 0.0
+    },
+    "tokenizer/merges.txt": {
+      "files": 1,
+      "bytes": 1671839,
+      "lfs_files": 0,
+      "lfs_bytes": 0,
+      "gib": 0.001557,
+      "lfs_gib": 0.0
+    },
+    "tokenizer/tokenizer.json": {
+      "files": 1,
+      "bytes": 7032403,
+      "lfs_files": 0,
+      "lfs_bytes": 0,
+      "gib": 0.006549,
+      "lfs_gib": 0.0
+    },
+    "tokenizer/tokenizer_config.json": {
+      "files": 1,
+      "bytes": 11003,
+      "lfs_files": 0,
+      "lfs_bytes": 0,
+      "gib": 1e-05,
+      "lfs_gib": 0.0
+    },
+    "tokenizer/vocab.json": {
+      "files": 1,
+      "bytes": 2776833,
+      "lfs_files": 0,
+      "lfs_bytes": 0,
+      "gib": 0.002586,
+      "lfs_gib": 0.0
+    },
+    "transformer/config.json": {
+      "files": 1,
+      "bytes": 546,
+      "lfs_files": 0,
+      "lfs_bytes": 0,
+      "gib": 1e-06,
+      "lfs_gib": 0.0
+    },
+    "transformer/diffusion_pytorch_model-00001-of-00014.safetensors": {
+      "files": 1,
+      "bytes": 4825958704,
+      "lfs_files": 1,
+      "lfs_bytes": 4825958704,
+      "gib": 4.494524,
+      "lfs_gib": 4.494524
+    },
+    "transformer/diffusion_pytorch_model-00002-of-00014.safetensors": {
+      "files": 1,
+      "bytes": 4702158032,
+      "lfs_files": 1,
+      "lfs_bytes": 4702158032,
+      "gib": 4.379226,
+      "lfs_gib": 4.379226
+    },
+    "transformer/diffusion_pytorch_model-00003-of-00014.safetensors": {
+      "files": 1,
+      "bytes": 4933368192,
+      "lfs_files": 1,
+      "lfs_bytes": 4933368192,
+      "gib": 4.594557,
+      "lfs_gib": 4.594557
+    },
+    "transformer/diffusion_pytorch_model-00004-of-00014.safetensors": {
+      "files": 1,
+      "bytes": 4567069608,
+      "lfs_files": 1,
+      "lfs_bytes": 4567069608,
+      "gib": 4.253415,
+      "lfs_gib": 4.253415
+    },
+    "transformer/diffusion_pytorch_model-00005-of-00014.safetensors": {
+      "files": 1,
+      "bytes": 4702158080,
+      "lfs_files": 1,
+      "lfs_bytes": 4702158080,
+      "gib": 4.379226,
+      "lfs_gib": 4.379226
+    },
+    "transformer/diffusion_pytorch_model-00006-of-00014.safetensors": {
+      "files": 1,
+      "bytes": 4933368232,
+      "lfs_files": 1,
+      "lfs_bytes": 4933368232,
+      "gib": 4.594557,
+      "lfs_gib": 4.594557
+    },
+    "transformer/diffusion_pytorch_model-00007-of-00014.safetensors": {
+      "files": 1,
+      "bytes": 4567069608,
+      "lfs_files": 1,
+      "lfs_bytes": 4567069608,
+      "gib": 4.253415,
+      "lfs_gib": 4.253415
+    },
+    "transformer/diffusion_pytorch_model-00008-of-00014.safetensors": {
+      "files": 1,
+      "bytes": 4702158080,
+      "lfs_files": 1,
+      "lfs_bytes": 4702158080,
+      "gib": 4.379226,
+      "lfs_gib": 4.379226
+    },
+    "transformer/diffusion_pytorch_model-00009-of-00014.safetensors": {
+      "files": 1,
+      "bytes": 4933368232,
+      "lfs_files": 1,
+      "lfs_bytes": 4933368232,
+      "gib": 4.594557,
+      "lfs_gib": 4.594557
+    },
+    "transformer/diffusion_pytorch_model-00010-of-00014.safetensors": {
+      "files": 1,
+      "bytes": 4567069608,
+      "lfs_files": 1,
+      "lfs_bytes": 4567069608,
+      "gib": 4.253415,
+      "lfs_gib": 4.253415
+    },
+    "transformer/diffusion_pytorch_model-00011-of-00014.safetensors": {
+      "files": 1,
+      "bytes": 4702158080,
+      "lfs_files": 1,
+      "lfs_bytes": 4702158080,
+      "gib": 4.379226,
+      "lfs_gib": 4.379226
+    },
+    "transformer/diffusion_pytorch_model-00012-of-00014.safetensors": {
+      "files": 1,
+      "bytes": 4933368232,
+      "lfs_files": 1,
+      "lfs_bytes": 4933368232,
+      "gib": 4.594557,
+      "lfs_gib": 4.594557
+    },
+    "transformer/diffusion_pytorch_model-00013-of-00014.safetensors": {
+      "files": 1,
+      "bytes": 4567069608,
+      "lfs_files": 1,
+      "lfs_bytes": 4567069608,
+      "gib": 4.253415,
+      "lfs_gib": 4.253415
+    },
+    "transformer/diffusion_pytorch_model-00014-of-00014.safetensors": {
+      "files": 1,
+      "bytes": 4644161920,
+      "lfs_files": 1,
+      "lfs_bytes": 4644161920,
+      "gib": 4.325213,
+      "lfs_gib": 4.325213
+    },
+    "transformer/diffusion_pytorch_model.safetensors.index.json": {
+      "files": 1,
+      "bytes": 64488,
+      "lfs_files": 0,
+      "lfs_bytes": 0,
+      "gib": 6e-05,
+      "lfs_gib": 0.0
+    },
+    "transformer_ref/config.json": {
+      "files": 1,
+      "bytes": 546,
+      "lfs_files": 0,
+      "lfs_bytes": 0,
+      "gib": 1e-06,
+      "lfs_gib": 0.0
+    },
+    "transformer_ref/diffusion_pytorch_model-00001-of-00014.safetensors": {
+      "files": 1,
+      "bytes": 4825958704,
+      "lfs_files": 1,
+      "lfs_bytes": 4825958704,
+      "gib": 4.494524,
+      "lfs_gib": 4.494524
+    },
+    "transformer_ref/diffusion_pytorch_model-00002-of-00014.safetensors": {
+      "files": 1,
+      "bytes": 4702158032,
+      "lfs_files": 1,
+      "lfs_bytes": 4702158032,
+      "gib": 4.379226,
+      "lfs_gib": 4.379226
+    },
+    "transformer_ref/diffusion_pytorch_model-00003-of-00014.safetensors": {
+      "files": 1,
+      "bytes": 4933368192,
+      "lfs_files": 1,
+      "lfs_bytes": 4933368192,
+      "gib": 4.594557,
+      "lfs_gib": 4.594557
+    },
+    "transformer_ref/diffusion_pytorch_model-00004-of-00014.safetensors": {
+      "files": 1,
+      "bytes": 4567069608,
+      "lfs_files": 1,
+      "lfs_bytes": 4567069608,
+      "gib": 4.253415,
+      "lfs_gib": 4.253415
+    },
+    "transformer_ref/diffusion_pytorch_model-00005-of-00014.safetensors": {
+      "files": 1,
+      "bytes": 4702158080,
+      "lfs_files": 1,
+      "lfs_bytes": 4702158080,
+      "gib": 4.379226,
+      "lfs_gib": 4.379226
+    },
+    "transformer_ref/diffusion_pytorch_model-00006-of-00014.safetensors": {
+      "files": 1,
+      "bytes": 4933368232,
+      "lfs_files": 1,
+      "lfs_bytes": 4933368232,
+      "gib": 4.594557,
+      "lfs_gib": 4.594557
+    },
+    "transformer_ref/diffusion_pytorch_model-00007-of-00014.safetensors": {
+      "files": 1,
+      "bytes": 4567069608,
+      "lfs_files": 1,
+      "lfs_bytes": 4567069608,
+      "gib": 4.253415,
+      "lfs_gib": 4.253415
+    },
+    "transformer_ref/diffusion_pytorch_model-00008-of-00014.safetensors": {
+      "files": 1,
+      "bytes": 4702158080,
+      "lfs_files": 1,
+      "lfs_bytes": 4702158080,
+      "gib": 4.379226,
+      "lfs_gib": 4.379226
+    },
+    "transformer_ref/diffusion_pytorch_model-00009-of-00014.safetensors": {
+      "files": 1,
+      "bytes": 4933368232,
+      "lfs_files": 1,
+      "lfs_bytes": 4933368232,
+      "gib": 4.594557,
+      "lfs_gib": 4.594557
+    },
+    "transformer_ref/diffusion_pytorch_model-00010-of-00014.safetensors": {
+      "files": 1,
+      "bytes": 4567069608,
+      "lfs_files": 1,
+      "lfs_bytes": 4567069608,
+      "gib": 4.253415,
+      "lfs_gib": 4.253415
+    },
+    "transformer_ref/diffusion_pytorch_model-00011-of-00014.safetensors": {
+      "files": 1,
+      "bytes": 4702158080,
+      "lfs_files": 1,
+      "lfs_bytes": 4702158080,
+      "gib": 4.379226,
+      "lfs_gib": 4.379226
+    },
+    "transformer_ref/diffusion_pytorch_model-00012-of-00014.safetensors": {
+      "files": 1,
+      "bytes": 4933368232,
+      "lfs_files": 1,
+      "lfs_bytes": 4933368232,
+      "gib": 4.594557,
+      "lfs_gib": 4.594557
+    },
+    "transformer_ref/diffusion_pytorch_model-00013-of-00014.safetensors": {
+      "files": 1,
+      "bytes": 4567069608,
+      "lfs_files": 1,
+      "lfs_bytes": 4567069608,
+      "gib": 4.253415,
+      "lfs_gib": 4.253415
+    },
+    "transformer_ref/diffusion_pytorch_model-00014-of-00014.safetensors": {
+      "files": 1,
+      "bytes": 4644161920,
+      "lfs_files": 1,
+      "lfs_bytes": 4644161920,
+      "gib": 4.325213,
+      "lfs_gib": 4.325213
+    },
+    "transformer_ref/diffusion_pytorch_model.safetensors.index.json": {
+      "files": 1,
+      "bytes": 64488,
+      "lfs_files": 0,
+      "lfs_bytes": 0,
+      "gib": 6e-05,
+      "lfs_gib": 0.0
+    },
+    "vae/config.json": {
+      "files": 1,
+      "bytes": 2011,
+      "lfs_files": 0,
+      "lfs_bytes": 0,
+      "gib": 2e-06,
+      "lfs_gib": 0.0
+    },
+    "vae/diffusion_pytorch_model-00001-of-00003.safetensors": {
+      "files": 1,
+      "bytes": 5061033024,
+      "lfs_files": 1,
+      "lfs_bytes": 5061033024,
+      "gib": 4.713454,
+      "lfs_gib": 4.713454
+    },
+    "vae/diffusion_pytorch_model-00002-of-00003.safetensors": {
+      "files": 1,
+      "bytes": 4955986528,
+      "lfs_files": 1,
+      "lfs_bytes": 4955986528,
+      "gib": 4.615622,
+      "lfs_gib": 4.615622
+    },
+    "vae/diffusion_pytorch_model-00003-of-00003.safetensors": {
+      "files": 1,
+      "bytes": 398539336,
+      "lfs_files": 1,
+      "lfs_bytes": 398539336,
+      "gib": 0.371169,
+      "lfs_gib": 0.371169
+    },
+    "vae/diffusion_pytorch_model.safetensors.index.json": {
+      "files": 1,
+      "bytes": 74228,
+      "lfs_files": 0,
+      "lfs_bytes": 0,
+      "gib": 6.9e-05,
+      "lfs_gib": 0.0
+    }
+  },
+  "total_files": 280,
+  "total_bytes": 498474749553,
+  "total_gib": 464.240787,
+  "files_over_5gib": [
+    {
+      "rfilename": "FL2VA/video_vae/source/model.safetensors",
+      "size": 10415548320,
+      "size_gib": 9.7,
+      "lfs_sha256": "5f0c2e161d895a9fee7645ca32d4a7e3a22b90cacfcbeba62ec999cdbbefe0d3"
+    },
+    {
+      "rfilename": "Ref2VA/video_vae/source/model.safetensors",
+      "size": 10415548320,
+      "size_gib": 9.7,
+      "lfs_sha256": "5f0c2e161d895a9fee7645ca32d4a7e3a22b90cacfcbeba62ec999cdbbefe0d3"
+    }
+  ]
+}
