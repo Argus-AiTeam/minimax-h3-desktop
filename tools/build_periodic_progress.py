@@ -27,7 +27,7 @@ def main() -> int:
     ds=e/'dlo_autotune/detached_continuation'; did=text(ds/'candidate50_run_id.txt',''); d=load(e/'dlo_autotune/runs'/did/'candidate50_summary.json') if did else {}
     ss=e/'sol_engine_port/sol_attn_gpu2_supervisor'; sid=text(ss/'latest_run_id',''); sr=e/'sol_engine_port'/sid if sid else Path('/'); sol=load(sr/'sol_attn_diagnostic_status.json') if sid else {}; solstatus=text(ss/'status.txt')
     now=datetime.now(timezone.utc).isoformat(timespec='seconds')
-    lines=['# MiniMax-H3 A6000 验证进度','',f'> 更新时间：{now}  ', '> 仅汇总已落盘证据；实验中或缺失结果明确标记，不估算。','',
+    lines=['# MiniMax-H3 A6000 验证进度','',f'> 更新时间：{now}', '> 仅汇总已落盘证据；实验中或缺失结果明确标记，不估算。','',
     '## 固定工作负载','', '- 单张RTX A6000 48GB；完整FL2VA；1344×768；5.166667秒；124帧；24FPS；32kHz立体声音频。','',
     '## 已认证性能','', '| 路径 | Steps | N | Median(s) | Speedup |','|---|---:|---:|---:|---:|',
     f"| BF16 fidelity | 50 | {warm.get('n','待定')} | {f(warm.get('median_s'))} | 1.000× |",

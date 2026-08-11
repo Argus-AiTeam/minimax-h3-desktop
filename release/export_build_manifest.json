@@ -51,8 +51,8 @@
     },
     {
       "path": "ports/minimax_h3_a6000/README.md",
-      "sha256": "2eca9b62a66a5048d7f56002fa9071233d53c01cb702a639672b0e44e4d599c9",
-      "size_bytes": 10535,
+      "sha256": "2b7d28d167c3f3544db939c1b66a21e8e6b3ffd7b1a8481239b654071e31ab9d",
+      "size_bytes": 10947,
       "source": "ports/minimax_h3_a6000/README.md"
     },
     {
@@ -393,8 +393,8 @@
     },
     {
       "path": "technical_report/progress_update.md",
-      "sha256": "370dde6ba84dbeb025896f53a146571dcd7c985dbc8142d0ade17e75be67536b",
-      "size_bytes": 1376,
+      "sha256": "c27649ce0730a3b98102a8d722b5b0aea8c8bb2337a2fbe3007d71726e8724a3",
+      "size_bytes": 1374,
       "source": "technical_report/progress_update.md"
     },
     {
@@ -429,8 +429,8 @@
     },
     {
       "path": "tools/build_periodic_progress.py",
-      "sha256": "049dfd89bddc40c91b27b76591929bdd6a787671979e065eb8b9ed2ae99a580f",
-      "size_bytes": 3830,
+      "sha256": "6135b311c695505730bd10fe173b729eb73cda99a5ac86f9684dbccb55dbc1a4",
+      "size_bytes": 3828,
       "source": "tools/build_periodic_progress.py"
     },
     {
