@@ -12,6 +12,8 @@ candidate in :mod:`minimax_h3_a6000.sol_attn_triton_sm86`:
 * cache stays disabled by contract;
 * unsupported inputs strictly fall back to dense reference attention unless the
   caller opts into ``strict``;
+* non-contiguous H3 Q/K/V decline by default; r7 can only test past that gate
+  through a separate diagnostic materialization env switch with copy telemetry;
 * importing this module never imports Triton or probes CUDA.
 
 The Triton candidate is loaded only after the env/policy, tensor, metadata, and
@@ -22,6 +24,7 @@ from __future__ import annotations
 
 import functools
 import os
+import time
 from dataclasses import dataclass, field
 from typing import Any, Callable, Mapping
 
@@ -225,6 +228,8 @@ class SolAttnPolicy:
     prefix_query_dense: bool = True
     cache_enabled: bool = False
     strict: bool = False
+    diagnostic_materialize_noncontiguous: bool = False
+    diagnostic_materialize_max_bytes: int = 67_108_864
 
     @classmethod
     def from_env(cls, env: Mapping[str, str] | None = None) -> "SolAttnPolicy":
@@ -237,6 +242,14 @@ class SolAttnPolicy:
             ),
             cache_enabled=env_enabled("MINIMAX_H3_A6000_SOL_ATTN_CACHE", env),
             strict=env_enabled("MINIMAX_H3_A6000_SOL_ATTN_STRICT", env),
+            diagnostic_materialize_noncontiguous=env_enabled(
+                "MINIMAX_H3_A6000_SOL_ATTN_DIAGNOSTIC_MATERIALIZE", env
+            ),
+            diagnostic_materialize_max_bytes=_read_env_int(
+                env,
+                "MINIMAX_H3_A6000_SOL_ATTN_MATERIALIZE_MAX_BYTES",
+                default=67_108_864,
+            ),
         )
 
 
@@ -253,6 +266,11 @@ class SolAttnTelemetry:
     fallback_reasons: dict[str, int] = field(default_factory=dict)
     sink_ranges: list[tuple[int, int]] = field(default_factory=list)
     density_samples: list[dict[str, Any]] = field(default_factory=list)
+    layout_samples: list[dict[str, Any]] = field(default_factory=list)
+    materialize_copy_count: int = 0
+    materialize_copy_bytes: int = 0
+    materialize_copy_by_tensor: dict[str, int] = field(default_factory=dict)
+    materialize_latency_ms: float = 0.0
 
     def record_decline(self, reason: str) -> None:
         self.dense_calls += 1
@@ -272,6 +290,46 @@ class SolAttnTelemetry:
         self.sparse_calls += 1
         if prefix_query_dense:
             self.prefix_query_dense_calls += 1
+
+    def record_layout(self, *, stage: str, query: torch.Tensor, key: torch.Tensor, value: torch.Tensor) -> None:
+        if len(self.layout_samples) >= 32:
+            return
+        self.layout_samples.append(
+            {
+                "stage": str(stage),
+                "tensors": [
+                    _tensor_layout("query", query),
+                    _tensor_layout("key", key),
+                    _tensor_layout("value", value),
+                ],
+            }
+        )
+
+    def record_materialize(self, *, by_tensor: dict[str, int], latency_ms: float) -> None:
+        self.materialize_copy_count += len(by_tensor)
+        self.materialize_copy_bytes += sum(int(v) for v in by_tensor.values())
+        self.materialize_latency_ms += float(latency_ms)
+        for name, value in by_tensor.items():
+            self.materialize_copy_by_tensor[name] = self.materialize_copy_by_tensor.get(name, 0) + int(value)
+
+
+def _read_env_int(env: Mapping[str, str], name: str, *, default: int) -> int:
+    try:
+        return int(str(env.get(name, DEFAULT_ENV_SWITCHES.get(name, str(default)))).strip())
+    except (TypeError, ValueError):
+        return int(default)
+
+
+def _tensor_layout(name: str, tensor: torch.Tensor) -> dict[str, Any]:
+    return {
+        "name": name,
+        "shape": [int(x) for x in tensor.shape],
+        "stride": [int(x) for x in tensor.stride()],
+        "storage_offset": int(tensor.storage_offset()),
+        "dtype": str(tensor.dtype).replace("torch.", ""),
+        "device_type": tensor.device.type,
+        "is_contiguous": bool(tensor.is_contiguous()),
+    }
 
 
 def _ceil_div(value: int, divisor: int) -> int:
@@ -361,10 +419,10 @@ def decline_reason(
         return "invalid_valid_length"
     if query.dtype != torch.bfloat16 or key.dtype != query.dtype or value.dtype != query.dtype:
         return "unsupported_dtype"
-    if query.device.type != "cuda" or key.device != query.device or value.device != query.device:
-        return "unsupported_device"
     if not (query.is_contiguous() and key.is_contiguous() and value.is_contiguous()):
         return "unsupported_contiguity"
+    if query.device.type != "cuda" or key.device != query.device or value.device != query.device:
+        return "unsupported_device"
     if not sm86_capability_guard(device_capability):
         return "unsupported_or_unprobed_sm"
     return None
@@ -424,6 +482,56 @@ def dense_attention_packed_reference(
     return output
 
 
+def _copy_bytes_for(tensor: torch.Tensor) -> int | None:
+    numel = int(tensor.numel())
+    element_size = int(tensor.element_size())
+    if numel < 0 or element_size <= 0:
+        return None
+    if numel > ((1 << 63) - 1) // element_size:
+        return None
+    return numel * element_size
+
+
+def _diagnostic_materialize_qkv(
+    query: torch.Tensor,
+    key: torch.Tensor,
+    value: torch.Tensor,
+    *,
+    policy: SolAttnPolicy,
+    telemetry: SolAttnTelemetry,
+) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, str | None]:
+    if query.is_contiguous() and key.is_contiguous() and value.is_contiguous():
+        return query, key, value, None
+    if not policy.diagnostic_materialize_noncontiguous:
+        return query, key, value, "unsupported_contiguity"
+    max_bytes = int(policy.diagnostic_materialize_max_bytes)
+    if max_bytes <= 0:
+        return query, key, value, "diagnostic_materialize_invalid_cap"
+
+    tensors = {"query": query, "key": key, "value": value}
+    by_tensor: dict[str, int] = {}
+    total = 0
+    for name, tensor in tensors.items():
+        if tensor.is_contiguous():
+            continue
+        copy_bytes = _copy_bytes_for(tensor)
+        if copy_bytes is None:
+            return query, key, value, "diagnostic_materialize_allocation_overflow"
+        total += copy_bytes
+        if total > max_bytes:
+            return query, key, value, "diagnostic_materialize_cap_exceeded"
+        by_tensor[name] = copy_bytes
+
+    start = time.perf_counter_ns()
+    try:
+        out = tuple(t.contiguous() if not t.is_contiguous() else t for t in (query, key, value))
+    except Exception as exc:  # noqa: BLE001 - diagnostic path must fail closed
+        return query, key, value, f"diagnostic_materialize_error:{type(exc).__name__}"
+    elapsed_ms = (time.perf_counter_ns() - start) / 1_000_000.0
+    telemetry.record_materialize(by_tensor=by_tensor, latency_ms=elapsed_ms)
+    return out[0], out[1], out[2], None
+
+
 def sol_attn_h3_sparse_candidate(
     query: torch.Tensor,
     key: torch.Tensor,
@@ -441,16 +549,45 @@ def sol_attn_h3_sparse_candidate(
 
     policy = SolAttnPolicy() if policy is None else policy
     telemetry = SolAttnTelemetry() if telemetry is None else telemetry
+    telemetry.record_layout(stage="pre_decline", query=query, key=key, value=value)
+    candidate_query, candidate_key, candidate_value = query, key, value
     reason = decline_reason(
-        query=query,
-        key=key,
-        value=value,
+        query=candidate_query,
+        key=candidate_key,
+        value=candidate_value,
         metadata=metadata,
         step_index=step_index,
         layer_index=layer_index,
         policy=policy,
         device_capability=device_capability,
     )
+    if reason == "unsupported_contiguity":
+        candidate_query, candidate_key, candidate_value, materialize_reason = _diagnostic_materialize_qkv(
+            candidate_query,
+            candidate_key,
+            candidate_value,
+            policy=policy,
+            telemetry=telemetry,
+        )
+        if materialize_reason is None:
+            telemetry.record_layout(
+                stage="post_diagnostic_materialize",
+                query=candidate_query,
+                key=candidate_key,
+                value=candidate_value,
+            )
+            reason = decline_reason(
+                query=candidate_query,
+                key=candidate_key,
+                value=candidate_value,
+                metadata=metadata,
+                step_index=step_index,
+                layer_index=layer_index,
+                policy=policy,
+                device_capability=device_capability,
+            )
+        else:
+            reason = materialize_reason
     if reason is not None:
         telemetry.record_decline(reason)
         return dense_attention_packed_reference(query, key, value, metadata=metadata, softmax_scale=softmax_scale)
@@ -458,15 +595,17 @@ def sol_attn_h3_sparse_candidate(
     assert metadata is not None  # narrowed by decline_reason
     sink_range = derive_sink_range(metadata, policy)
     density = estimate_sparse_density(metadata, policy)
+    if telemetry.materialize_copy_count:
+        density = {**density, "diagnostic_materialized_qkv": True}
     telemetry.record_sparse_candidate(sink_range, density)
     valid = int(metadata.valid_length)
     prefix = int(metadata.prefix_len)
 
     try:
         kernel = _load_sol_attn_sm86()
-        q_valid = query[:, :valid].contiguous()
-        k_valid = key[:, :valid].contiguous()
-        v_valid = value[:, :valid].contiguous()
+        q_valid = candidate_query[:, :valid].contiguous()
+        k_valid = candidate_key[:, :valid].contiguous()
+        v_valid = candidate_value[:, :valid].contiguous()
         sparse_valid = kernel(
             q_valid,
             k_valid,

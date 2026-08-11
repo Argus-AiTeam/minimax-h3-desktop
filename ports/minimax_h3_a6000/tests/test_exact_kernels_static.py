@@ -60,6 +60,7 @@ def test_exact_kernel_env_switches_default_off():
         "MINIMAX_H3_A6000_TELEMETRY_ATEXIT",
         "MINIMAX_H3_A6000_ENABLE_SHADOW",
         "MINIMAX_H3_A6000_SHADOW_STRICT",
+        "MINIMAX_H3_A6000_SOL_ATTN_DIAGNOSTIC_MATERIALIZE",
     ):
         assert DEFAULT_ENV_SWITCHES[key] == "0"
     assert DEFAULT_ENV_SWITCHES["MINIMAX_H3_A6000_EXACT_INDEXED_STRATEGY"] == "auto"
@@ -90,6 +91,9 @@ def test_sol_attn_sm86_source_contains_real_triton_candidate_and_harness():
         "static_exact_block_lower_bound",
         "unsupported_device",
         "unsupported_contiguity",
+        "diagnostic_materialize_noncontiguous",
+        "materialize_copy_bytes",
+        "layout_samples",
         "kernel_error:",
         "sol_attn_sm86",
     ):

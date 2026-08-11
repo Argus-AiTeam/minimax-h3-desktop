@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-# Reproducible r6 Sol-Attn integration overlay image.
+# Reproducible r7 Sol-Attn integration overlay image.
 # Build context must be the repository root. This Dockerfile starts from the
 # locked P0/r2 vLLM-Omni image, installs only the local overlay package, applies
 # the current Sol-Attn/exact-kernel opt-in patch to a disposable tree, and then
@@ -13,9 +13,9 @@
 ARG BASE_IMAGE=argus/minimax-h3-vllm-omni:8e2e9b6b53e8-r2
 FROM ${BASE_IMAGE}
 
-LABEL org.opencontainers.image.title="MiniMax-H3 A6000 r6 Sol-Attn integration overlay"
+LABEL org.opencontainers.image.title="MiniMax-H3 A6000 r7 Sol-Attn integration overlay"
 LABEL org.opencontainers.image.description="Default-off local overlay plus audited patched vLLM-Omni files; no GPU required at build"
-LABEL org.opencontainers.image.version="r6"
+LABEL org.opencontainers.image.version="r7"
 LABEL org.opencontainers.image.base.name="argus/minimax-h3-vllm-omni:8e2e9b6b53e8-r2"
 LABEL org.opencontainers.image.licenses="Apache-2.0"
 LABEL org.opencontainers.image.vendor="Local MiniMax-H3 A6000 adapter preserving NVLabs/Sol-Engine and upstream attribution"
@@ -42,24 +42,24 @@ COPY ports/minimax_h3_a6000 /opt/minimax_h3_a6000
 
 RUN set -eux; \
     python3 -m pip install --no-deps --no-build-isolation /opt/minimax_h3_a6000; \
-    tmp=/tmp/vllm-omni-r6-patched; \
+    tmp=/tmp/vllm-omni-r7-patched; \
     patch=/opt/minimax_h3_a6000/patches/vllm_omni_h3_a6000_opt_in.patch; \
-    helper=/opt/minimax_h3_a6000/integration/r6/dual_install_patch_files.py; \
+    helper=/opt/minimax_h3_a6000/integration/r7/dual_install_patch_files.py; \
     rm -rf "$tmp"; \
     cp -a /app/vllm-omni "$tmp"; \
-    python3 "$helper" --patch "$patch" --list-patch-files > /opt/minimax_h3_a6000/r6_patch_changed_files.txt; \
-    grep -qx 'vllm_omni/diffusion/attention/backends/registry.py' /opt/minimax_h3_a6000/r6_patch_changed_files.txt; \
-    grep -qx 'vllm_omni/diffusion/attention/backends/sol_attn_h3_a6000.py' /opt/minimax_h3_a6000/r6_patch_changed_files.txt; \
-    grep -qx 'vllm_omni/diffusion/models/minimax_h3/minimax_h3_transformer.py' /opt/minimax_h3_a6000/r6_patch_changed_files.txt; \
+    python3 "$helper" --patch "$patch" --list-patch-files > /opt/minimax_h3_a6000/r7_patch_changed_files.txt; \
+    grep -qx 'vllm_omni/diffusion/attention/backends/registry.py' /opt/minimax_h3_a6000/r7_patch_changed_files.txt; \
+    grep -qx 'vllm_omni/diffusion/attention/backends/sol_attn_h3_a6000.py' /opt/minimax_h3_a6000/r7_patch_changed_files.txt; \
+    grep -qx 'vllm_omni/diffusion/models/minimax_h3/minimax_h3_transformer.py' /opt/minimax_h3_a6000/r7_patch_changed_files.txt; \
     git -C "$tmp" apply "$patch"; \
     python3 "$helper" \
       --patch "$patch" \
       --patched-root "$tmp" \
       --app-root /app/vllm-omni \
-      --manifest /opt/minimax_h3_a6000/r6_patch_changed_files.txt \
-      --hash-json /opt/minimax_h3_a6000/r6_patched_source_hashes.json \
-      --hash-sha256 /opt/minimax_h3_a6000/r6_patched_source_hashes.sha256; \
-    test -s /opt/minimax_h3_a6000/r6_patched_source_hashes.json; \
-    test -s /opt/minimax_h3_a6000/r6_patched_source_hashes.sha256; \
+      --manifest /opt/minimax_h3_a6000/r7_patch_changed_files.txt \
+      --hash-json /opt/minimax_h3_a6000/r7_patched_source_hashes.json \
+      --hash-sha256 /opt/minimax_h3_a6000/r7_patched_source_hashes.sha256; \
+    test -s /opt/minimax_h3_a6000/r7_patched_source_hashes.json; \
+    test -s /opt/minimax_h3_a6000/r7_patched_source_hashes.sha256; \
     rm -rf "$tmp"; \
-    python3 -c "import minimax_h3_a6000; from minimax_h3_a6000.env import DEFAULT_ENV_SWITCHES as d; assert d['MINIMAX_H3_A6000_ENABLE_OVERLAY'] == '0'; assert d['MINIMAX_H3_A6000_ENABLE_TELEMETRY'] == '0'; assert d['MINIMAX_H3_A6000_ENABLE_SOL_ATTN'] == '0'; assert d['MINIMAX_H3_A6000_SOL_ATTN_DIAGNOSTIC_MATERIALIZE'] == '0'; print('minimax_h3_a6000_r6_overlay_import=ok')"
+    python3 -c "import minimax_h3_a6000; from minimax_h3_a6000.env import DEFAULT_ENV_SWITCHES as d; assert d['MINIMAX_H3_A6000_ENABLE_OVERLAY'] == '0'; assert d['MINIMAX_H3_A6000_ENABLE_TELEMETRY'] == '0'; assert d['MINIMAX_H3_A6000_ENABLE_SOL_ATTN'] == '0'; assert d['MINIMAX_H3_A6000_SOL_ATTN_DIAGNOSTIC_MATERIALIZE'] == '0'; print('minimax_h3_a6000_r7_overlay_import=ok')"

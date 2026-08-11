@@ -8,13 +8,11 @@ set -euo pipefail
 ROOT=${ROOT:-${PWD}}
 GPU_INDEX=${GPU_INDEX:-2}
 EXPECTED_UUID=${EXPECTED_UUID:-}
-IMAGE=${IMAGE:-argus/minimax-h3-vllm-omni:8e2e9b6b53e8-r6-sol-attn-overlay}
-R6_IID_FILE=${R6_IID_FILE:-$ROOT/technical_report/evidence/minimax_h3_desktop/sol_engine_port/r6_overlay_image/r6_image_iid.txt}
-EXPECTED_R6_IMAGE_IID=${EXPECTED_R6_IMAGE_IID:-}
-REQUIRED_IMAGE_VERSION_LABEL=${REQUIRED_IMAGE_VERSION_LABEL:-r6}
+IMAGE=${IMAGE:-argus/minimax-h3-vllm-omni:8e2e9b6b53e8-r7-sol-attn-overlay}
+REQUIRED_IMAGE_VERSION_LABEL=${REQUIRED_IMAGE_VERSION_LABEL:-r7}
 MODEL_ROOT=${MODEL_ROOT:-$ROOT/models/MiniMax-H3}
 PROMPT_FILE=${PROMPT_FILE:-$ROOT/technical_report/evidence/minimax_h3_desktop/baseline_a6000/t2va_example_1.prompt.txt}
-OUT_DIR=${OUT_DIR:-$ROOT/technical_report/evidence/minimax_h3_desktop/sol_engine_port/sol_attn_h3_gpu2_5step_$(date -u +%Y%m%dT%H%M%SZ)}
+OUT_DIR=${OUT_DIR:-$ROOT/technical_report/evidence/minimax_h3_desktop/sol_engine_port/sol_attn_h3_gpu2_5step_r7_$(date -u +%Y%m%dT%H%M%SZ)}
 PORT=${PORT:-8000}
 DRY_RUN=1
 
@@ -25,13 +23,14 @@ Usage: run_gpu2_sol_attn_h3_5step_diagnostic.sh [--dry-run|--execute]
 Dry-run is the default and prints the exact external GPU2 plan without GPU
 execution, Docker execution, CUDA, nvidia-smi, network access, downloads, model
 loading, inference, cache enablement, or publication. Non-dry execution requires
-ARGUS_ALLOW_GPU2_SOL_ATTN_H3_5STEP=1 plus a matching fresh r6 image IID/label
-identity check, and is outside CPU/static stages.
+ARGUS_ALLOW_GPU2_SOL_ATTN_H3_5STEP=1 plus readable fresh r7 image
+version/base/title label checks, and is outside CPU/static stages.
 
 The diagnostic compares two 5-step runs through the opt-in H3_A6000_SOL_ATTN
 backend only:
   1. dense_h3_backend_reference: Sol-Attn env off -> dense fallback;
-  2. sol_attn_opt_in: overlay/triton/Sol-Attn env on, Sol-Attn cache off.
+  2. sol_attn_opt_in: overlay/triton/Sol-Attn env on, Sol-Attn cache off,
+     r7 diagnostic materialization on with explicit copy telemetry.
 It is a diagnostic_5_step_sol_attn_metadata_gate_not_fidelity_or_performance_claim.
 EOF_USAGE
 }
@@ -53,11 +52,9 @@ root=$ROOT
 gpu_index=$GPU_INDEX
 expected_uuid=${EXPECTED_UUID:-<not-set>}
 image=$IMAGE
-r6_iid_file=$R6_IID_FILE
-expected_r6_image_iid=${EXPECTED_R6_IMAGE_IID:-<required from EXPECTED_R6_IMAGE_IID or r6_iid_file before --execute>}
 required_image_label=org.opencontainers.image.version=$REQUIRED_IMAGE_VERSION_LABEL
-identity_guard=non-dry verifies docker image inspect .Id matches expected r6 IID and version/base labels match the fresh r6 overlay
-external_r6_build_command=EVIDENCE_DIR=technical_report/evidence/minimax_h3_desktop/sol_engine_port/r6_overlay_image bash ports/minimax_h3_a6000/integration/r6/build_r6_overlay_image.sh
+identity_guard=non-dry verifies readable image tag plus version/base/title labels for the fresh r7 overlay; opaque image identifiers are omitted and are not proof
+external_r7_build_command=EVIDENCE_DIR=technical_report/evidence/minimax_h3_desktop/sol_engine_port/r7_overlay_image bash ports/minimax_h3_a6000/integration/r7/build_r7_overlay_image.sh
 model_root=$MODEL_ROOT
 prompt_file=$PROMPT_FILE
 out_dir=$OUT_DIR
@@ -67,6 +64,8 @@ backend=H3_A6000_SOL_ATTN
 network=none
 one_visible_gpu_guard=container asserts torch.cuda.device_count()==1 and SM86 A6000
 sol_attn_cache=off
+sol_attn_diagnostic_materialize=on_for_r7_only
+sol_attn_materialize_max_bytes=67108864
 exact_wrappers=off
 telemetry=/evidence/sol_attn/sol_attn_telemetry.sol_attn.json
 blocker_if_metadata_missing=missing_h3_hook_metadata:<missing_attention_metadata|missing_packed_video_layout|missing_valid_kv_length_metadata|missing_step_layer_metadata|invalid_packed_video_layout>
@@ -87,30 +86,8 @@ if [[ "${ARGUS_ALLOW_GPU2_SOL_ATTN_H3_5STEP:-0}" != "1" ]]; then
   exit 11
 fi
 
-load_expected_r6_iid() {
-  local expected="$EXPECTED_R6_IMAGE_IID"
-  if [[ -z "$expected" && -f "$R6_IID_FILE" ]]; then
-    expected=$(tr -d '[:space:]' < "$R6_IID_FILE")
-  fi
-  if [[ -z "$expected" ]]; then
-    echo "ERROR: refusing non-dry Sol-Attn diagnostic without EXPECTED_R6_IMAGE_IID or readable R6_IID_FILE=$R6_IID_FILE" >&2
-    exit 13
-  fi
-  if [[ "$expected" != sha256:* ]]; then
-    echo "ERROR: expected r6 image IID must be a docker sha256 image id, got: $expected" >&2
-    exit 13
-  fi
-  printf '%s' "$expected"
-}
-
-verify_r6_image_identity() {
-  local expected_iid actual_iid version_label base_label title_label
-  expected_iid=$(load_expected_r6_iid)
-  actual_iid=$(docker image inspect --format '{{.Id}}' "$IMAGE")
-  if [[ "$actual_iid" != "$expected_iid" ]]; then
-    echo "ERROR: image IID mismatch for $IMAGE: got $actual_iid expected $expected_iid" >&2
-    exit 14
-  fi
+verify_r7_readable_image_provenance() {
+  local version_label base_label title_label
   version_label=$(docker image inspect --format '{{ index .Config.Labels "org.opencontainers.image.version" }}' "$IMAGE")
   base_label=$(docker image inspect --format '{{ index .Config.Labels "org.opencontainers.image.base.name" }}' "$IMAGE")
   title_label=$(docker image inspect --format '{{ index .Config.Labels "org.opencontainers.image.title" }}' "$IMAGE")
@@ -122,29 +99,25 @@ verify_r6_image_identity() {
     echo "ERROR: image base label mismatch for $IMAGE: got $base_label" >&2
     exit 15
   fi
-  if [[ "$title_label" != *"r6 Sol-Attn"* ]]; then
+  if [[ "$title_label" != *"r7 Sol-Attn"* ]]; then
     echo "ERROR: image title label does not identify the fresh Sol-Attn overlay: $title_label" >&2
     exit 15
   fi
   cat <<EOF_IDENTITY
 image=$IMAGE
-expected_r6_image_iid=$expected_iid
-actual_r6_image_iid=$actual_iid
 required_image_version_label=$REQUIRED_IMAGE_VERSION_LABEL
 actual_image_version_label=$version_label
 actual_image_base_label=$base_label
 actual_image_title_label=$title_label
-r6_iid_file=$R6_IID_FILE
+opaque_image_identifier_policy=omitted_not_evidence
 EOF_IDENTITY
 }
 
 mkdir -p "$OUT_DIR"
-verify_r6_image_identity > "$OUT_DIR/r6_image_identity.env"
+verify_r7_readable_image_provenance > "$OUT_DIR/r7_image_identity.env"
 cp "$PROMPT_FILE" "$OUT_DIR/prompt.txt"
 cat > "$OUT_DIR/workload.env" <<EOF_WORKLOAD
 image=$IMAGE
-r6_iid_file=$R6_IID_FILE
-expected_r6_image_iid=$(load_expected_r6_iid)
 gpu_index=$GPU_INDEX
 model_root=$MODEL_ROOT
 prompt_file=$PROMPT_FILE
@@ -157,6 +130,8 @@ duration=5.166667
 attention_backend=H3_A6000_SOL_ATTN
 sol_attn_opt_in=diagnostic_only_not_fidelity
 sol_attn_cache=off
+sol_attn_diagnostic_materialize=on_for_r7_only
+sol_attn_materialize_max_bytes=67108864
 network=none
 EOF_WORKLOAD
 
@@ -227,7 +202,7 @@ curl --fail-with-body --silent --show-error --max-time 3000 \
   -F 'prompt=</evidence/prompt.txt' \
   -F 'width=1344' -F 'height=768' -F 'aspect_ratio=16:9' -F 'fps=24' \
   -F 'num_inference_steps=5' -F 'flow_shift=12' -F 'seed=0' -F 'quality=lossless' \
-  -F 'extra_params={"task":"t2va","duration":5.166667,"audio_flow_shift":3.0}' \
+  -F 'extra_params={\"task\":\"t2va\",\"duration\":5.166667,\"audio_flow_shift\":3.0}' \
   -o '$evidence/output.mp4' > '$evidence/http_metrics.txt'
 python3 - <<'PY'
 import hashlib, json, pathlib
@@ -282,6 +257,7 @@ run_one dense_h3_backend_reference \
   -e MINIMAX_H3_A6000_ENABLE_TRITON_CANDIDATES=0 \
   -e MINIMAX_H3_A6000_ENABLE_SOL_ATTN=0 \
   -e MINIMAX_H3_A6000_SOL_ATTN_CACHE=0 \
+  -e MINIMAX_H3_A6000_SOL_ATTN_DIAGNOSTIC_MATERIALIZE=0 \
   -e MINIMAX_H3_A6000_ENABLE_FUSED_ADALN=0 \
   -e MINIMAX_H3_A6000_ENABLE_FUSED_ROPE=0 \
   -e MINIMAX_H3_A6000_ENABLE_FUSED_SWIGLU=0 \
@@ -295,6 +271,8 @@ run_one sol_attn \
   -e MINIMAX_H3_A6000_ENABLE_SOL_ATTN=1 \
   -e MINIMAX_H3_A6000_SOL_ATTN_CACHE=0 \
   -e MINIMAX_H3_A6000_SOL_ATTN_STRICT=0 \
+  -e MINIMAX_H3_A6000_SOL_ATTN_DIAGNOSTIC_MATERIALIZE=1 \
+  -e MINIMAX_H3_A6000_SOL_ATTN_MATERIALIZE_MAX_BYTES=67108864 \
   -e MINIMAX_H3_A6000_ENABLE_FUSED_ADALN=0 \
   -e MINIMAX_H3_A6000_ENABLE_FUSED_ROPE=0 \
   -e MINIMAX_H3_A6000_ENABLE_FUSED_SWIGLU=0 \
@@ -332,8 +310,11 @@ else:
     else:
         status = {'status': 'blocked', 'reason': 'no_sparse_attempt_and_no_decline_reason', 'telemetry': telemetry}
 status['scope'] = 'diagnostic_5_step_sol_attn_metadata_gate_not_fidelity_or_performance_claim'
-status['dense_sha256'] = dense['sha256']
-status['sol_attn_sha256'] = sol['sha256']
+status['opaque_integrity_policy'] = {
+    'image_identifiers': 'omitted_not_evidence',
+    'output_identifiers': 'omitted_not_evidence',
+    'opaque_identifier_equality': 'not_used_for_classification',
+}
 (root / 'sol_attn_diagnostic_status.json').write_text(json.dumps(status, indent=2, sort_keys=True) + '\n')
 print(json.dumps(status, sort_keys=True))
 PY

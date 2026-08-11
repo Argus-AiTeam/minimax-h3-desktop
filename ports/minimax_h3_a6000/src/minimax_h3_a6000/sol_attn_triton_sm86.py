@@ -7,6 +7,16 @@
 # SM>=8 guard is preserved and the caller adds the stricter SM86 policy gate.
 """Pointer-backed Triton Sol-Attn candidate for MiniMax-H3 A6000/SM86.
 
+Stride audit for r7: every Triton pointer expression below linearizes tensors as
+packed row-major BTHD, e.g. ``((batch * T + token) * H + head) * D + dim`` for
+Q/K/V/O and the analogous packed summary layouts for KC/VC.  The actual
+vLLM-Omni H3 path builds Q/K/V by splitting a wider ``qkv`` projection and then
+``view``-ing each segment to ``[T, heads, head_dim]`` before ``unsqueeze(0)``;
+that source-backed construction can leave at least V with a row stride larger
+than ``heads * head_dim``.  Because this kernel does not accept explicit strides,
+non-contiguous H3 layouts must either decline or enter a separately gated,
+telemetry-visible diagnostic materialization path in the wrapper.
+
 The module is intentionally not imported by :mod:`minimax_h3_a6000` package
 initialization.  Importing this file requires PyTorch+Triton, but no CUDA work is
 performed until ``sol_attn_sm86`` is called by an already-authorized GPU harness

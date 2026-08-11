@@ -38,6 +38,9 @@
       "path": "tools/minimax_h3_a6000_performance_report.py"
     },
     {
+      "path": "tools/build_periodic_progress.py"
+    },
+    {
       "path": "tools/argus_ir04_aggregate.py"
     },
     {
@@ -63,6 +66,9 @@
     },
     {
       "path": "technical_report/minimax_h3_a6000_performance.md"
+    },
+    {
+      "path": "technical_report/progress_update.md"
     },
     {
       "path": "technical_report/evidence/minimax_h3_desktop/quantization_feasibility_a6000.md"
@@ -119,7 +125,8 @@
         "integration/*.sh",
         "integration/r3/*",
         "integration/r4/*",
-        "integration/r6/*"
+        "integration/r6/*",
+        "integration/r7/*"
       ],
       "exclude": [
         "evidence/**",

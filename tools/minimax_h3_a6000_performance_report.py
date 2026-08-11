@@ -9,6 +9,7 @@ experiment evidence. Missing optional evidence is represented explicitly as
 from __future__ import annotations
 
 import argparse
+import csv
 import json
 import re
 import statistics
@@ -35,6 +36,7 @@ DLO_STATE_REL = Path("dlo_autotune/detached_continuation")
 EXACT_LATEST_REL = Path("sol_engine_port/LATEST_GPU_EXACT_DIR")
 R5_ABLATION_LATEST_REL = Path("sol_engine_port/LATEST_R5_ABLATION_DIR")
 SOL_ATTN_LATEST_REL = Path("sol_engine_port/LATEST_SOL_ATTN_GPU_DIR")
+SOL_ATTN_SUPERVISOR_REL = Path("sol_engine_port/sol_attn_gpu2_supervisor")
 
 JsonDict = dict[str, Any]
 
@@ -706,32 +708,142 @@ def collect_exact_kernels(evidence_root: Path) -> JsonDict:
     return _section(status, evidence=evidence, data=data, notes=notes, reason="missing exact-kernel evidence" if status == "pending" else None)
 
 
-def collect_sol_attn(evidence_root: Path) -> JsonDict:
-    evidence: list[str] = []
-    notes: list[str] = []
-    sol_dir = _read_latest_dir(evidence_root, SOL_ATTN_LATEST_REL, "sol_attn_gpu_*")
+def _parse_env_lines(text: str | None) -> JsonDict:
+    data: JsonDict = {}
+    if text is None:
+        return data
+    for raw in text.splitlines():
+        line = raw.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        data[key.strip()] = value.strip().strip('"')
+    return data
+
+
+def _resource_csv_subset(path: Path, evidence_root: Path, evidence: list[str], notes: list[str]) -> JsonDict:
+    if not path.is_file():
+        return {"status": "missing", "reason": f"missing evidence: {path.as_posix()}"}
+    evidence.append(_evidence_rel(path, evidence_root))
+    try:
+        with path.open("r", encoding="utf-8", newline="") as f:
+            rows = list(csv.DictReader(f))
+    except csv.Error as exc:
+        notes.append(f"invalid resource CSV in {path.as_posix()}: {exc}")
+        return {"status": "invalid", "reason": str(exc)}
+    out: JsonDict = {"status": "present", "samples": len(rows)}
+    numeric_aliases = {
+        "peak_gpu_memory_mib": "gpu_memory_used_mib",
+        "peak_gpu_util_percent": "gpu_util_percent",
+        "peak_power_w": "power_w",
+        "peak_temperature_c": "temperature_c",
+        "peak_host_memory_used_bytes": "host_memory_used_bytes",
+        "peak_host_swap_used_bytes": "host_swap_used_bytes",
+    }
+    for canonical, column in numeric_aliases.items():
+        values: list[float] = []
+        for row in rows:
+            number = _maybe_number(row.get(column))
+            if number is not None:
+                values.append(float(number))
+        if values:
+            out[canonical] = max(values)
+    return out
+
+
+def _av_contract_subset(av: JsonDict | None) -> JsonDict:
+    av = av or {}
+    data = {
+        "mode": av.get("mode"),
+        "opaque_output_identifier_policy": "sha256_omitted_not_evidence",
+        "bytes": av.get("bytes"),
+        "video_present": av.get("video_present"),
+        "audio_present": av.get("audio_present"),
+        "width": av.get("width"),
+        "height": av.get("height"),
+        "average_rate": av.get("average_rate"),
+        "decoded_video_frames": av.get("decoded_video_frames"),
+        "audio_sample_rate_hz": av.get("audio_sample_rate_hz") or av.get("audio_sample_rate"),
+        "audio_channels": av.get("audio_channels"),
+        "decoded_audio_frames": av.get("decoded_audio_frames"),
+        "decoded_audio_samples": av.get("decoded_audio_samples"),
+    }
+    required_ok = (
+        data["video_present"] is True
+        and data["audio_present"] is True
+        and data["width"] == 1344
+        and data["height"] == 768
+        and _maybe_number(data["decoded_video_frames"]) is not None
+        and float(_maybe_number(data["decoded_video_frames"]) or 0) > 0
+        and data["audio_sample_rate_hz"] == 32000
+        and data["audio_channels"] == 2
+    )
+    data["structural_av_contract_pass"] = required_ok
+    return data
+
+
+def _load_av_contract(path: Path, evidence_root: Path, evidence: list[str], notes: list[str]) -> JsonDict:
+    data, err = _load_json(path)
+    if err:
+        notes.append(err)
+        return {"structural_av_contract_pass": False, "reason": err}
+    evidence.append(_evidence_rel(path, evidence_root))
+    return _av_contract_subset(data)
+
+
+def _load_http_metrics(path: Path, evidence_root: Path, evidence: list[str], notes: list[str]) -> JsonDict:
+    text, err = _read_text(path)
+    if err:
+        notes.append(err)
+        return {"status": "missing", "reason": err}
+    evidence.append(_evidence_rel(path, evidence_root))
+    return {"status": "present", "time_total_s": _parse_http_time_total(text)}
+
+
+def _legacy_sol_attn_kernel_diagnostic(evidence_root: Path, evidence: list[str], notes: list[str]) -> JsonDict:
+    legacy: JsonDict = {"status": "pending"}
+    pointer_text, pointer_err = _read_text(evidence_root / SOL_ATTN_LATEST_REL)
+    sol_dir: Path | None = None
+    if pointer_err is None and pointer_text is not None:
+        evidence.append(SOL_ATTN_LATEST_REL.as_posix())
+        raw_pointer = pointer_text.strip()
+        legacy["latest_pointer_raw"] = raw_pointer
+        pointer_path = Path(raw_pointer)
+        if pointer_path.is_absolute() and pointer_path.is_dir():
+            sol_dir = pointer_path
+        elif raw_pointer and "/" not in raw_pointer and ".." not in raw_pointer:
+            candidate = evidence_root / SOL_ATTN_LATEST_REL.parent / raw_pointer
+            if candidate.is_dir():
+                sol_dir = candidate
+        else:
+            legacy["pointer_reason"] = f"stale or non-run-id Sol-Attn pointer is not accepted as strict r6 runtime evidence: {raw_pointer!r}"
+    elif pointer_err:
+        legacy["pointer_reason"] = pointer_err
+        notes.append(pointer_err)
     if sol_dir is None:
-        return _section("pending", reason="missing Sol-Attn diagnostic evidence")
+        sol_dir = _read_latest_dir(evidence_root, SOL_ATTN_LATEST_REL, "sol_attn_gpu_*")
+    if sol_dir is None:
+        legacy["reason"] = "missing legacy Sol-Attn kernel diagnostic"
+        return legacy
     result_path = sol_dir / "result.json"
     result, err = _load_json(result_path)
     if err:
-        return _section("pending", reason=err)
+        legacy["reason"] = err
+        notes.append(err)
+        return legacy
     assert result is not None
     evidence.append(_evidence_rel(result_path, evidence_root))
     bench = result.get("bench") if isinstance(result.get("bench"), dict) else {}
     correctness = result.get("correctness") if isinstance(result.get("correctness"), dict) else {}
     speedup = bench.get("speedup_dense_over_sparse_median")
-    model_load = result.get("model_load")
-    h3_e2e_status = "pending"
-    if bench.get("kernel_candidates_only_not_h3_e2e") is True or model_load is False:
-        h3_e2e_reason = "diagnostic is kernel-candidate-only with model_load=false; no H3 end-to-end Sol-Attn result is present"
-    else:
-        h3_e2e_reason = "no H3 end-to-end Sol-Attn result marker found"
     if _maybe_number(speedup) is not None and float(speedup) < 1.0:
-        notes.append("Current Sol-Attn diagnostic is slower than dense and is not deployed as a speed result.")
-    data = {
+        notes.append("Legacy Sol-Attn kernel diagnostic is slower than dense and is not deployed as a speed result.")
+    return {
+        **{key: value for key, value in legacy.items() if key in {"latest_pointer_raw", "pointer_reason"}},
+        "status": "present",
+        "run_dir": _evidence_rel(sol_dir, evidence_root),
         "schema_version": result.get("schema_version"),
-        "model_load": model_load,
+        "model_load": result.get("model_load"),
         "device": result.get("device"),
         "capability": result.get("capability"),
         "correctness": {
@@ -750,10 +862,223 @@ def collect_sol_attn(evidence_root: Path) -> JsonDict:
             "speedup_dense_over_sparse_median": speedup,
             "shape": bench.get("shape") if isinstance(bench.get("shape"), dict) else {},
         },
-        "h3_e2e": {"status": h3_e2e_status, "reason": h3_e2e_reason},
-        "deployment_status": "rejected_or_pending_not_deployed",
     }
-    return _section("partial", evidence=evidence, data=data, notes=notes)
+
+
+def _runtime_finish(classification: str, reason: str, data: JsonDict, *, accepted_metadata: bool = False, accepted_runtime: bool = False) -> JsonDict:
+    data["classification"] = classification
+    data["reason"] = reason
+    data["accepted_metadata"] = accepted_metadata
+    data["accepted_runtime_evidence"] = accepted_runtime
+    data["release_manifest_eligible"] = accepted_runtime
+    h3_status = "pending" if classification == "pending_non_terminal_supervisor_status" else classification
+    data["h3_e2e"] = {"status": h3_status, "reason": reason, "accepted_runtime_evidence": accepted_runtime}
+    return data
+
+
+def _classify_sol_attn_runtime(evidence_root: Path, evidence: list[str], notes: list[str]) -> JsonDict:
+    data: JsonDict = {"status": "pending"}
+    supervisor_dir = evidence_root / SOL_ATTN_SUPERVISOR_REL
+    status_text, status_err = _read_text(supervisor_dir / "status.txt")
+    latest_run_id, latest_err = _read_pointer(supervisor_dir / "latest_run_id")
+    if status_err is None:
+        evidence.append((SOL_ATTN_SUPERVISOR_REL / "status.txt").as_posix())
+    if latest_err is None and latest_run_id is not None:
+        evidence.append((SOL_ATTN_SUPERVISOR_REL / "latest_run_id").as_posix())
+    exit_text, _ = _read_text(supervisor_dir / "exit_code")
+    if exit_text is not None:
+        evidence.append((SOL_ATTN_SUPERVISOR_REL / "exit_code").as_posix())
+    supervisor_status = status_text.strip() if status_text else None
+    data["supervisor"] = {"status": supervisor_status, "latest_run_id": latest_run_id, "exit_code": exit_text.strip() if exit_text is not None else None}
+    if status_err or latest_err or not latest_run_id:
+        return _runtime_finish("pending", status_err or latest_err or "missing Sol-Attn supervisor latest_run_id", data)
+    if latest_run_id.startswith("sol_attn_gpu_"):
+        return _runtime_finish("stale_or_dry_run_rejected", "legacy Sol-Attn toy/kernel run is not accepted as H3 diagnostic runtime", data)
+
+    run_dir = evidence_root / "sol_engine_port" / latest_run_id
+    data["run_dir"] = _evidence_rel(run_dir, evidence_root)
+    if not run_dir.is_dir():
+        return _runtime_finish("pending", f"supervisor latest_run_id {latest_run_id!r} has no evidence directory", data)
+
+    resource = _resource_csv_subset(run_dir / "resource_monitor.csv", evidence_root, evidence, notes)
+    if resource.get("status") == "present":
+        data["resource"] = resource
+
+    workload_text, workload_err = _read_text(run_dir / "workload.env")
+    if workload_err is None:
+        evidence.append(_evidence_rel(run_dir / "workload.env", evidence_root))
+    workload = _parse_env_lines(workload_text)
+    image_text = str(workload.get("image") or "")
+
+    r7_identity_text, r7_identity_err = _read_text(run_dir / "r7_image_identity.env")
+    r6_identity_text, r6_identity_err = _read_text(run_dir / "r6_image_identity.env")
+    if r7_identity_err is None:
+        evidence.append(_evidence_rel(run_dir / "r7_image_identity.env", evidence_root))
+    if r6_identity_err is None:
+        evidence.append(_evidence_rel(run_dir / "r6_image_identity.env", evidence_root))
+    r7_identity = _parse_env_lines(r7_identity_text)
+    r6_identity = _parse_env_lines(r6_identity_text)
+    if r7_identity or "r7" in image_text:
+        runtime_label = "r7"
+        identity = r7_identity
+        identity_err = r7_identity_err
+    elif r6_identity or "r6" in image_text:
+        runtime_label = "r6"
+        identity = r6_identity
+        identity_err = r6_identity_err
+    else:
+        runtime_label = "unknown"
+        identity = {}
+        identity_err = "missing r6/r7 readable image provenance evidence"
+    data["runtime_label"] = runtime_label
+
+    data["opaque_integrity_policy"] = {
+        "image_identifiers": "omitted_not_evidence",
+        "output_identifiers": "omitted_not_evidence",
+        "opaque_identifier_equality": "not_used_for_classification",
+    }
+    data["image_identity"] = {
+        "runtime_label": runtime_label,
+        "version_label": identity.get("actual_image_version_label"),
+        "required_version_label": identity.get("required_image_version_label"),
+        "base_label": identity.get("actual_image_base_label"),
+        "title_label": identity.get("actual_image_title_label"),
+        "image_tag": image_text or None,
+        "opaque_identifier_policy": "omitted_not_evidence",
+    }
+    data["readable_provenance"] = {
+        "selected_run_dir": _evidence_rel(run_dir, evidence_root),
+        "runtime_label": runtime_label,
+        "workload_image": image_text or None,
+        "workload_attention_backend": workload.get("attention_backend"),
+        "image_version_label": identity.get("actual_image_version_label"),
+        "required_image_version_label": identity.get("required_image_version_label"),
+        "image_base_label": identity.get("actual_image_base_label"),
+        "image_title_label": identity.get("actual_image_title_label"),
+        "supervisor_status": supervisor_status,
+    }
+    data["workload"] = {key: workload.get(key) for key in ("image", "steps", "seed", "width", "height", "fps", "duration", "attention_backend", "sol_attn_opt_in", "sol_attn_cache", "sol_attn_diagnostic_materialize", "sol_attn_materialize_max_bytes", "network")}
+    data["workload"]["run_id_text_prefix_note"] = "latest_run_id may retain r6 text prefix; runtime label is decided from readable workload/version-label provenance"
+
+    active_statuses = {"running", "active", "starting", "started"}
+    if str(supervisor_status).lower() in active_statuses:
+        return _runtime_finish("pending_non_terminal_supervisor_status", f"Sol-Attn supervisor status is still {supervisor_status!r}; dense/opt-in runtime evidence is not terminal and is not ingested as success", data)
+
+    lowered_status = str(supervisor_status or "").lower()
+    if lowered_status.startswith("failed") or (exit_text is not None and exit_text.strip() not in {"", "0"}):
+        return _runtime_finish("runtime_failure", f"supervisor ended with status={supervisor_status!r} exit_code={exit_text.strip() if exit_text else 'missing'}", data)
+    if lowered_status not in {"complete", "completed", "success", "succeeded", "done"}:
+        return _runtime_finish("pending", f"supervisor status {supervisor_status!r} is not a completed runtime marker", data)
+
+    if runtime_label not in {"r6", "r7"} or identity_err or workload_err:
+        missing = [msg for msg in (identity_err, workload_err) if msg]
+        return _runtime_finish("fail_closed_missing_metadata", "; ".join(missing) or "missing readable runtime/workload provenance", data)
+    version_label = data["image_identity"].get("version_label")
+    required_version_label = data["image_identity"].get("required_version_label") or runtime_label
+    if version_label != runtime_label or required_version_label != runtime_label:
+        return _runtime_finish("identity_mismatch", f"{runtime_label} readable image version-label provenance is absent or mismatched", data)
+    workload_mismatches = []
+    expected_workload = {
+        "steps": "5",
+        "seed": "0",
+        "width": "1344",
+        "height": "768",
+        "attention_backend": "H3_A6000_SOL_ATTN",
+        "sol_attn_cache": "off",
+        "network": "none",
+    }
+    for key, expected_value in expected_workload.items():
+        if str(workload.get(key)) != expected_value:
+            workload_mismatches.append(f"{key}={workload.get(key)!r} expected {expected_value!r}")
+    if runtime_label == "r7" and workload.get("sol_attn_diagnostic_materialize") != "on_for_r7_only":
+        workload_mismatches.append("sol_attn_diagnostic_materialize is not on_for_r7_only")
+    if workload_mismatches:
+        return _runtime_finish("identity_mismatch", "workload identity mismatch: " + "; ".join(workload_mismatches), data)
+
+    dense_http = _load_http_metrics(run_dir / "dense_h3_backend_reference" / "http_metrics.txt", evidence_root, evidence, notes)
+    sol_http = _load_http_metrics(run_dir / "sol_attn" / "http_metrics.txt", evidence_root, evidence, notes)
+    dense_av = _load_av_contract(run_dir / "dense_h3_backend_reference" / "av_validation.json", evidence_root, evidence, notes)
+    sol_av = _load_av_contract(run_dir / "sol_attn" / "av_validation.json", evidence_root, evidence, notes)
+    status_json, status_json_err = _load_json(run_dir / "sol_attn_diagnostic_status.json")
+    if status_json_err is None and status_json is not None:
+        evidence.append(_evidence_rel(run_dir / "sol_attn_diagnostic_status.json", evidence_root))
+    telemetry, telemetry_err = _load_json(run_dir / "sol_attn" / "sol_attn_telemetry.sol_attn.json")
+    if telemetry_err is None and telemetry is not None:
+        evidence.append(_evidence_rel(run_dir / "sol_attn" / "sol_attn_telemetry.sol_attn.json", evidence_root))
+    data["dense_h3_backend_reference"] = {"http": dense_http, "av": dense_av}
+    data["sol_attn_opt_in"] = {"http": sol_http, "av": sol_av}
+    dense_time = _maybe_number(dense_http.get("time_total_s"))
+    sol_time = _maybe_number(sol_http.get("time_total_s"))
+    data["paired_http_time_total_s"] = {"dense_h3_backend_reference": dense_time, "sol_attn_opt_in": sol_time}
+    if dense_time and sol_time:
+        data["paired_http_ratio_dense_over_opt_in_not_speedup"] = float(dense_time) / float(sol_time)
+
+    telemetry_subset: JsonDict = {}
+    if isinstance(telemetry, dict):
+        telemetry_subset = {
+            "dense_calls": telemetry.get("dense_calls"),
+            "sparse_candidate_calls": telemetry.get("sparse_candidate_calls"),
+            "sparse_calls": telemetry.get("sparse_calls"),
+            "fallback_calls": telemetry.get("fallback_calls"),
+            "prefix_query_dense_calls": telemetry.get("prefix_query_dense_calls"),
+            "materialized_copy_calls": telemetry.get("materialized_copy_calls") or telemetry.get("copy_calls"),
+            "materialized_copy_bytes": telemetry.get("materialized_copy_bytes") or telemetry.get("copy_bytes"),
+            "materialization_failures": telemetry.get("materialization_failures"),
+            "decline_reasons": telemetry.get("decline_reasons") if isinstance(telemetry.get("decline_reasons"), dict) else {},
+            "fallback_reasons": telemetry.get("fallback_reasons") if isinstance(telemetry.get("fallback_reasons"), dict) else {},
+            "density_samples": telemetry.get("density_samples") if isinstance(telemetry.get("density_samples"), list) else [],
+        }
+    data["telemetry"] = telemetry_subset
+
+    missing_runtime = [err for err in (status_json_err, telemetry_err) if err]
+    if dense_http.get("status") != "present" or dense_http.get("time_total_s") is None or sol_http.get("status") != "present" or sol_http.get("time_total_s") is None:
+        missing_runtime.append("missing or invalid dense/opt-in HTTP timing")
+    if not dense_av.get("structural_av_contract_pass") or not sol_av.get("structural_av_contract_pass"):
+        missing_runtime.append("missing or invalid dense/opt-in structural AV evidence")
+    if missing_runtime:
+        return _runtime_finish("runtime_failure", "; ".join(missing_runtime), data)
+
+    status_marker = status_json.get("status") if isinstance(status_json, dict) else None
+    sparse_calls = _maybe_number(telemetry_subset.get("sparse_calls")) or 0
+    sparse_candidates = _maybe_number(telemetry_subset.get("sparse_candidate_calls")) or 0
+    fallback_calls = _maybe_number(telemetry_subset.get("fallback_calls")) or 0
+    decline_reasons = telemetry_subset.get("decline_reasons") if isinstance(telemetry_subset.get("decline_reasons"), dict) else {}
+    density_samples = telemetry_subset.get("density_samples") if isinstance(telemetry_subset.get("density_samples"), list) else []
+    if status_marker == "fail_closed_dense_fallback" or (not sparse_candidates and decline_reasons):
+        return _runtime_finish("fail_closed_missing_metadata", "Sol-Attn runtime failed closed to dense fallback with decline reasons", data)
+    if sparse_calls <= 0:
+        return _runtime_finish("fail_closed_missing_metadata", "Sol-Attn telemetry sparse_calls==0; opt-in result is not accepted as a sparse runtime", data)
+    if fallback_calls > 0:
+        return _runtime_finish("runtime_failure", "Sol-Attn telemetry reported fallback_calls>0", data)
+    if telemetry_subset.get("materialization_failures"):
+        return _runtime_finish("runtime_failure", "Sol-Attn telemetry reported materialization failures", data)
+    if status_marker not in {"metadata_path_accepted_sparse_candidate_attempted", "sparse_runtime_valid"}:
+        return _runtime_finish("fail_closed_missing_metadata", f"Sol-Attn metadata was not accepted: diagnostic status={status_marker!r}", data)
+    if not density_samples:
+        return _runtime_finish("fail_closed_missing_metadata", "Sol-Attn sparse candidate was attempted but density telemetry is absent", data)
+
+    data["paired_http_speedup_dense_over_sol_attn"] = float(dense_time) / float(sol_time) if dense_time and sol_time else None
+    return _runtime_finish("speed_only_no_quality", "Sol-Attn sparse_calls>0 and paired timing/AV evidence exists; opaque output hashes were omitted and not used as quality-equivalence evidence", data, accepted_metadata=True)
+
+
+def collect_sol_attn(evidence_root: Path) -> JsonDict:
+    evidence: list[str] = []
+    notes: list[str] = []
+    legacy = _legacy_sol_attn_kernel_diagnostic(evidence_root, evidence, notes)
+    runtime = _classify_sol_attn_runtime(evidence_root, evidence, notes)
+    h3_e2e = runtime.get("h3_e2e") if isinstance(runtime.get("h3_e2e"), dict) else {"status": "pending", "reason": runtime.get("reason", "missing Sol-Attn runtime evidence")}
+    data = {
+        "legacy_kernel_diagnostic": legacy,
+        "strict_runtime": runtime,
+        "strict_r6_runtime": runtime,
+        "h3_e2e": h3_e2e,
+        "deployment_status": "not_deployed_release_manifest_blocked" if not runtime.get("accepted_runtime_evidence") else "accepted_runtime_evidence_ready_for_private_release_metadata",
+    }
+    status = "partial" if legacy.get("status") == "present" or runtime.get("accepted_metadata") else "pending"
+    if runtime.get("classification") in {"pending_non_terminal_supervisor_status", "identity_mismatch", "runtime_failure", "quality_drift", "fail_closed_missing_metadata", "speed_only_no_quality", "stale_or_dry_run_rejected"}:
+        status = "partial"
+    reason = None if status != "pending" else runtime.get("reason") or legacy.get("reason") or "missing Sol-Attn diagnostic evidence"
+    return _section(status, evidence=evidence, data=data, notes=notes, reason=reason)
 
 
 def collect_dmd(evidence_root: Path) -> JsonDict:
@@ -795,8 +1120,8 @@ def _collect_pending(section_name: str, section: JsonDict) -> list[JsonDict]:
                 pending.append({"section": f"dlo.capacity.rl{attempt.get('resident_layers')}", "status": "pending", "reason": attempt.get("result_status")})
     if section_name == "sol_attn":
         h3_e2e = data.get("h3_e2e")
-        if isinstance(h3_e2e, dict) and h3_e2e.get("status") == "pending":
-            pending.append({"section": "sol_attn.h3_e2e", "status": "pending", "reason": h3_e2e.get("reason", "missing evidence")})
+        if isinstance(h3_e2e, dict) and h3_e2e.get("status") in {"pending", "identity_mismatch", "stale_or_dry_run_rejected", "fail_closed_missing_metadata", "runtime_failure", "quality_drift", "speed_only_no_quality", "metadata_accepted"}:
+            pending.append({"section": "sol_attn.h3_e2e", "status": h3_e2e.get("status", "pending"), "reason": h3_e2e.get("reason", "missing evidence")})
     return pending
 
 
@@ -848,8 +1173,8 @@ def build_payload(evidence_root: Path, *, repo_root: Path | None = None) -> Json
         blockers.append({"scope": "DLO", "status": "pending", "reason": dlo_data["formal_n10"].get("reason")})
     sol_data = sections["sol_attn"].get("data") if isinstance(sections["sol_attn"].get("data"), dict) else {}
     h3_e2e = sol_data.get("h3_e2e") if isinstance(sol_data, dict) else None
-    if isinstance(h3_e2e, dict) and h3_e2e.get("status") == "pending":
-        blockers.append({"scope": "Sol-Attn", "status": "pending", "reason": h3_e2e.get("reason")})
+    if isinstance(h3_e2e, dict) and h3_e2e.get("accepted_runtime_evidence") is not True:
+        blockers.append({"scope": "Sol-Attn", "status": h3_e2e.get("status", "pending"), "reason": h3_e2e.get("reason") or "Sol-Attn runtime evidence is not accepted"})
     dmd_data = sections["dmd"].get("data") if isinstance(sections["dmd"].get("data"), dict) else {}
     if dmd_data.get("status", "").startswith("blocked"):
         blockers.append({"scope": "DMD/DMD2", "status": "blocked", "reason": dmd_data.get("claim_boundary")})
@@ -1136,12 +1461,29 @@ def render_markdown(payload: JsonDict) -> str:
     if sections["sol_attn"]["status"] == "pending":
         lines.append(f"- Sol-Attn: **pending** ({sections['sol_attn'].get('reason', 'missing evidence')}).")
     else:
-        bench = sol.get("bench", {}) if isinstance(sol.get("bench"), dict) else {}
+        legacy = sol.get("legacy_kernel_diagnostic", {}) if isinstance(sol.get("legacy_kernel_diagnostic"), dict) else {}
+        runtime = sol.get("strict_runtime", {}) if isinstance(sol.get("strict_runtime"), dict) else (sol.get("strict_r6_runtime", {}) if isinstance(sol.get("strict_r6_runtime"), dict) else {})
+        bench = legacy.get("bench", {}) if isinstance(legacy.get("bench"), dict) else {}
         h3_e2e = sol.get("h3_e2e", {}) if isinstance(sol.get("h3_e2e"), dict) else {}
+        telemetry = runtime.get("telemetry", {}) if isinstance(runtime.get("telemetry"), dict) else {}
+        times = runtime.get("paired_http_time_total_s", {}) if isinstance(runtime.get("paired_http_time_total_s"), dict) else {}
+        image = runtime.get("image_identity", {}) if isinstance(runtime.get("image_identity"), dict) else {}
+        runtime_label = runtime.get("runtime_label") or image.get("runtime_label") or "unknown"
+        speedup_value = runtime.get('paired_http_speedup_dense_over_sol_attn')
+        if speedup_value is None:
+            timing_ratio_label = "dense/opt-in timing ratio (not a speedup claim)"
+            timing_ratio_value = runtime.get('paired_http_ratio_dense_over_opt_in_not_speedup')
+        else:
+            timing_ratio_label = "dense/opt-in speedup"
+            timing_ratio_value = speedup_value
         lines.extend(
             [
-                f"- Sol-Attn diagnostic: model_load={_fmt(sol.get('model_load'))}; deployment_status=`{_fmt(sol.get('deployment_status'))}`.",
+                f"- Sol-Attn legacy toy/kernel diagnostic: model_load={_fmt(legacy.get('model_load'))}; run_dir=`{_fmt(legacy.get('run_dir'))}`; deployment_status=`{_fmt(sol.get('deployment_status'))}`.",
                 f"- Sol-Attn toy/kernel bench: dense median={_fmt(bench.get('dense_median_ms'))} ms; sparse median={_fmt(bench.get('sparse_median_ms'))} ms; dense/sparse median speedup={_fmt(bench.get('speedup_dense_over_sparse_median'))}.",
+                f"- Sol-Attn {runtime_label} supervisor (current selected run by readable workload/version-label provenance, not run-id text prefix): status `{_fmt((runtime.get('supervisor') or {}).get('status') if isinstance(runtime.get('supervisor'), dict) else None)}`, latest_run_id `{_fmt((runtime.get('supervisor') or {}).get('latest_run_id') if isinstance(runtime.get('supervisor'), dict) else None)}`, classified `{_fmt(runtime.get('classification'))}`.",
+                f"- Sol-Attn {runtime_label} readable provenance: image_tag=`{_fmt(image.get('image_tag'))}`, version=`{_fmt(image.get('version_label'))}`, required_version=`{_fmt(image.get('required_version_label'))}`, title=`{_fmt(image.get('title_label'))}`; opaque image/output identifiers are omitted and are not classification evidence.",
+                f"- Sol-Attn {runtime_label} HTTP timing: dense={_fmt(times.get('dense_h3_backend_reference'), 's')}, opt-in={_fmt(times.get('sol_attn_opt_in'), 's')}, {timing_ratio_label}={_fmt_speedup(timing_ratio_value)}.",
+                f"- Sol-Attn {runtime_label} telemetry: sparse_candidates={_fmt(telemetry.get('sparse_candidate_calls'))}, sparse_calls={_fmt(telemetry.get('sparse_calls'))}, fallback_calls={_fmt(telemetry.get('fallback_calls'))}, materialized_copy_calls={_fmt(telemetry.get('materialized_copy_calls'))}, materialized_copy_bytes={_fmt(telemetry.get('materialized_copy_bytes'))}, declines={telemetry.get('decline_reasons') or 'pending'}, density_samples={_fmt(len(telemetry.get('density_samples', [])) if isinstance(telemetry.get('density_samples'), list) else None)}.",
                 f"- Sol-Attn H3 end-to-end: **{_fmt(h3_e2e.get('status'))}** — {h3_e2e.get('reason', 'pending')}.",
             ]
         )

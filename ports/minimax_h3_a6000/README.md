@@ -1,6 +1,6 @@
 # MiniMax-H3 A6000 Sol-Engine overlay (exact-kernel + Sol-Attn candidate increment)
 
-Status: **default-off standalone Triton exact-kernel candidates, a real SM86 pointer-path Sol-Attn candidate, and opt-in r4 integration artifacts**. This directory does not modify the locked vLLM-Omni worktree, does not load MiniMax-H3 weights, and does not run Docker/GPU commands during CPU/static work. The external exact-kernel GPU2 gate has passed for exact kernel candidates only; no H3 E2E performance claim is made for Sol-Attn until the external GPU2 harness is run.
+Status: **default-off standalone Triton exact-kernel candidates, a real SM86 pointer-path Sol-Attn candidate, and a supervised r7 H3 Sol-Attn diagnostic currently pending terminal evidence**. This directory does not modify the locked vLLM-Omni worktree, does not load MiniMax-H3 weights, and does not run Docker/GPU commands during CPU/static work. The external exact-kernel GPU2 gate has passed for exact kernel candidates only. The current H3 Sol-Attn supervisor-selected run is classified by r7 workload/image identity despite a stale `r6` text prefix in the run id; local status is still `running`, so no H3 E2E Sol-Attn pass, speedup, or fidelity claim is made until terminal dense+opt-in HTTP/AV evidence and `sparse_calls>0` telemetry are present.
 
 ## What is included
 
@@ -86,6 +86,8 @@ git -C runtime/single_a6000_bf16/src/vllm-omni apply --check \
 ```
 
 External exact-kernel GPU evidence already absorbed (kernel-only, not H3 E2E): `${PWD}/technical_report/evidence/minimax_h3_desktop/sol_engine_port/gpu_exact_20260809T155451Z`. Correctness JSON: 8/8 cases `compiled_and_launched`, all `max_abs=0`, `max_rel=0`, `mismatch=0`. Microbenchmark median speedups: indexed modulation 22.02x, indexed gate 11.66x, RoPE 6.50x, SwiGLU 8.09-8.11x. These are raw kernel candidate timings only.
+
+Current H3 Sol-Attn r7 CPU-only ingest: `technical_report/evidence/minimax_h3_desktop/delivery/r7_sol_attn_cpu_ingest_20260811T110523Z/r7_terminal_classification.json`. It records terminal supervisor status `complete`, selected run `sol_engine_port/sol_attn_h3_gpu2_5step_r6_20260811T110523Z`, readable r7 workload/version-label provenance, valid dense/opt-in HTTP+AV, and `sparse_calls=0`; classification remains fail-closed (`fail_closed_missing_metadata`) because Sol-Attn never entered a sparse runtime path. Opaque image/output identifiers are omitted and are not classification evidence.
 
 External commands for repeat or later integration gates (not run by CPU/static tasks):
 

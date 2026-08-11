@@ -82,9 +82,13 @@ E2E diagnostic ablation quality/telemetry:
 - `all_exact`: video_mean_mse=224.11484810613817; audio_waveform_cosine=0.9775986604966458; latency_s=186.382043; telemetry_ops=['apply_rope_bf16', 'indexed_gate_bf16', 'indexed_modulate_bf16', 'swiglu_bf16'].
 - `swiglu`: video_mean_mse=0.0; audio_waveform_cosine=0.9999999999999999; latency_s=189.553095; telemetry_ops=['apply_rope_bf16', 'indexed_gate_bf16', 'indexed_modulate_bf16', 'swiglu_bf16'].
 - Exact-kernel diagnostics are retained as diagnostic/candidate evidence only unless a separate accepted N10 speed result exists.
-- Sol-Attn diagnostic: model_load=False; deployment_status=`rejected_or_pending_not_deployed`.
+- Sol-Attn legacy toy/kernel diagnostic: model_load=False; run_dir=`sol_engine_port/sol_attn_gpu_20260809T173323Z`; deployment_status=`not_deployed_release_manifest_blocked`.
 - Sol-Attn toy/kernel bench: dense median=0.12390399724245071 ms; sparse median=0.40243199467658997 ms; dense/sparse median speedup=0.30788803793302966.
-- Sol-Attn H3 end-to-end: **pending** — diagnostic is kernel-candidate-only with model_load=false; no H3 end-to-end Sol-Attn result is present.
+- Sol-Attn r7 supervisor (current selected run by readable workload/version-label provenance, not run-id text prefix): status `complete`, latest_run_id `sol_attn_h3_gpu2_5step_r6_20260811T110523Z`, classified `fail_closed_missing_metadata`.
+- Sol-Attn r7 readable provenance: image_tag=`argus/minimax-h3-vllm-omni:8e2e9b6b53e8-r7-sol-attn-overlay`, version=`r7`, required_version=`r7`, title=`MiniMax-H3 A6000 r7 Sol-Attn integration overlay`; opaque image/output identifiers are omitted and are not classification evidence.
+- Sol-Attn r7 HTTP timing: dense=189.461526s, opt-in=186.971979s, dense/opt-in timing ratio (not a speedup claim)=1.0133150807587055x.
+- Sol-Attn r7 telemetry: sparse_candidates=0, sparse_calls=0, fallback_calls=0, materialized_copy_calls=pending, materialized_copy_bytes=pending, declines={'dense_first_steps': 200, 'missing_h3_hook_metadata:missing_packed_video_layout': 8}, density_samples=0.
+- Sol-Attn H3 end-to-end: **fail_closed_missing_metadata** — Sol-Attn runtime failed closed to dense fallback with decline reasons.
 
 ## DMD / DMD2 status
 
@@ -94,12 +98,12 @@ E2E diagnostic ablation quality/telemetry:
 ## Pending stages and blockers
 
 - `dlo.formal_n10`: **pending** — no DLO formal N10 timing evidence found.
-- `sol_attn.h3_e2e`: **pending** — diagnostic is kernel-candidate-only with model_load=false; no H3 end-to-end Sol-Attn result is present.
+- `sol_attn.h3_e2e`: **fail_closed_missing_metadata** — Sol-Attn runtime failed closed to dense fallback with decline reasons.
 
 Blockers:
 - `Turbo quality`: **pending** — semantic quality is not certified and human auditory listening remains pending.
 - `DLO`: **pending** — no DLO formal N10 timing evidence found.
-- `Sol-Attn`: **pending** — diagnostic is kernel-candidate-only with model_load=false; no H3 end-to-end Sol-Attn result is present.
+- `Sol-Attn`: **fail_closed_missing_metadata** — Sol-Attn runtime failed closed to dense fallback with decline reasons.
 - `DMD/DMD2`: **blocked** — No DMD/DMD2 speed or quality value is reported unless a first-source H3 recipe/checkpoint appears..
 
 ## Evidence index
@@ -123,6 +127,7 @@ Blockers:
 - `dlo_autotune/runs/a6000_dlo_capacity_5step_rl18_20260810T134526Z`
 - `dlo_autotune/runs/a6000_dlo_capacity_5step_rl18_20260810T134526Z/capacity_gate_verdict.json`
 - `dmd_primary_source_note.md`
+- `sol_engine_port/LATEST_SOL_ATTN_GPU_DIR`
 - `sol_engine_port/gpu_exact_20260809T155451Z/correctness.json`
 - `sol_engine_port/gpu_exact_20260809T155451Z/microbenchmark.json`
 - `sol_engine_port/r5_ablation_20260809T181515Z/adaln/av_validation.json`
@@ -141,7 +146,19 @@ Blockers:
 - `sol_engine_port/r5_ablation_20260809T181515Z/swiglu/exact_telemetry.json`
 - `sol_engine_port/r5_ablation_20260809T181515Z/swiglu/http_metrics.txt`
 - `sol_engine_port/r5_ablation_20260809T181515Z/swiglu/quality_vs_dense.json`
+- `sol_engine_port/sol_attn_gpu2_supervisor/exit_code`
+- `sol_engine_port/sol_attn_gpu2_supervisor/latest_run_id`
+- `sol_engine_port/sol_attn_gpu2_supervisor/status.txt`
 - `sol_engine_port/sol_attn_gpu_20260809T173323Z/result.json`
+- `sol_engine_port/sol_attn_h3_gpu2_5step_r6_20260811T110523Z/dense_h3_backend_reference/av_validation.json`
+- `sol_engine_port/sol_attn_h3_gpu2_5step_r6_20260811T110523Z/dense_h3_backend_reference/http_metrics.txt`
+- `sol_engine_port/sol_attn_h3_gpu2_5step_r6_20260811T110523Z/r7_image_identity.env`
+- `sol_engine_port/sol_attn_h3_gpu2_5step_r6_20260811T110523Z/resource_monitor.csv`
+- `sol_engine_port/sol_attn_h3_gpu2_5step_r6_20260811T110523Z/sol_attn/av_validation.json`
+- `sol_engine_port/sol_attn_h3_gpu2_5step_r6_20260811T110523Z/sol_attn/http_metrics.txt`
+- `sol_engine_port/sol_attn_h3_gpu2_5step_r6_20260811T110523Z/sol_attn/sol_attn_telemetry.sol_attn.json`
+- `sol_engine_port/sol_attn_h3_gpu2_5step_r6_20260811T110523Z/sol_attn_diagnostic_status.json`
+- `sol_engine_port/sol_attn_h3_gpu2_5step_r6_20260811T110523Z/workload.env`
 - `turbo_merged/LATEST_QUALITY_SUITE_RUN_ID`
 - `turbo_merged/quality_suite_runs/gpu3_turbo_quality_20260810T005611Z/baseline_seed0_quality_comparison.json`
 - `turbo_merged/quality_suite_runs/gpu3_turbo_quality_20260810T005611Z/human_review.md`

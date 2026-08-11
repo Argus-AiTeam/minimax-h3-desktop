@@ -5,7 +5,7 @@
     "virtual environments, caches, pycache, PID files, raw logs, generated media/audio, Docker layers, archives, and credentials",
     "Git remotes, tags, releases, and publication actions"
   ],
-  "file_count": 68,
+  "file_count": 73,
   "files": [
     {
       "path": ".argus_release_tree",
@@ -33,8 +33,8 @@
     },
     {
       "path": "README.md",
-      "sha256": "665b200b64f54d5eb787e8571d071076f1930ecb62b54cf27ba0be00ce72d8e7",
-      "size_bytes": 2765,
+      "sha256": "383504091df7e2760bad63eadc60ce51b2e2da1e773ca7fdd7efe06780063a6d",
+      "size_bytes": 10206,
       "source": "generated:readme"
     },
     {
@@ -51,8 +51,8 @@
     },
     {
       "path": "ports/minimax_h3_a6000/README.md",
-      "sha256": "f6e72ec80abc59e8d19e12773210837b289858024c9f9f65eeff617ff5f823b0",
-      "size_bytes": 9661,
+      "sha256": "2eca9b62a66a5048d7f56002fa9071233d53c01cb702a639672b0e44e4d599c9",
+      "size_bytes": 10535,
       "source": "ports/minimax_h3_a6000/README.md"
     },
     {
@@ -117,8 +117,8 @@
     },
     {
       "path": "ports/minimax_h3_a6000/integration/r6/Dockerfile",
-      "sha256": "70f2bb88ba64254cb35e56aff683f9a15eb5d9e38aa52d9572d7d0482d69adb3",
-      "size_bytes": 3707,
+      "sha256": "fe050363900578f848f9af338ee5ece361e5a0e483e11f8172160625380dea31",
+      "size_bytes": 3896,
       "source": "ports/minimax_h3_a6000/integration/r6/Dockerfile"
     },
     {
@@ -132,6 +132,24 @@
       "sha256": "617ef05f8d37aa33d2833694a97d603b345cddd4526c9496236494bd17f57295",
       "size_bytes": 6204,
       "source": "ports/minimax_h3_a6000/integration/r6/dual_install_patch_files.py"
+    },
+    {
+      "path": "ports/minimax_h3_a6000/integration/r7/Dockerfile",
+      "sha256": "c01570aa51b50a8189b0c331661c921ba70e486f0fe2712e31d86f8962ab8663",
+      "size_bytes": 3896,
+      "source": "ports/minimax_h3_a6000/integration/r7/Dockerfile"
+    },
+    {
+      "path": "ports/minimax_h3_a6000/integration/r7/build_r7_overlay_image.sh",
+      "sha256": "01de3cac21f3a062d910dc42c80ef01e4866091ff0fd0df6f6d785154231470e",
+      "size_bytes": 3571,
+      "source": "ports/minimax_h3_a6000/integration/r7/build_r7_overlay_image.sh"
+    },
+    {
+      "path": "ports/minimax_h3_a6000/integration/r7/dual_install_patch_files.py",
+      "sha256": "b41c855641fbd4e8f4b7d6de310808cbe77cc46557087f51d91f17d066ae93bd",
+      "size_bytes": 6204,
+      "source": "ports/minimax_h3_a6000/integration/r7/dual_install_patch_files.py"
     },
     {
       "path": "ports/minimax_h3_a6000/integration/run_gpu2_exact_ablation_5step_r4.sh",
@@ -153,14 +171,14 @@
     },
     {
       "path": "ports/minimax_h3_a6000/integration/run_gpu2_sol_attn_h3_5step_diagnostic.sh",
-      "sha256": "5599cfe28fae570673521e0ba83534a777a6a4213d7ebea785f5c511cb60a9e9",
-      "size_bytes": 13985,
+      "sha256": "48ad62c6535c7b98f2fb0f53e31e9c693e8fbb2e89c059810f6f2d425922a1b9",
+      "size_bytes": 13346,
       "source": "ports/minimax_h3_a6000/integration/run_gpu2_sol_attn_h3_5step_diagnostic.sh"
     },
     {
       "path": "ports/minimax_h3_a6000/patches/vllm_omni_h3_a6000_opt_in.patch",
-      "sha256": "3993fea7fe12d9e2412980059c38c776555275bfd0f513d3005ea790f9328e59",
-      "size_bytes": 26828,
+      "sha256": "01c5554b256d7c106175e7b080c18c319131ef8bd5be5ad4ff3836a316c167aa",
+      "size_bytes": 29380,
       "source": "ports/minimax_h3_a6000/patches/vllm_omni_h3_a6000_opt_in.patch"
     },
     {
@@ -177,8 +195,8 @@
     },
     {
       "path": "ports/minimax_h3_a6000/src/minimax_h3_a6000/env.py",
-      "sha256": "f57827ef3db639c01d0809911d087151a8da1b109431dd0d5684c24015d21216",
-      "size_bytes": 1226,
+      "sha256": "4edd6cd63a64bec39b9e921a7412347bf54eca0d6fa4ca72b602c0f843625765",
+      "size_bytes": 1354,
       "source": "ports/minimax_h3_a6000/src/minimax_h3_a6000/env.py"
     },
     {
@@ -201,14 +219,14 @@
     },
     {
       "path": "ports/minimax_h3_a6000/src/minimax_h3_a6000/sol_attn_backend.py",
-      "sha256": "676764e3f607c792adc1d1b1c7cff744ee0cda5a76f28e26fa108d517ffb18bb",
-      "size_bytes": 19409,
+      "sha256": "d8ff9dc3d630e6908d99a21ed494594467f8f700db246b6a78eff297f8954ee5",
+      "size_bytes": 25150,
       "source": "ports/minimax_h3_a6000/src/minimax_h3_a6000/sol_attn_backend.py"
     },
     {
       "path": "ports/minimax_h3_a6000/src/minimax_h3_a6000/sol_attn_triton_sm86.py",
-      "sha256": "21639227a7b9cae661d18047f3460bd90fceba2f7c6b1f368f396201f7482cea",
-      "size_bytes": 18650,
+      "sha256": "ee0393d0c33676eb9fafde4298472b837ebb1b705b0b6fea66eb344125793ff3",
+      "size_bytes": 19343,
       "source": "ports/minimax_h3_a6000/src/minimax_h3_a6000/sol_attn_triton_sm86.py"
     },
     {
@@ -219,8 +237,8 @@
     },
     {
       "path": "ports/minimax_h3_a6000/tests/test_exact_kernels_static.py",
-      "sha256": "be06f873a4f62ab48366c5fe3ff05962d126ec47e85522e27afe5a86708d0e49",
-      "size_bytes": 6982,
+      "sha256": "9ff29ba9b85b8f0a3844352c604203879a2424d2f5424c07be185ec49f46b6f1",
+      "size_bytes": 7150,
       "source": "ports/minimax_h3_a6000/tests/test_exact_kernels_static.py"
     },
     {
@@ -231,8 +249,8 @@
     },
     {
       "path": "ports/minimax_h3_a6000/tests/test_patch_and_guards.py",
-      "sha256": "f26578d446e84d9612dfbe2bef389ffda8383319975ad1a77070b60dda7c03a5",
-      "size_bytes": 5054,
+      "sha256": "f233c7ef5090c78aabc6f1172fdacb649df3c3ae44d6cb38c7d126dd966a02f1",
+      "size_bytes": 5317,
       "source": "ports/minimax_h3_a6000/tests/test_patch_and_guards.py"
     },
     {
@@ -243,8 +261,8 @@
     },
     {
       "path": "ports/minimax_h3_a6000/tests/test_r6_integration_static.py",
-      "sha256": "65b9326e78e6d185d682e93e9216c3851ff03a43dbcbc4f7ecac619bce227ac6",
-      "size_bytes": 6091,
+      "sha256": "58b3cc54908a24d0f0ae85f802df29c1a8b7a6fa641acc7197d75fefc9076b4d",
+      "size_bytes": 7373,
       "source": "ports/minimax_h3_a6000/tests/test_r6_integration_static.py"
     },
     {
@@ -255,14 +273,14 @@
     },
     {
       "path": "ports/minimax_h3_a6000/tests/test_sol_attn_backend.py",
-      "sha256": "91877c4033c6e8d3a4bb57b326764165dcc924c26a5311527e3848d223050b13",
-      "size_bytes": 8603,
+      "sha256": "bb6513c321c79b7e8f4348137313f21f1c47d6fca780d24a96c71cc22c02b8e4",
+      "size_bytes": 14748,
       "source": "ports/minimax_h3_a6000/tests/test_sol_attn_backend.py"
     },
     {
       "path": "release/github_release_manifest.json",
-      "sha256": "ac6f7a8449bd51d41c2af41948ae395407c8d0209c8847351e468e8a93237b90",
-      "size_bytes": 3644,
+      "sha256": "22e09ebb82d1cfcf56b113f4dc84aa54d54b3f7730f9de44d92a3ee0be29e887",
+      "size_bytes": 3799,
       "source": "release/github_release_manifest.json"
     },
     {
@@ -369,20 +387,26 @@
     },
     {
       "path": "technical_report/minimax_h3_a6000_performance.md",
-      "sha256": "27ca7c8fc69dedc74d4194c8b9b0fd20e42ab850d999e600acbf22818e2f44b2",
-      "size_bytes": 14285,
+      "sha256": "09750ce2e76621050da2c788fbcc7e1b5c0fcd3dbb8d134a576961cec9f0c227",
+      "size_bytes": 16305,
       "source": "technical_report/minimax_h3_a6000_performance.md"
     },
     {
+      "path": "technical_report/progress_update.md",
+      "sha256": "370dde6ba84dbeb025896f53a146571dcd7c985dbc8142d0ade17e75be67536b",
+      "size_bytes": 1376,
+      "source": "technical_report/progress_update.md"
+    },
+    {
       "path": "tests/test_github_release_tree_builder.py",
-      "sha256": "5dfcd5f1acc2d9abf264d2cf1cb7ac0e5e02300488055f15f950afbaa98d4786",
-      "size_bytes": 3751,
+      "sha256": "c299f2253158a12e1221fc103a5928199e7ce9a9887aaea502b96b8057652509",
+      "size_bytes": 4531,
       "source": "tests/test_github_release_tree_builder.py"
     },
     {
       "path": "tests/test_minimax_h3_a6000_performance_report.py",
-      "sha256": "1c18275ecfdddc5b09fb1ef3fe44601f8efcdf43d54f8a72f61f92bc0f5a4293",
-      "size_bytes": 14497,
+      "sha256": "bb902f4758f5db10ef57b9d49d0e96184c174f062ecb9e8b6fff08192e25f50a",
+      "size_bytes": 22554,
       "source": "tests/test_minimax_h3_a6000_performance_report.py"
     },
     {
@@ -399,14 +423,20 @@
     },
     {
       "path": "tools/build_github_release_tree.py",
-      "sha256": "657fdb3b313d350f540588925e004a5cca1882f853ea80976b8a001daf929912",
-      "size_bytes": 21428,
+      "sha256": "90be84f1f13220a4e00c4d1889111beb6fc0a3023d29dfb5633e6c54d671ddc2",
+      "size_bytes": 28876,
       "source": "tools/build_github_release_tree.py"
     },
     {
+      "path": "tools/build_periodic_progress.py",
+      "sha256": "049dfd89bddc40c91b27b76591929bdd6a787671979e065eb8b9ed2ae99a580f",
+      "size_bytes": 3830,
+      "source": "tools/build_periodic_progress.py"
+    },
+    {
       "path": "tools/minimax_h3_a6000_performance_report.py",
-      "sha256": "181ac2e0197befa55734d84ab3771b4502eb63f82f53e98584dfacfa737857fd",
-      "size_bytes": 62906,
+      "sha256": "9aab086c38033e79aa7f73f851024935d4457774680aa26dd039ace9b8f9a77b",
+      "size_bytes": 85054,
       "source": "tools/minimax_h3_a6000_performance_report.py"
     },
     {

@@ -43,8 +43,19 @@ def test_real_manifest_builds_sanitized_export_to_tmp_path(tmp_path: Path) -> No
     assert (dest / "release" / "github_release_manifest.json").is_file()
     assert (dest / "release" / "export_build_manifest.json").is_file()
     assert (dest / "runtime" / "single_a6000_bf16" / "source_commit.json").is_file()
+    readme = (dest / "README.md").read_text(encoding="utf-8")
+    assert "中文定位" in readme
+    assert "Architecture and DLO map" in readme
+    assert "1792.2021025 s" in readme
+    assert "290.9976015 s" in readme
+    assert "unsupported_contiguity=208" in readme
+    assert "sparse_candidate_calls=0" in readme
+    assert "This is **not a speedup claim**" in readme
+    assert "git init" not in readme
+    assert "gh auth" not in readme
     assert (dest / "ports" / "minimax_h3_a6000" / "src" / "minimax_h3_a6000" / "exact_kernels.py").is_file()
     assert (dest / "ports" / "minimax_h3_a6000" / "integration" / "r6" / "Dockerfile").is_file()
+    assert (dest / "ports" / "minimax_h3_a6000" / "integration" / "r7" / "Dockerfile").is_file()
     assert not (dest / "models").exists()
     assert not (dest / "upstreams").exists()
     assert not (dest / "runtime" / "single_a6000_bf16" / "src").exists()
@@ -53,6 +64,8 @@ def test_real_manifest_builds_sanitized_export_to_tmp_path(tmp_path: Path) -> No
     assert build_manifest["schema_version"] == "argus-github-release-build-v1"
     assert any(item["path"] == "technical_report/minimax_h3_a6000_performance.md" for item in build_manifest["files"])
     assert any(item["path"].endswith("quantization_feasibility_a6000.md") for item in build_manifest["files"])
+    assert not any("sol_attn_h3_gpu2_5step_r6_" in item["path"] for item in build_manifest["files"])
+    assert not (dest / "technical_report" / "evidence" / "minimax_h3_desktop" / "sol_engine_port" / "sol_attn_gpu2_supervisor").exists()
 
     issues = audit_tree(dest, max_bytes=1_000_000, prohibited_terms=[])
     assert issues == []

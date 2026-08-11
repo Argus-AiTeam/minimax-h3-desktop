@@ -224,6 +224,103 @@ def _minimal_report_evidence(root: Path) -> None:
     (root / "dmd_primary_source_note.md").write_text("Status: **P5 BLOCKED / RESEARCH ONLY / practical track only**. There is no first-source basis for an H3 DMD claim.\n", encoding="utf-8")
 
 
+def _write_r6_sol_attn_runtime(
+    root: Path,
+    *,
+    run_id: str = "sol_attn_h3_gpu2_5step_r6_20260811T000000Z",
+    supervisor_status: str = "complete",
+    exit_code: str = "0",
+    diagnostic_status: str = "metadata_path_accepted_sparse_candidate_attempted",
+    sparse_candidates: int = 3,
+    decline_reasons: dict | None = None,
+    dense_sha: str = "same-sha",
+    sol_sha: str = "same-sha",
+    write_telemetry: bool = True,
+    write_runtime_files: bool = True,
+) -> Path:
+    sol_root = root / "sol_engine_port"
+    supervisor = sol_root / "sol_attn_gpu2_supervisor"
+    supervisor.mkdir(parents=True, exist_ok=True)
+    (supervisor / "status.txt").write_text(supervisor_status + "\n", encoding="utf-8")
+    (supervisor / "latest_run_id").write_text(run_id + "\n", encoding="utf-8")
+    (supervisor / "exit_code").write_text(exit_code + "\n", encoding="utf-8")
+
+    iid = "sha256:" + "a" * 64
+    image_dir = sol_root / "r6_overlay_image"
+    image_dir.mkdir(parents=True, exist_ok=True)
+    (image_dir / "r6_image_iid.txt").write_text(iid + "\n", encoding="utf-8")
+
+    run = sol_root / run_id
+    run.mkdir(parents=True, exist_ok=True)
+    (run / "resource_monitor.csv").write_text(
+        "timestamp,gpu_memory_used_mib,gpu_util_percent,power_w,temperature_c,host_memory_used_bytes,host_memory_available_bytes,host_swap_used_bytes\n"
+        "2026-08-11T00:00:00Z,24000,80,250.5,75,1000,2000,0\n",
+        encoding="utf-8",
+    )
+    if not write_runtime_files:
+        return run
+    (run / "r6_image_identity.env").write_text(
+        f"expected_r6_image_iid={iid}\n"
+        f"actual_r6_image_iid={iid}\n"
+        "actual_image_version_label=r6\n"
+        "actual_image_base_label=argus/minimax-h3-vllm-omni:8e2e9b6b53e8-r2\n"
+        "actual_image_title_label=MiniMax-H3 A6000 r6 Sol-Attn integration overlay\n",
+        encoding="utf-8",
+    )
+    (run / "workload.env").write_text(
+        "steps=5\nseed=0\nwidth=1344\nheight=768\nfps=24\nduration=5.166667\nattention_backend=H3_A6000_SOL_ATTN\nsol_attn_cache=off\nnetwork=none\n",
+        encoding="utf-8",
+    )
+    for mode, sha, latency in (("dense_h3_backend_reference", dense_sha, 120.0), ("sol_attn", sol_sha, 100.0)):
+        mode_dir = run / mode
+        mode_dir.mkdir(parents=True, exist_ok=True)
+        (mode_dir / "http_metrics.txt").write_text(f"http_code=200\ntime_total_s={latency}\n", encoding="utf-8")
+        _write_json(
+            mode_dir / "av_validation.json",
+            {
+                "mode": mode,
+                "steps": 5,
+                "seed": 0,
+                "sha256": sha,
+                "bytes": 2048,
+                "video_present": True,
+                "audio_present": True,
+                "width": 1344,
+                "height": 768,
+                "average_rate": "24",
+                "decoded_video_frames": 124,
+                "audio_sample_rate": 32000,
+                "audio_channels": 2,
+                "decoded_audio_frames": 10,
+                "decoded_audio_samples": 160000,
+            },
+        )
+    if write_telemetry:
+        _write_json(
+            run / "sol_attn" / "sol_attn_telemetry.sol_attn.json",
+            {
+                "dense_calls": 4,
+                "sparse_candidate_calls": sparse_candidates,
+                "sparse_calls": sparse_candidates,
+                "fallback_calls": 0,
+                "prefix_query_dense_calls": 0,
+                "decline_reasons": decline_reasons or {},
+                "fallback_reasons": {},
+                "density_samples": [{"kind": "static_exact_block_lower_bound", "exact_density_lower_bound": 0.5}] if sparse_candidates else [],
+            },
+        )
+    _write_json(
+        run / "sol_attn_diagnostic_status.json",
+        {
+            "status": diagnostic_status,
+            "scope": "diagnostic_5_step_sol_attn_metadata_gate_not_fidelity_or_performance_claim",
+            "dense_sha256": dense_sha,
+            "sol_attn_sha256": sol_sha,
+        },
+    )
+    return run
+
+
 def test_payload_and_markdown_preserve_lane_boundaries_and_pending(tmp_path: Path) -> None:
     evidence = tmp_path / "technical_report" / "evidence" / "minimax_h3_desktop"
     _minimal_report_evidence(evidence)
@@ -243,6 +340,82 @@ def test_payload_and_markdown_preserve_lane_boundaries_and_pending(tmp_path: Pat
     assert "Turbo practical results must not be relabeled as BF16-exact/fidelity" in report
     assert "Formal DLO N10: **pending**" in report
     assert "Sol-Attn H3 end-to-end: **pending**" in report
+
+
+def test_sol_attn_r6_completed_metadata_is_speed_only_until_quality_gate(tmp_path: Path) -> None:
+    evidence = tmp_path / "technical_report" / "evidence" / "minimax_h3_desktop"
+    _minimal_report_evidence(evidence)
+    _write_r6_sol_attn_runtime(evidence)
+
+    payload = build_payload(evidence, repo_root=tmp_path)
+    validate_payload(payload, SCHEMA)
+    strict = payload["sections"]["sol_attn"]["data"]["strict_r6_runtime"]
+    report = render_markdown(payload)
+
+    assert strict["accepted_metadata"] is True
+    assert strict["classification"] == "speed_only_no_quality"
+    assert strict["paired_http_speedup_dense_over_sol_attn"] == 1.2
+    assert strict["telemetry"]["sparse_candidate_calls"] == 3
+    assert strict["telemetry"]["density_samples"]
+    assert strict["release_manifest_eligible"] is False
+    assert any(item["section"] == "sol_attn.h3_e2e" and item["status"] == "speed_only_no_quality" for item in payload["pending_items"])
+    assert "Sol-Attn r6 supervisor" in report
+
+
+def test_sol_attn_r6_active_supervisor_remains_pending(tmp_path: Path) -> None:
+    evidence = tmp_path / "technical_report" / "evidence" / "minimax_h3_desktop"
+    _minimal_report_evidence(evidence)
+    _write_r6_sol_attn_runtime(evidence, supervisor_status="running")
+
+    strict = build_payload(evidence, repo_root=tmp_path)["sections"]["sol_attn"]["data"]["strict_r6_runtime"]
+
+    assert strict["classification"] == "pending_non_terminal_supervisor_status"
+    assert "still 'running'" in strict["reason"]
+    assert strict["accepted_metadata"] is False
+
+
+def test_sol_attn_r6_fail_closed_missing_metadata_decline(tmp_path: Path) -> None:
+    evidence = tmp_path / "technical_report" / "evidence" / "minimax_h3_desktop"
+    _minimal_report_evidence(evidence)
+    _write_r6_sol_attn_runtime(
+        evidence,
+        diagnostic_status="fail_closed_dense_fallback",
+        sparse_candidates=0,
+        decline_reasons={"missing_h3_hook_metadata": 12},
+    )
+
+    payload = build_payload(evidence, repo_root=tmp_path)
+    strict = payload["sections"]["sol_attn"]["data"]["strict_r6_runtime"]
+    report = render_markdown(payload)
+
+    assert strict["classification"] == "fail_closed_missing_metadata"
+    assert strict["accepted_metadata"] is False
+    assert "paired_http_speedup_dense_over_sol_attn" not in strict
+    assert strict["paired_http_ratio_dense_over_opt_in_not_speedup"] == 1.2
+    assert strict["telemetry"]["decline_reasons"] == {"missing_h3_hook_metadata": 12}
+    assert "dense/opt-in timing ratio (not a speedup claim)=1.2x" in report
+
+
+def test_sol_attn_r6_runtime_failure_quality_drift_and_stale_rejection(tmp_path: Path) -> None:
+    evidence = tmp_path / "technical_report" / "evidence" / "minimax_h3_desktop"
+    _minimal_report_evidence(evidence)
+    _write_r6_sol_attn_runtime(evidence, supervisor_status="failed_rc_61", exit_code="61", write_runtime_files=False)
+    runtime_failure = build_payload(evidence, repo_root=tmp_path)["sections"]["sol_attn"]["data"]["strict_r6_runtime"]
+    assert runtime_failure["classification"] == "runtime_failure"
+
+    drift_root = tmp_path / "drift" / "technical_report" / "evidence" / "minimax_h3_desktop"
+    _minimal_report_evidence(drift_root)
+    _write_r6_sol_attn_runtime(drift_root, dense_sha="dense-sha", sol_sha="sol-sha")
+    no_hash_drift = build_payload(drift_root, repo_root=tmp_path / "drift")["sections"]["sol_attn"]["data"]["strict_r6_runtime"]
+    assert no_hash_drift["classification"] == "speed_only_no_quality"
+    assert no_hash_drift["accepted_metadata"] is True
+    assert no_hash_drift["opaque_integrity_policy"]["output_identifiers"] == "omitted_not_evidence"
+
+    stale_root = tmp_path / "stale" / "technical_report" / "evidence" / "minimax_h3_desktop"
+    _minimal_report_evidence(stale_root)
+    _write_r6_sol_attn_runtime(stale_root, run_id="sol_attn_gpu_20260809T173323Z")
+    stale = build_payload(stale_root, repo_root=tmp_path / "stale")["sections"]["sol_attn"]["data"]["strict_r6_runtime"]
+    assert stale["classification"] == "stale_or_dry_run_rejected"
 
 
 def test_sparse_evidence_root_succeeds_with_explicit_pending(tmp_path: Path) -> None:

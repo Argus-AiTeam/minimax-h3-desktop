@@ -45,6 +45,8 @@ def test_patch_builder_copies_without_runtime_write():
     assert "MINIMAX_H3_A6000_ABLATION_DISABLE_INDEXED_GATE=0" in report
     assert "MINIMAX_H3_A6000_ENABLE_SHADOW=0" in report
     assert "MINIMAX_H3_A6000_SHADOW_STRICT=0" in report
+    assert "MINIMAX_H3_A6000_SOL_ATTN_DIAGNOSTIC_MATERIALIZE=0" in report
+    assert "MINIMAX_H3_A6000_SOL_ATTN_MATERIALIZE_MAX_BYTES=67108864" in report
     assert "=1" not in report
 
 
@@ -98,6 +100,8 @@ def test_patch_is_opt_in_and_default_dense():
     assert "density_samples" in patch_text
     assert "static_exact_block_lower_bound" in patch_text
     assert "SOL_ATTN_CACHE" in patch_text
+    assert "SOL_ATTN_DIAGNOSTIC_MATERIALIZE" in patch_text
+    assert "materialize_copy_bytes" in patch_text
 
 
 def test_embedded_sol_attn_backend_blocks_until_real_metadata_and_kernel_path():

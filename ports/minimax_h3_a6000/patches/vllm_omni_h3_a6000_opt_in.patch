@@ -13,7 +13,7 @@ diff --git a/vllm_omni/diffusion/attention/backends/sol_attn_h3_a6000.py b/vllm_
 new file mode 100644
 --- /dev/null
 +++ b/vllm_omni/diffusion/attention/backends/sol_attn_h3_a6000.py
-@@ -0,0 +1,424 @@
+@@ -0,0 +1,468 @@
 +# SPDX-License-Identifier: Apache-2.0
 +# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
 +"""Opt-in MiniMax-H3 A6000 Sol-Attn backend.
@@ -54,6 +54,8 @@ new file mode 100644
 +    "MINIMAX_H3_A6000_TELEMETRY_JSON": "",
 +    "MINIMAX_H3_A6000_SOL_ATTN_CACHE": "0",
 +    "MINIMAX_H3_A6000_SOL_ATTN_STRICT": "0",
++    "MINIMAX_H3_A6000_SOL_ATTN_DIAGNOSTIC_MATERIALIZE": "0",
++    "MINIMAX_H3_A6000_SOL_ATTN_MATERIALIZE_MAX_BYTES": "67108864",
 +    "MINIMAX_H3_A6000_SOL_ATTN_TELEMETRY_JSON": "",
 +}
 +
@@ -79,6 +81,11 @@ new file mode 100644
 +    fallback_reasons: dict[str, int] = field(default_factory=dict)
 +    sink_ranges: list[tuple[int, int]] = field(default_factory=list)
 +    density_samples: list[dict[str, Any]] = field(default_factory=list)
++    layout_samples: list[dict[str, Any]] = field(default_factory=list)
++    materialize_copy_count: int = 0
++    materialize_copy_bytes: int = 0
++    materialize_copy_by_tensor: dict[str, int] = field(default_factory=dict)
++    materialize_latency_ms: float = 0.0
 +
 +    def decline(self, reason: str) -> None:
 +        self.dense_calls += 1
@@ -101,6 +108,23 @@ new file mode 100644
 +            self.fallback_reasons[str(name)] = self.fallback_reasons.get(str(name), 0) + int(count)
 +        self.sink_ranges.extend(list(getattr(wrapper_telemetry, "sink_ranges", [])))
 +        self.density_samples.extend(list(getattr(wrapper_telemetry, "density_samples", [])))
++        self.layout_samples.extend(list(getattr(wrapper_telemetry, "layout_samples", [])))
++        self.materialize_copy_count += int(getattr(wrapper_telemetry, "materialize_copy_count", 0))
++        self.materialize_copy_bytes += int(getattr(wrapper_telemetry, "materialize_copy_bytes", 0))
++        self.materialize_latency_ms += float(getattr(wrapper_telemetry, "materialize_latency_ms", 0.0))
++        for name, count in getattr(wrapper_telemetry, "materialize_copy_by_tensor", {}).items():
++            key = str(name)
++            self.materialize_copy_by_tensor[key] = self.materialize_copy_by_tensor.get(key, 0) + int(count)
++
++    def record_layout(self, *, stage: str, query: torch.Tensor, key: torch.Tensor, value: torch.Tensor) -> None:
++        if len(self.layout_samples) >= 32:
++            return
++        self.layout_samples.append(
++            {
++                "stage": str(stage),
++                "tensors": [_tensor_layout("query", query), _tensor_layout("key", key), _tensor_layout("value", value)],
++            }
++        )
 +
 +
 +_TELEMETRY = H3A6000SolAttnTelemetry()
@@ -123,6 +147,23 @@ new file mode 100644
 +        "fallback_reasons": dict(_TELEMETRY.fallback_reasons),
 +        "sink_ranges": list(_TELEMETRY.sink_ranges),
 +        "density_samples": list(_TELEMETRY.density_samples),
++        "layout_samples": list(_TELEMETRY.layout_samples),
++        "materialize_copy_count": _TELEMETRY.materialize_copy_count,
++        "materialize_copy_bytes": _TELEMETRY.materialize_copy_bytes,
++        "materialize_copy_by_tensor": dict(_TELEMETRY.materialize_copy_by_tensor),
++        "materialize_latency_ms": _TELEMETRY.materialize_latency_ms,
++    }
++
++
++def _tensor_layout(name: str, tensor: torch.Tensor) -> dict[str, Any]:
++    return {
++        "name": name,
++        "shape": [int(x) for x in tensor.shape],
++        "stride": [int(x) for x in tensor.stride()],
++        "storage_offset": int(tensor.storage_offset()),
++        "dtype": str(tensor.dtype).replace("torch.", ""),
++        "device_type": tensor.device.type,
++        "is_contiguous": bool(tensor.is_contiguous()),
 +    }
 +
 +
@@ -363,10 +404,11 @@ new file mode 100644
 +            return "unsupported_qkv_layout"
 +        if query.dtype != torch.bfloat16 or key.dtype != query.dtype or value.dtype != query.dtype:
 +            return "unsupported_dtype"
++        if not (query.is_contiguous() and key.is_contiguous() and value.is_contiguous()):
++            if not _env_enabled("MINIMAX_H3_A6000_SOL_ATTN_DIAGNOSTIC_MATERIALIZE"):
++                return "unsupported_contiguity"
 +        if query.device.type != "cuda" or key.device != query.device or value.device != query.device:
 +            return "unsupported_device"
-+        if not (query.is_contiguous() and key.is_contiguous() and value.is_contiguous()):
-+            return "unsupported_contiguity"
 +        if not _sm86_guard(query):
 +            return "unsupported_or_unprobed_sm"
 +        sparse_metadata, reason = _extract_sparse_metadata(attn_metadata, query.shape[1])
@@ -386,6 +428,7 @@ new file mode 100644
 +        value: torch.Tensor,
 +        attn_metadata: AttentionMetadata | None = None,
 +    ) -> torch.Tensor:
++        _TELEMETRY.record_layout(stage="pre_decline", query=query, key=key, value=value)
 +        reason = self._decline_reason(query, key, value, attn_metadata)
 +        if reason is not None:
 +            _TELEMETRY.decline(reason)
@@ -459,7 +502,7 @@ diff --git a/vllm_omni/diffusion/models/minimax_h3/minimax_h3_transformer.py b/v
  from vllm_omni.diffusion.distributed.sp_plan import (
      SequenceParallelInput,
      SequenceParallelOutput,
-@@ -44,6 +47,101 @@
+@@ -44,6 +47,103 @@
      from vllm_omni.diffusion.data import OmniDiffusionConfig
 
  logger = init_logger(__name__)
@@ -476,6 +519,8 @@ diff --git a/vllm_omni/diffusion/models/minimax_h3/minimax_h3_transformer.py b/v
 +    "MINIMAX_H3_A6000_ENABLE_FUSED_SWIGLU": "0",
 +    "MINIMAX_H3_A6000_ENABLE_SOL_ATTN": "0",
 +    "MINIMAX_H3_A6000_SOL_ATTN_CACHE": "0",
++    "MINIMAX_H3_A6000_SOL_ATTN_DIAGNOSTIC_MATERIALIZE": "0",
++    "MINIMAX_H3_A6000_SOL_ATTN_MATERIALIZE_MAX_BYTES": "67108864",
 +    "MINIMAX_H3_A6000_ENABLE_TELEMETRY": "0",
 +    "MINIMAX_H3_A6000_TELEMETRY_ATEXIT": "0",
 +    "MINIMAX_H3_A6000_TELEMETRY_JSON": "",
@@ -561,7 +606,7 @@ diff --git a/vllm_omni/diffusion/models/minimax_h3/minimax_h3_transformer.py b/v
 
 
  @dataclass
-@@ -187,6 +285,17 @@
+@@ -187,6 +287,17 @@
      dtype: torch.dtype,
  ) -> torch.Tensor:
      # Apply per-index affine modulation: x * (1 + scale[idx]) + shift[idx].
@@ -579,7 +624,7 @@ diff --git a/vllm_omni/diffusion/models/minimax_h3/minimax_h3_transformer.py b/v
      return (x * (1.0 + scale.index_select(0, indices)) + shift.index_select(0, indices)).to(dtype)
 
 
-@@ -199,6 +308,17 @@
+@@ -199,6 +310,17 @@
      dtype: torch.dtype,
  ) -> torch.Tensor:
      # Apply the per-index gated residual: x + gate[idx] * other.
@@ -597,7 +642,7 @@ diff --git a/vllm_omni/diffusion/models/minimax_h3/minimax_h3_transformer.py b/v
      return (x + gate.index_select(0, indices) * other).to(dtype)
 
 
-@@ -358,6 +478,7 @@
+@@ -358,6 +480,7 @@
              skip_sequence_parallel=skip_sequence_parallel,
              prefix=prefix,
          )
@@ -605,7 +650,7 @@ diff --git a/vllm_omni/diffusion/models/minimax_h3/minimax_h3_transformer.py b/v
 
      def _apply_rope(self, x: torch.Tensor, freqs: torch.Tensor) -> torch.Tensor:
          """Rotate the first rot_dim head dims; pass the rest through.
-@@ -365,6 +486,14 @@
+@@ -365,6 +488,14 @@
          x: [T, heads, head_dim]; freqs: [T, rot_dim]. In the unfused path, cos/sin
          are cast to the activation dtype before the elementwise math.
          """
@@ -620,7 +665,7 @@ diff --git a/vllm_omni/diffusion/models/minimax_h3/minimax_h3_transformer.py b/v
          rot_dim = freqs.shape[-1]
          x_rot, x_pass = x[..., :rot_dim], x[..., rot_dim:]
          cos = torch.cos(freqs).to(x.dtype)  # [T, rot_dim]
-@@ -407,15 +536,25 @@
+@@ -407,15 +538,25 @@
          )
          if used < packed_total and not prefix_slice:
              attn_mask = torch.arange(packed_total, device=q.device)[None] < used
@@ -653,7 +698,7 @@ diff --git a/vllm_omni/diffusion/models/minimax_h3/minimax_h3_transformer.py b/v
              video_layout=video_layout,
          )
          return self.attention(
-@@ -513,7 +652,16 @@
+@@ -513,7 +654,16 @@
 
      def forward(self, x: torch.Tensor) -> torch.Tensor:
          hidden, _ = self.fc1(x)

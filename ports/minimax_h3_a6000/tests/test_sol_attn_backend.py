@@ -16,6 +16,7 @@ SRC = Path(__file__).resolve().parents[1] / "src"
 sys.path.insert(0, str(SRC))
 
 if torch is not None:
+    import minimax_h3_a6000.sol_attn_backend as sol_backend  # noqa: E402
     from minimax_h3_a6000.sol_attn_backend import (  # noqa: E402
         DEFAULT_ENV_SWITCHES,
         H3_HOOK_METADATA_SOURCE,
@@ -49,6 +50,15 @@ def _qkv(tokens=6, heads=2, dim=128):
     return q, k, v
 
 
+def _noncontiguous_qkv(tokens=8, heads=2, dim=128):
+    torch.manual_seed(17)
+    q = torch.randn(1, heads, tokens, dim).to(torch.bfloat16).permute(0, 2, 1, 3)
+    k = torch.randn(1, heads, tokens, dim).to(torch.bfloat16).permute(0, 2, 1, 3)
+    v = torch.randn(1, heads, tokens, dim).to(torch.bfloat16).permute(0, 2, 1, 3)
+    assert not q.is_contiguous() and not k.is_contiguous() and not v.is_contiguous()
+    return q, k, v
+
+
 class _HookLayout:
     def __init__(self, *, prefix_len=2, latent_grid=(1, 2, 2)):
         self.prefix_len = prefix_len
@@ -67,6 +77,8 @@ def test_env_switches_are_default_off():
     assert DEFAULT_ENV_SWITCHES.get("MINIMAX_H3_A6000_EXACT_INDEXED_STRATEGY") == "auto"
     assert DEFAULT_ENV_SWITCHES.get("MINIMAX_H3_A6000_TELEMETRY_JSON", "") == ""
     assert DEFAULT_ENV_SWITCHES.get("MINIMAX_H3_A6000_SOL_ATTN_TELEMETRY_JSON", "") == ""
+    assert DEFAULT_ENV_SWITCHES.get("MINIMAX_H3_A6000_SOL_ATTN_DIAGNOSTIC_MATERIALIZE") == "0"
+    assert DEFAULT_ENV_SWITCHES.get("MINIMAX_H3_A6000_SOL_ATTN_MATERIALIZE_MAX_BYTES") == "67108864"
 
 
 def test_h3_hook_metadata_derivation_uses_source_backed_layout_only():
@@ -214,6 +226,150 @@ def test_cache_and_shape_declines():
         device_capability=(8, 6),
     )
     assert telemetry.decline_reasons == {"unsupported_qkv_layout": 1}
+
+
+def test_noncontiguous_default_off_declines_with_layout_telemetry():
+    q, k, v = _noncontiguous_qkv(tokens=8)
+    metadata = PackedH3Metadata(prefix_len=2, latent_grid=(1, 2, 2), valid_length=6, total_length=8)
+    telemetry = SolAttnTelemetry()
+
+    out = sol_attn_h3_reference_or_decline(
+        q,
+        k,
+        v,
+        metadata=metadata,
+        step_index=10,
+        layer_index=2,
+        policy=SolAttnPolicy(allow_sparse=True),
+        telemetry=telemetry,
+        device_capability=(8, 6),
+    )
+
+    assert torch.equal(out, dense_attention_packed_reference(q, k, v, metadata=metadata))
+    assert telemetry.decline_reasons == {"unsupported_contiguity": 1}
+    assert telemetry.sparse_candidate_calls == 0
+    assert telemetry.materialize_copy_count == 0
+    assert telemetry.layout_samples[0]["stage"] == "pre_decline"
+    assert telemetry.layout_samples[0]["tensors"][0]["is_contiguous"] is False
+    assert telemetry.layout_samples[0]["tensors"][0]["shape"] == [1, 8, 2, 128]
+
+
+def test_diagnostic_materialize_cap_declines_without_allocation():
+    q, k, v = _noncontiguous_qkv(tokens=8)
+    metadata = PackedH3Metadata(prefix_len=2, latent_grid=(1, 2, 2), valid_length=6, total_length=8)
+    telemetry = SolAttnTelemetry()
+
+    sol_attn_h3_reference_or_decline(
+        q,
+        k,
+        v,
+        metadata=metadata,
+        step_index=10,
+        layer_index=2,
+        policy=SolAttnPolicy(
+            allow_sparse=True,
+            diagnostic_materialize_noncontiguous=True,
+            diagnostic_materialize_max_bytes=1,
+        ),
+        telemetry=telemetry,
+        device_capability=(8, 6),
+    )
+
+    assert telemetry.decline_reasons == {"diagnostic_materialize_cap_exceeded": 1}
+    assert telemetry.sparse_candidate_calls == 0
+    assert telemetry.materialize_copy_count == 0
+    assert len(telemetry.layout_samples) == 1
+
+
+def test_diagnostic_materialize_can_reach_sparse_candidate_with_monkeypatch(monkeypatch):
+    q, k, v = _noncontiguous_qkv(tokens=8)
+    metadata = PackedH3Metadata(prefix_len=2, latent_grid=(1, 2, 2), valid_length=6, total_length=8)
+    telemetry = SolAttnTelemetry()
+
+    def fake_decline_reason(**kwargs):
+        tensors = (kwargs["query"], kwargs["key"], kwargs["value"])
+        if not all(t.is_contiguous() for t in tensors):
+            return "unsupported_contiguity"
+        return None
+
+    def fake_kernel(q_valid, k_valid, v_valid, **kwargs):
+        return dense_attention_reference(q_valid, k_valid, v_valid, softmax_scale=kwargs.get("scale"))
+
+    monkeypatch.setattr(sol_backend, "decline_reason", fake_decline_reason)
+    monkeypatch.setattr(sol_backend, "_load_sol_attn_sm86", lambda: fake_kernel)
+
+    out = sol_attn_h3_reference_or_decline(
+        q,
+        k,
+        v,
+        metadata=metadata,
+        step_index=10,
+        layer_index=2,
+        policy=SolAttnPolicy(
+            allow_sparse=True,
+            diagnostic_materialize_noncontiguous=True,
+            diagnostic_materialize_max_bytes=1_000_000,
+        ),
+        telemetry=telemetry,
+        device_capability=(8, 6),
+    )
+
+    assert torch.equal(out, dense_attention_packed_reference(q, k, v, metadata=metadata))
+    assert telemetry.sparse_candidate_calls == 1
+    assert telemetry.sparse_calls == 1
+    assert telemetry.decline_reasons == {}
+    assert telemetry.materialize_copy_count == 3
+    assert telemetry.materialize_copy_bytes == q.numel() * q.element_size() * 3
+    assert telemetry.materialize_copy_by_tensor == {
+        "query": q.numel() * q.element_size(),
+        "key": k.numel() * k.element_size(),
+        "value": v.numel() * v.element_size(),
+    }
+    assert telemetry.materialize_latency_ms >= 0.0
+    assert telemetry.layout_samples[-1]["stage"] == "post_diagnostic_materialize"
+    assert telemetry.layout_samples[-1]["tensors"][0]["is_contiguous"] is True
+    assert telemetry.density_samples[-1]["diagnostic_materialized_qkv"] is True
+
+
+def test_diagnostic_materialize_candidate_failure_falls_back_dense(monkeypatch):
+    q, k, v = _noncontiguous_qkv(tokens=8)
+    metadata = PackedH3Metadata(prefix_len=2, latent_grid=(1, 2, 2), valid_length=6, total_length=8)
+    telemetry = SolAttnTelemetry()
+
+    def fake_decline_reason(**kwargs):
+        tensors = (kwargs["query"], kwargs["key"], kwargs["value"])
+        if not all(t.is_contiguous() for t in tensors):
+            return "unsupported_contiguity"
+        return None
+
+    def failing_kernel(*args, **kwargs):
+        raise ValueError("synthetic candidate failure")
+
+    monkeypatch.setattr(sol_backend, "decline_reason", fake_decline_reason)
+    monkeypatch.setattr(sol_backend, "_load_sol_attn_sm86", lambda: failing_kernel)
+
+    out = sol_attn_h3_reference_or_decline(
+        q,
+        k,
+        v,
+        metadata=metadata,
+        step_index=10,
+        layer_index=2,
+        policy=SolAttnPolicy(
+            allow_sparse=True,
+            diagnostic_materialize_noncontiguous=True,
+            diagnostic_materialize_max_bytes=1_000_000,
+        ),
+        telemetry=telemetry,
+        device_capability=(8, 6),
+    )
+
+    assert torch.equal(out, dense_attention_packed_reference(q, k, v, metadata=metadata))
+    assert telemetry.sparse_candidate_calls == 1
+    assert telemetry.sparse_calls == 0
+    assert telemetry.fallback_calls == 1
+    assert telemetry.fallback_reasons == {"kernel_error:ValueError": 1}
+    assert telemetry.decline_reasons == {"kernel_error:ValueError": 1}
 
 
 if torch is None:
