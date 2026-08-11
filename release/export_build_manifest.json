@@ -5,7 +5,7 @@
     "virtual environments, caches, pycache, PID files, raw logs, generated media/audio, Docker layers, archives, and credentials",
     "Git remotes, tags, releases, and publication actions"
   ],
-  "file_count": 66,
+  "file_count": 68,
   "files": [
     {
       "path": ".argus_release_tree",
@@ -159,7 +159,7 @@
     },
     {
       "path": "ports/minimax_h3_a6000/patches/vllm_omni_h3_a6000_opt_in.patch",
-      "sha256": "93ab829c352d2b0fdd20565087b43bac9933d90d18338eb8d55393cdca769c6a",
+      "sha256": "3993fea7fe12d9e2412980059c38c776555275bfd0f513d3005ea790f9328e59",
       "size_bytes": 26828,
       "source": "ports/minimax_h3_a6000/patches/vllm_omni_h3_a6000_opt_in.patch"
     },
@@ -261,8 +261,8 @@
     },
     {
       "path": "release/github_release_manifest.json",
-      "sha256": "f4d44aa1186fca01d9ae27058ef73a51aff6fd52020bc7d56bdab6ebbf7ce2fb",
-      "size_bytes": 3320,
+      "sha256": "ac6f7a8449bd51d41c2af41948ae395407c8d0209c8847351e468e8a93237b90",
+      "size_bytes": 3644,
       "source": "release/github_release_manifest.json"
     },
     {
@@ -330,6 +330,18 @@
       "sha256": "ca5774e50e82b6440136ee72f64e1c27abc4e58c34bb9c4ddd24affcafbacfb8",
       "size_bytes": 5773,
       "source": "technical_report/evidence/minimax_h3_desktop/dlo_autotune/resident_layer_candidates.json"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/dlo_autotune/runs/a6000_dlo_candidate_50_rl16_20260810T141257Z/candidate50_summary.json",
+      "sha256": "355d839099ed973784afe614f04aeddcb822a8db1fbb04b37c412393e9a88209",
+      "size_bytes": 553,
+      "source": "technical_report/evidence/minimax_h3_desktop/dlo_autotune/runs/a6000_dlo_candidate_50_rl16_20260810T141257Z/candidate50_summary.json"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/dlo_autotune/runs/a6000_dlo_candidate_50_rl16_20260810T141257Z/candidate50_verdict.json",
+      "sha256": "0338b338a18090b82444a6ee82840eb1a98a75f29146af485e21e675ab153846",
+      "size_bytes": 836,
+      "source": "technical_report/evidence/minimax_h3_desktop/dlo_autotune/runs/a6000_dlo_candidate_50_rl16_20260810T141257Z/candidate50_verdict.json"
     },
     {
       "path": "technical_report/evidence/minimax_h3_desktop/hidden_cache_policy.json",

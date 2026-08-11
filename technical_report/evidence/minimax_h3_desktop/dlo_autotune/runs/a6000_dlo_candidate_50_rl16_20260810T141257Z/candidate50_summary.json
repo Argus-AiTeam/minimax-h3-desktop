@@ -1,0 +1,13 @@
+{
+  "baseline_warm_cv_percent": 0.8371622556580874,
+  "baseline_warm_n10_median_s": 1792.2021025,
+  "formal_n10_promotion_recommended": false,
+  "promotion_note": "N=1 warm candidate only; formal speedup requires N>=10 and should exceed baseline variability.",
+  "resident_layers": 16,
+  "schema": "argus-ir04-dlo-candidate50-summary-v1",
+  "session_first_latency_s": 1794.848556,
+  "single_warm_improvement_percent": 0.45586357225460006,
+  "single_warm_speedup": 1.004558635722546,
+  "status": "pass_exact_lifecycle",
+  "warm_latency_s": 1784.069181
+}

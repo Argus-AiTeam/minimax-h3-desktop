@@ -653,7 +653,7 @@ diff --git a/vllm_omni/diffusion/models/minimax_h3/minimax_h3_transformer.py b/v
              video_layout=video_layout,
          )
          return self.attention(
-@@ -513,8 +652,17 @@
+@@ -513,7 +652,16 @@
 
      def forward(self, x: torch.Tensor) -> torch.Tensor:
          hidden, _ = self.fc1(x)

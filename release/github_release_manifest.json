@@ -83,6 +83,12 @@
       "path": "technical_report/evidence/minimax_h3_desktop/dlo_autotune/detached_continuation/capacity_selection.json"
     },
     {
+      "path": "technical_report/evidence/minimax_h3_desktop/dlo_autotune/runs/a6000_dlo_candidate_50_rl16_20260810T141257Z/candidate50_summary.json"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/dlo_autotune/runs/a6000_dlo_candidate_50_rl16_20260810T141257Z/candidate50_verdict.json"
+    },
+    {
       "path": "technical_report/evidence/minimax_h3_desktop/hidden_cache_policy.json"
     },
     {

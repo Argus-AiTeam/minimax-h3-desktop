@@ -1,0 +1,18 @@
+{
+  "baseline_denominator": "baseline v2 same physical GPU3 warm N=10 remains the only formal denominator",
+  "candidate_warm": {
+    "av_validation": "candidate_rl16_warm_50step_av_validation.json"
+  },
+  "expected_session_first_sha256": "d1d6280b40d7a8df543caa45509aa531a3d0dfdf71081ea7284b7e8acc1855f1",
+  "expected_warm_sha256": "6c987ae83c02e53fa922d974a159dbd34778211cef4925c6bab6af6883362cb9",
+  "observed_session_first_sha256": "d1d6280b40d7a8df543caa45509aa531a3d0dfdf71081ea7284b7e8acc1855f1",
+  "observed_warm_sha256": "6c987ae83c02e53fa922d974a159dbd34778211cef4925c6bab6af6883362cb9",
+  "physical_device": {
+    "host_gpu_index": 3,
+    "uuid": "GPU-ff0c8d25-2652-ce58-3ef7-e3a9aeeb3334"
+  },
+  "resident_layers": 16,
+  "schema": "argus-minimax-h3-a6000-dlo-candidate50-v1",
+  "stage": "candidate-50",
+  "status": "pass"
+}
