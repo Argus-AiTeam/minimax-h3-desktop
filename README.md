@@ -29,7 +29,7 @@
 
 ## 实际生成效果
 
-下面的视频是本仓库使用单张 RTX A6000 新生成的 **Turbo 8-step practical** 示例，不是引用其他项目的数据或媒体。
+下面的视频是本仓库使用单张 RTX A6000 新生成的 **Turbo 8-step practical** 示例。
 
 <a href="examples/a6000-turbo-8step-sci-fi/orbital-shipyard-turbo-8step.mp4">
   <img src="examples/a6000-turbo-8step-sci-fi/contact-sheet.jpg" alt="MiniMax-H3 A6000 orbital shipyard six-frame preview">
@@ -296,7 +296,6 @@ python3 tools/publication_audit.py \
 ## 平台边界
 
 - 当前正式目标平台是 **单张 RTX A6000 48GB**；
-- 测试主机虽然有 4 张 A6000，但每个正式模型进程只看见一张，结果没有聚合多卡；
 - 不能将本仓库数字当作 RTX 5090、DGX Spark、A100、H100 或 8×GB200 结果；
 - Turbo 是 practical approximation；BF16 baseline 才属于 fidelity 分母；
 - 实际耗时会受 prompt 长度、驱动、温度、存储、host RAM 和后台负载影响。
