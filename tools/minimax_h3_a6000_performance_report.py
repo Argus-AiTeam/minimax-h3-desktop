@@ -37,6 +37,9 @@ EXACT_LATEST_REL = Path("sol_engine_port/LATEST_GPU_EXACT_DIR")
 R5_ABLATION_LATEST_REL = Path("sol_engine_port/LATEST_R5_ABLATION_DIR")
 SOL_ATTN_LATEST_REL = Path("sol_engine_port/LATEST_SOL_ATTN_GPU_DIR")
 SOL_ATTN_SUPERVISOR_REL = Path("sol_engine_port/sol_attn_gpu2_supervisor")
+R8_MATCHED_RETEST_TERMINAL_GLOB = "sol_attn_h3_matched_retest_r8_n3_*"
+R8_MATCHED_RETEST_TERMINAL_RECHECK_GLOB = "r8_matched_retest_terminal_recheck_*"
+R8_MATCHED_RETEST_NONTERMINAL_GLOBS = ("r8_matched_retest_inspection_*", "r8_matched_retest_nonterminal_inspection_*")
 
 JsonDict = dict[str, Any]
 
@@ -733,19 +736,22 @@ def _resource_csv_subset(path: Path, evidence_root: Path, evidence: list[str], n
         return {"status": "invalid", "reason": str(exc)}
     out: JsonDict = {"status": "present", "samples": len(rows)}
     numeric_aliases = {
-        "peak_gpu_memory_mib": "gpu_memory_used_mib",
-        "peak_gpu_util_percent": "gpu_util_percent",
-        "peak_power_w": "power_w",
-        "peak_temperature_c": "temperature_c",
-        "peak_host_memory_used_bytes": "host_memory_used_bytes",
-        "peak_host_swap_used_bytes": "host_swap_used_bytes",
+        "peak_gpu_memory_mib": ("gpu_memory_used_mib", "memory.used [MiB]", "memory.used"),
+        "peak_gpu_util_percent": ("gpu_util_percent", "utilization.gpu [%]", "utilization.gpu"),
+        "peak_power_w": ("power_w", "power.draw [W]", "power.draw"),
+        "peak_temperature_c": ("temperature_c", "temperature.gpu", "temperature.gpu [C]"),
+        "peak_host_memory_used_bytes": ("host_memory_used_bytes",),
+        "peak_host_swap_used_bytes": ("host_swap_used_bytes",),
     }
-    for canonical, column in numeric_aliases.items():
+    for canonical, columns in numeric_aliases.items():
         values: list[float] = []
         for row in rows:
-            number = _maybe_number(row.get(column))
-            if number is not None:
-                values.append(float(number))
+            normalized_row = {str(key).strip(): str(value).strip() for key, value in row.items() if key is not None}
+            for column in columns:
+                number = _maybe_number(normalized_row.get(column))
+                if number is not None:
+                    values.append(float(number))
+                    break
         if values:
             out[canonical] = max(values)
     return out
@@ -865,14 +871,28 @@ def _legacy_sol_attn_kernel_diagnostic(evidence_root: Path, evidence: list[str],
     }
 
 
-def _runtime_finish(classification: str, reason: str, data: JsonDict, *, accepted_metadata: bool = False, accepted_runtime: bool = False) -> JsonDict:
+def _runtime_finish(
+    classification: str,
+    reason: str,
+    data: JsonDict,
+    *,
+    accepted_metadata: bool = False,
+    accepted_runtime: bool = False,
+    release_manifest_eligible: bool | None = None,
+) -> JsonDict:
+    release_eligible = accepted_runtime if release_manifest_eligible is None else release_manifest_eligible
     data["classification"] = classification
     data["reason"] = reason
     data["accepted_metadata"] = accepted_metadata
     data["accepted_runtime_evidence"] = accepted_runtime
-    data["release_manifest_eligible"] = accepted_runtime
+    data["release_manifest_eligible"] = release_eligible
     h3_status = "pending" if classification == "pending_non_terminal_supervisor_status" else classification
-    data["h3_e2e"] = {"status": h3_status, "reason": reason, "accepted_runtime_evidence": accepted_runtime}
+    data["h3_e2e"] = {
+        "status": h3_status,
+        "reason": reason,
+        "accepted_runtime_evidence": accepted_runtime,
+        "release_manifest_eligible": release_eligible,
+    }
     return data
 
 
@@ -910,15 +930,23 @@ def _classify_sol_attn_runtime(evidence_root: Path, evidence: list[str], notes: 
     workload = _parse_env_lines(workload_text)
     image_text = str(workload.get("image") or "")
 
+    r8_identity_text, r8_identity_err = _read_text(run_dir / "r8_image_identity.env")
     r7_identity_text, r7_identity_err = _read_text(run_dir / "r7_image_identity.env")
     r6_identity_text, r6_identity_err = _read_text(run_dir / "r6_image_identity.env")
+    if r8_identity_err is None:
+        evidence.append(_evidence_rel(run_dir / "r8_image_identity.env", evidence_root))
     if r7_identity_err is None:
         evidence.append(_evidence_rel(run_dir / "r7_image_identity.env", evidence_root))
     if r6_identity_err is None:
         evidence.append(_evidence_rel(run_dir / "r6_image_identity.env", evidence_root))
+    r8_identity = _parse_env_lines(r8_identity_text)
     r7_identity = _parse_env_lines(r7_identity_text)
     r6_identity = _parse_env_lines(r6_identity_text)
-    if r7_identity or "r7" in image_text:
+    if r8_identity or "r8" in image_text:
+        runtime_label = "r8"
+        identity = r8_identity
+        identity_err = r8_identity_err
+    elif r7_identity or "r7" in image_text:
         runtime_label = "r7"
         identity = r7_identity
         identity_err = r7_identity_err
@@ -929,7 +957,7 @@ def _classify_sol_attn_runtime(evidence_root: Path, evidence: list[str], notes: 
     else:
         runtime_label = "unknown"
         identity = {}
-        identity_err = "missing r6/r7 readable image provenance evidence"
+        identity_err = "missing r6/r7/r8 readable image provenance evidence"
     data["runtime_label"] = runtime_label
 
     data["opaque_integrity_policy"] = {
@@ -970,7 +998,7 @@ def _classify_sol_attn_runtime(evidence_root: Path, evidence: list[str], notes: 
     if lowered_status not in {"complete", "completed", "success", "succeeded", "done"}:
         return _runtime_finish("pending", f"supervisor status {supervisor_status!r} is not a completed runtime marker", data)
 
-    if runtime_label not in {"r6", "r7"} or identity_err or workload_err:
+    if runtime_label not in {"r6", "r7", "r8"} or identity_err or workload_err:
         missing = [msg for msg in (identity_err, workload_err) if msg]
         return _runtime_finish("fail_closed_missing_metadata", "; ".join(missing) or "missing readable runtime/workload provenance", data)
     version_label = data["image_identity"].get("version_label")
@@ -990,8 +1018,8 @@ def _classify_sol_attn_runtime(evidence_root: Path, evidence: list[str], notes: 
     for key, expected_value in expected_workload.items():
         if str(workload.get(key)) != expected_value:
             workload_mismatches.append(f"{key}={workload.get(key)!r} expected {expected_value!r}")
-    if runtime_label == "r7" and workload.get("sol_attn_diagnostic_materialize") != "on_for_r7_only":
-        workload_mismatches.append("sol_attn_diagnostic_materialize is not on_for_r7_only")
+    if runtime_label in {"r7", "r8"} and workload.get("sol_attn_diagnostic_materialize") != f"on_for_{runtime_label}_only":
+        workload_mismatches.append(f"sol_attn_diagnostic_materialize is not on_for_{runtime_label}_only")
     if workload_mismatches:
         return _runtime_finish("identity_mismatch", "workload identity mismatch: " + "; ".join(workload_mismatches), data)
 
@@ -1021,8 +1049,8 @@ def _classify_sol_attn_runtime(evidence_root: Path, evidence: list[str], notes: 
             "sparse_calls": telemetry.get("sparse_calls"),
             "fallback_calls": telemetry.get("fallback_calls"),
             "prefix_query_dense_calls": telemetry.get("prefix_query_dense_calls"),
-            "materialized_copy_calls": telemetry.get("materialized_copy_calls") or telemetry.get("copy_calls"),
-            "materialized_copy_bytes": telemetry.get("materialized_copy_bytes") or telemetry.get("copy_bytes"),
+            "materialized_copy_calls": telemetry.get("materialized_copy_calls") or telemetry.get("materialize_copy_count") or telemetry.get("copy_calls"),
+            "materialized_copy_bytes": telemetry.get("materialized_copy_bytes") or telemetry.get("materialize_copy_bytes") or telemetry.get("copy_bytes"),
             "materialization_failures": telemetry.get("materialization_failures"),
             "decline_reasons": telemetry.get("decline_reasons") if isinstance(telemetry.get("decline_reasons"), dict) else {},
             "fallback_reasons": telemetry.get("fallback_reasons") if isinstance(telemetry.get("fallback_reasons"), dict) else {},
@@ -1057,8 +1085,91 @@ def _classify_sol_attn_runtime(evidence_root: Path, evidence: list[str], notes: 
     if not density_samples:
         return _runtime_finish("fail_closed_missing_metadata", "Sol-Attn sparse candidate was attempted but density telemetry is absent", data)
 
-    data["paired_http_speedup_dense_over_sol_attn"] = float(dense_time) / float(sol_time) if dense_time and sol_time else None
-    return _runtime_finish("speed_only_no_quality", "Sol-Attn sparse_calls>0 and paired timing/AV evidence exists; opaque output hashes were omitted and not used as quality-equivalence evidence", data, accepted_metadata=True)
+    if dense_time and sol_time:
+        data["paired_http_ratio_dense_over_opt_in_not_speedup"] = float(dense_time) / float(sol_time)
+    return _runtime_finish(
+        "sparse_runtime_valid_5step_diagnostic",
+        "Sol-Attn sparse_calls>0 with HTTP 200, structural AV, resource, density, and materialization telemetry; this is only a 5-step sparse-execution diagnostic candidate, not a speedup, N10, BF16 fidelity, release, or quality-equivalence claim",
+        data,
+        accepted_metadata=True,
+        accepted_runtime=True,
+        release_manifest_eligible=False,
+    )
+
+
+def _latest_glob_dir(parent: Path, pattern: str) -> Path | None:
+    if not parent.is_dir():
+        return None
+    dirs = sorted(path for path in parent.glob(pattern) if path.is_dir())
+    return dirs[-1] if dirs else None
+
+
+def _collect_r8_matched_retest(evidence_root: Path, evidence: list[str], notes: list[str]) -> JsonDict:
+    sol_root = evidence_root / "sol_engine_port"
+    terminal_dir = _latest_glob_dir(sol_root, R8_MATCHED_RETEST_TERMINAL_GLOB)
+    if terminal_dir is not None and (terminal_dir / "decision.json").is_file():
+        decision_path = terminal_dir / "decision.json"
+        decision, err = _load_json(decision_path)
+        if err or decision is None:
+            notes.append(err or "invalid r8 matched decision")
+            return {"status": "invalid", "reason": err or "invalid r8 matched decision"}
+        terminal_files = ["decision.json", "RUN_REPORT.md", "timing_summary.json", "quality_proxy_comparison.json", "resource_summary.json"]
+        terminal_artifacts = {name: (terminal_dir / name).is_file() for name in terminal_files}
+        for name, present in terminal_artifacts.items():
+            if present:
+                evidence.append(_evidence_rel(terminal_dir / name, evidence_root))
+        posthoc = terminal_dir / "posthoc_finalization_note.json"
+        posthoc_rel = None
+        if posthoc.is_file():
+            posthoc_rel = _evidence_rel(posthoc, evidence_root)
+            evidence.append(posthoc_rel)
+        recheck_rel = None
+        recheck_dir = _latest_glob_dir(evidence_root / "delivery", R8_MATCHED_RETEST_TERMINAL_RECHECK_GLOB)
+        if recheck_dir is not None and (recheck_dir / "summary.json").is_file():
+            recheck_rel = _evidence_rel(recheck_dir / "summary.json", evidence_root)
+            evidence.append(recheck_rel)
+        gates = decision.get("gates") if isinstance(decision.get("gates"), dict) else {}
+        return {
+            "status": decision.get("classification"),
+            "source_run_dir": _evidence_rel(terminal_dir, evidence_root),
+            "decision_path": _evidence_rel(decision_path, evidence_root),
+            "terminal_recheck_path": recheck_rel,
+            "posthoc_finalization_note": posthoc_rel,
+            "reason": decision.get("reason"),
+            "requested_pairs": gates.get("requested_pairs"),
+            "completed_pairs": gates.get("completed_pairs"),
+            "median_http_time_improvement_pct": decision.get("median_http_time_improvement_pct"),
+            "timing_threshold_pct": decision.get("timing_threshold_pct"),
+            "failed_gates": decision.get("failed_gates"),
+            "proceed_to_n10_recommended": decision.get("proceed_to_n10_recommended"),
+            "not_formal_n10": decision.get("not_formal_n10"),
+            "not_fidelity_or_performance_claim": decision.get("not_fidelity_or_performance_claim"),
+            "terminal_artifacts_present": terminal_artifacts,
+        }
+
+    latest_nonterminal: Path | None = None
+    delivery = evidence_root / "delivery"
+    for pattern in R8_MATCHED_RETEST_NONTERMINAL_GLOBS:
+        candidate = _latest_glob_dir(delivery, pattern)
+        if candidate is not None and (latest_nonterminal is None or candidate.name > latest_nonterminal.name):
+            latest_nonterminal = candidate
+    if latest_nonterminal is None:
+        return {"status": "not_available", "reason": "no r8 matched-workload route evidence found"}
+    json_files = sorted(latest_nonterminal.glob("*.json"))
+    if not json_files:
+        return {"status": "pending", "reason": f"no JSON file in {latest_nonterminal}"}
+    path = json_files[0]
+    data, err = _load_json(path)
+    if err or data is None:
+        return {"status": "pending", "reason": err or "invalid nonterminal inspection"}
+    evidence.append(_evidence_rel(path, evidence_root))
+    return {
+        "status": data.get("classification", "pending"),
+        "evidence_path": _evidence_rel(path, evidence_root),
+        "source_run_dir": data.get("source_run_dir"),
+        "reason": data.get("reason"),
+        "n10_recommendation": data.get("n10_recommendation"),
+    }
 
 
 def collect_sol_attn(evidence_root: Path) -> JsonDict:
@@ -1066,13 +1177,15 @@ def collect_sol_attn(evidence_root: Path) -> JsonDict:
     notes: list[str] = []
     legacy = _legacy_sol_attn_kernel_diagnostic(evidence_root, evidence, notes)
     runtime = _classify_sol_attn_runtime(evidence_root, evidence, notes)
+    matched_retest = _collect_r8_matched_retest(evidence_root, evidence, notes)
     h3_e2e = runtime.get("h3_e2e") if isinstance(runtime.get("h3_e2e"), dict) else {"status": "pending", "reason": runtime.get("reason", "missing Sol-Attn runtime evidence")}
     data = {
         "legacy_kernel_diagnostic": legacy,
         "strict_runtime": runtime,
         "strict_r6_runtime": runtime,
         "h3_e2e": h3_e2e,
-        "deployment_status": "not_deployed_release_manifest_blocked" if not runtime.get("accepted_runtime_evidence") else "accepted_runtime_evidence_ready_for_private_release_metadata",
+        "matched_retest": matched_retest,
+        "deployment_status": "accepted_5step_diagnostic_not_release_manifest_eligible" if runtime.get("accepted_runtime_evidence") and not runtime.get("release_manifest_eligible") else ("release_manifest_eligible_runtime_evidence" if runtime.get("release_manifest_eligible") else "not_deployed_release_manifest_blocked"),
     }
     status = "partial" if legacy.get("status") == "present" or runtime.get("accepted_metadata") else "pending"
     if runtime.get("classification") in {"pending_non_terminal_supervisor_status", "identity_mismatch", "runtime_failure", "quality_drift", "fail_closed_missing_metadata", "speed_only_no_quality", "stale_or_dry_run_rejected"}:
@@ -1122,6 +1235,12 @@ def _collect_pending(section_name: str, section: JsonDict) -> list[JsonDict]:
         h3_e2e = data.get("h3_e2e")
         if isinstance(h3_e2e, dict) and h3_e2e.get("status") in {"pending", "identity_mismatch", "stale_or_dry_run_rejected", "fail_closed_missing_metadata", "runtime_failure", "quality_drift", "speed_only_no_quality", "metadata_accepted"}:
             pending.append({"section": "sol_attn.h3_e2e", "status": h3_e2e.get("status", "pending"), "reason": h3_e2e.get("reason", "missing evidence")})
+        matched = data.get("matched_retest")
+        if isinstance(matched, dict):
+            if matched.get("status") == "proceed_to_formal_n10_candidate":
+                pending.append({"section": "sol_attn.formal_n10", "status": "pending_formal_n10_required_after_r8_n3_candidate_before_speedup_or_quality_claim", "reason": "r8 N=3 route gate recommends formal N>=10, but no formal N>=10 promotion result is accepted"})
+            elif matched.get("status") not in {None, "not_available"}:
+                pending.append({"section": "sol_attn.matched_workload", "status": matched.get("status", "pending"), "reason": matched.get("reason", "matched-workload route evidence is not terminal/pass")})
     return pending
 
 
@@ -1466,27 +1585,33 @@ def render_markdown(payload: JsonDict) -> str:
         bench = legacy.get("bench", {}) if isinstance(legacy.get("bench"), dict) else {}
         h3_e2e = sol.get("h3_e2e", {}) if isinstance(sol.get("h3_e2e"), dict) else {}
         telemetry = runtime.get("telemetry", {}) if isinstance(runtime.get("telemetry"), dict) else {}
+        resource = runtime.get("resource", {}) if isinstance(runtime.get("resource"), dict) else {}
         times = runtime.get("paired_http_time_total_s", {}) if isinstance(runtime.get("paired_http_time_total_s"), dict) else {}
         image = runtime.get("image_identity", {}) if isinstance(runtime.get("image_identity"), dict) else {}
+        matched = sol.get("matched_retest", {}) if isinstance(sol.get("matched_retest"), dict) else {}
         runtime_label = runtime.get("runtime_label") or image.get("runtime_label") or "unknown"
-        speedup_value = runtime.get('paired_http_speedup_dense_over_sol_attn')
-        if speedup_value is None:
-            timing_ratio_label = "dense/opt-in timing ratio (not a speedup claim)"
-            timing_ratio_value = runtime.get('paired_http_ratio_dense_over_opt_in_not_speedup')
-        else:
-            timing_ratio_label = "dense/opt-in speedup"
-            timing_ratio_value = speedup_value
+        timing_ratio_label = "dense/opt-in timing ratio (diagnostic only, not a speedup claim)"
+        timing_ratio_value = runtime.get('paired_http_ratio_dense_over_opt_in_not_speedup')
         lines.extend(
             [
-                f"- Sol-Attn legacy toy/kernel diagnostic: model_load={_fmt(legacy.get('model_load'))}; run_dir=`{_fmt(legacy.get('run_dir'))}`; deployment_status=`{_fmt(sol.get('deployment_status'))}`.",
+                f"- Sol-Attn legacy toy/kernel diagnostic: model_load={_fmt(legacy.get('model_load'))}; run_dir=`{_fmt(legacy.get('run_dir'))}`.",
+                f"- Sol-Attn H3 diagnostic deployment boundary: `{_fmt(sol.get('deployment_status'))}`.",
                 f"- Sol-Attn toy/kernel bench: dense median={_fmt(bench.get('dense_median_ms'))} ms; sparse median={_fmt(bench.get('sparse_median_ms'))} ms; dense/sparse median speedup={_fmt(bench.get('speedup_dense_over_sparse_median'))}.",
                 f"- Sol-Attn {runtime_label} supervisor (current selected run by readable workload/version-label provenance, not run-id text prefix): status `{_fmt((runtime.get('supervisor') or {}).get('status') if isinstance(runtime.get('supervisor'), dict) else None)}`, latest_run_id `{_fmt((runtime.get('supervisor') or {}).get('latest_run_id') if isinstance(runtime.get('supervisor'), dict) else None)}`, classified `{_fmt(runtime.get('classification'))}`.",
                 f"- Sol-Attn {runtime_label} readable provenance: image_tag=`{_fmt(image.get('image_tag'))}`, version=`{_fmt(image.get('version_label'))}`, required_version=`{_fmt(image.get('required_version_label'))}`, title=`{_fmt(image.get('title_label'))}`; opaque image/output identifiers are omitted and are not classification evidence.",
                 f"- Sol-Attn {runtime_label} HTTP timing: dense={_fmt(times.get('dense_h3_backend_reference'), 's')}, opt-in={_fmt(times.get('sol_attn_opt_in'), 's')}, {timing_ratio_label}={_fmt_speedup(timing_ratio_value)}.",
                 f"- Sol-Attn {runtime_label} telemetry: sparse_candidates={_fmt(telemetry.get('sparse_candidate_calls'))}, sparse_calls={_fmt(telemetry.get('sparse_calls'))}, fallback_calls={_fmt(telemetry.get('fallback_calls'))}, materialized_copy_calls={_fmt(telemetry.get('materialized_copy_calls'))}, materialized_copy_bytes={_fmt(telemetry.get('materialized_copy_bytes'))}, declines={telemetry.get('decline_reasons') or 'pending'}, density_samples={_fmt(len(telemetry.get('density_samples', [])) if isinstance(telemetry.get('density_samples'), list) else None)}.",
+                f"- Sol-Attn {runtime_label} resource envelope: {_fmt_resource(resource)}.",
                 f"- Sol-Attn H3 end-to-end: **{_fmt(h3_e2e.get('status'))}** — {h3_e2e.get('reason', 'pending')}.",
+                "- Sol-Attn diagnostic boundary: the selected 5-step run may be used only as sparse-execution metadata plumbing evidence; matched-workload quality/correctness and formal performance promotion remain separate follow-up gates.",
             ]
         )
+        if matched.get("status") == "proceed_to_formal_n10_candidate":
+            lines.append(
+                f"- Latest r8 matched-workload route decision: `{matched.get('status')}`; evidence `{matched.get('decision_path')}`, terminal recheck `{matched.get('terminal_recheck_path')}`. Completed pairs={matched.get('completed_pairs')}/{matched.get('requested_pairs')}; median HTTP-time improvement={_fmt(matched.get('median_http_time_improvement_pct'))}%; route threshold>{_fmt(matched.get('timing_threshold_pct'))}%; failed_gates={matched.get('failed_gates')}. This recommends a future formal N>=10 Sol-Attn run, but is not formal N10, not a speedup claim, not BF16 fidelity, and not quality-equivalence certification."
+            )
+        elif matched.get("status") not in {None, "not_available"}:
+            lines.append(f"- Latest r8 matched-workload retest CPU inspection: `{matched.get('status')}`; evidence `{matched.get('evidence_path')}`. {matched.get('reason', 'pending')}.")
     lines.extend(["", "## DMD / DMD2 status", ""])
     if sections["dmd"]["status"] == "pending":
         lines.append(f"- **pending**: {sections['dmd'].get('reason', 'missing DMD evidence')}.")

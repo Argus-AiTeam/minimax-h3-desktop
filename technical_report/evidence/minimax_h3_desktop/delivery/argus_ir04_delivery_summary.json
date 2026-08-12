@@ -28,6 +28,32 @@
         ],
         "limits": "Not an accepted N=10 speedup and not deployed as a certified fidelity path.",
         "track": "practical_disclosed_approx"
+      },
+      {
+        "claim": "The gated one-command local lifecycle passed in a clean-room export/work directory using existing local locked resources only.",
+        "evidence": [
+          "delivery/local_lifecycle_clean_room_20260812T014824Z/lifecycle/stages/05_lifecycle_summary.json",
+          "delivery/local_lifecycle_clean_room_20260812T014824Z/lifecycle/stages/02_model_prepare.json",
+          "delivery/local_lifecycle_clean_room_20260812T014824Z/lifecycle/stages/03_deploy.json"
+        ],
+        "limits": "Packaging/deployment evidence only: no container start, model load, GPU inference, media generation, speed, fidelity, or quality claim.",
+        "track": "packaging_deployment_only"
+      },
+      {
+        "claim": "H3 Sol-Attn r8 metadata plumbing reached the real 5-step H3 attention boundary and executed the sparse path with valid structural AV/resource telemetry.",
+        "evidence": [
+          "delivery/r8_sol_attn_cpu_ingest_20260812T005600Z/r8_terminal_classification.json"
+        ],
+        "limits": "accepted 5-step sparse-execution metadata-plumbing diagnostic only; not a speedup, N10, BF16 fidelity, release, or quality-equivalence claim",
+        "track": "diagnostic_metadata_plumbing_only"
+      },
+      {
+        "claim": "The r8 N=3 matched-workload route gate is terminal and recommends formal N>=10 Sol-Attn testing.",
+        "evidence": [
+          "sol_engine_port/sol_attn_h3_matched_retest_r8_n3_20260812T013544Z/decision.json"
+        ],
+        "limits": "Bounded N=3 5-step route decision only; not formal N10, not a speedup, not BF16 fidelity, and not quality-equivalence certification.",
+        "track": "diagnostic_metadata_plumbing_only"
       }
     ],
     "blocked": [
@@ -46,6 +72,23 @@
           "turbo_merged/quality_suite_runs/gpu3_turbo_quality_20260810T005611Z/human_review.md"
         ],
         "status": "blocked_human_auditory_listening_pending_semantic_quality_not_certified"
+      }
+    ],
+    "pending": [
+      {
+        "claim": "Formal DLO N10 performance promotion is complete.",
+        "evidence": [
+          "dlo_autotune/detached_continuation/status.txt",
+          "dlo_autotune/runs/a6000_dlo_candidate_50_rl16_20260810T141257Z/candidate50_summary.json"
+        ],
+        "status": "pending_no_formal_n10_because_current_candidate_is_below_baseline_noise"
+      },
+      {
+        "claim": "Sol-Attn matched-workload correctness/quality and performance promotion is complete.",
+        "evidence": [
+          "sol_engine_port/sol_attn_h3_matched_retest_r8_n3_20260812T013544Z/decision.json"
+        ],
+        "status": "pending_formal_n10_required_after_r8_n3_candidate_before_speedup_or_quality_claim"
       }
     ],
     "rejected": [
@@ -88,6 +131,41 @@
         "reason": "Current toy harness is kernel-candidate-only, model_load=false, and sparse median is slower than dense."
       }
     ]
+  },
+  "delivery_lifecycle": {
+    "claim_boundary": "local clean-room lifecycle verifier only; no new speedup, quality, BF16 fidelity, Sol-Attn, Turbo, DLO, DMD, GPU, Docker-run, model-load, or publication claim",
+    "deploy_path": "delivery/local_lifecycle_clean_room_20260812T014824Z/lifecycle/stages/03_deploy.json",
+    "deploy_status": "pass",
+    "model_file_count": 81,
+    "model_prepare_path": "delivery/local_lifecycle_clean_room_20260812T014824Z/lifecycle/stages/02_model_prepare.json",
+    "model_total_bytes": 144051182625,
+    "publication_audit_status": "pass",
+    "run_dir": "delivery/local_lifecycle_clean_room_20260812T014824Z",
+    "status": "pass_packaging_lifecycle_only",
+    "summary_path": "delivery/local_lifecycle_clean_room_20260812T014824Z/lifecycle/stages/05_lifecycle_summary.json"
+  },
+  "final_gates": {
+    "claim_boundary": "CPU/static/export/audit gates only; no GPU, Docker-run, model-load, speed, fidelity, or quality claim is created by these gates.",
+    "cpu_static_gate": {
+      "dir": "delivery/final_cpu_static_gate_20260812T020013Z",
+      "status": "pass",
+      "summary_path": "delivery/final_cpu_static_gate_20260812T020013Z/summary.txt",
+      "summary_tail": [
+        "verify_run=PASS mock-av-metadata-fixture-0001 track=fidelity_bf16_exact platform=current_a6000_reference mock=True",
+        "turbo_dry_run=To execute later: ARGUS_ALLOW_TURBO_QUALITY_SUITE=1 python3 tools/turbo_quality_suite_runner.py --execute --config technical_report/evidence/minimax_h3_desktop/turbo_merged/quality_suite_config.json --out technical_report/evidence/minimax_h3_desktop/turbo_merged/quality_suite_dry_run --authorization-id <FRESH_AUTHZ> --acknowledge-gpu-docker-model-inference",
+        "aggregate_regression_after_gate=3 collected, 3 passed, 0 skipped, 0 failed",
+        "release_regression_after_readme_gate=13 collected, 13 passed, 0 skipped, 0 failed"
+      ]
+    },
+    "decisive_export_audit_gate": {
+      "dir": "delivery/final_decisive_export_audit_20260812T025605Z",
+      "export_file_count": 82,
+      "publication_audit_status": "pass",
+      "publication_issue_count": 0,
+      "status": "pass",
+      "summary_path": "delivery/final_decisive_export_audit_20260812T025605Z/summary.json"
+    },
+    "status": "pass"
   },
   "input_root": "technical_report/evidence/minimax_h3_desktop",
   "lanes": {
@@ -159,6 +237,77 @@
           "quality_path": "sol_engine_port/r5_ablation_20260809T181515Z/all_exact/quality_vs_dense.json",
           "status": "rejected_for_output_drift_not_accepted_exact_kernel",
           "video_mean_mse": 224.11484810613817
+        },
+        "h3_sol_attn_r8": {
+          "av": {
+            "dense_audio_sample_rate_hz": 32000,
+            "dense_structural_pass": true,
+            "dense_video_frames": 124,
+            "opt_in_audio_sample_rate_hz": 32000,
+            "opt_in_structural_pass": true,
+            "opt_in_video_frames": 124
+          },
+          "claim_boundary": "accepted 5-step sparse-execution metadata-plumbing diagnostic only; not a speedup, N10, BF16 fidelity, release, or quality-equivalence claim",
+          "classification": "sparse_runtime_valid_5step_diagnostic",
+          "evidence_path": "delivery/r8_sol_attn_cpu_ingest_20260812T005600Z/r8_terminal_classification.json",
+          "final_pass_fail": "candidate_pass",
+          "http_time_total_s": {
+            "dense_h3_backend_reference": 186.498762,
+            "sol_attn_opt_in": 158.923988
+          },
+          "ingest_dir": "delivery/r8_sol_attn_cpu_ingest_20260812T005600Z",
+          "matched_retest": {
+            "completed_pairs": 3,
+            "evidence_path": "sol_engine_port/sol_attn_h3_matched_retest_r8_n3_20260812T013544Z/decision.json",
+            "median_http_time_improvement_pct": 14.782455716069165,
+            "n10_recommendation": "proceed_to_formal_n10_candidate",
+            "posthoc_finalization_note": "sol_engine_port/sol_attn_h3_matched_retest_r8_n3_20260812T013544Z/posthoc_finalization_note.json",
+            "reason": "bounded matched retest passed correctness, sparse-runtime, resource, quality-proxy, and timing gates",
+            "requested_pairs": 3,
+            "source_run_dir": "sol_engine_port/sol_attn_h3_matched_retest_r8_n3_20260812T013544Z",
+            "status": "proceed_to_formal_n10_candidate",
+            "supervisor_pid_alive": false,
+            "supervisor_return_code": 2,
+            "supervisor_status": "failed",
+            "terminal_artifacts_present": {
+              "RUN_REPORT.md": true,
+              "decision.json": true,
+              "quality_proxy_comparison.json": true,
+              "resource_summary.json": true,
+              "timing_summary.json": true
+            },
+            "terminal_recheck_evidence_path": "delivery/r8_matched_retest_terminal_recheck_20260812T024043Z/summary.json",
+            "timing_threshold_pct": 3.0
+          },
+          "paired_http_ratio_dense_over_opt_in_not_speedup": 1.173509199882399,
+          "readable_provenance": {
+            "image_tag": "argus/minimax-h3-vllm-omni:8e2e9b6b53e8-r8-sol-attn-overlay",
+            "image_version_label": "r8",
+            "runtime_label": "r8",
+            "workload_attention_backend": "H3_A6000_SOL_ATTN"
+          },
+          "reason": "Sol-Attn sparse_calls>0 with HTTP 200, structural AV, resource, density, and materialization telemetry; this is only a 5-step sparse-execution diagnostic candidate, not a speedup, N10, BF16 fidelity, release, or quality-equivalence claim",
+          "release_manifest_eligible": false,
+          "resource_summary": {
+            "peak_gpu_memory_mib": 27354.0,
+            "peak_power_w": 299.88,
+            "peak_temperature_c": 84.0
+          },
+          "selected_run_dir": "sol_engine_port/sol_attn_h3_gpu2_5step_r8_prompt0644_20260812T005600Z",
+          "status": "sparse_runtime_valid_5step_diagnostic",
+          "telemetry": {
+            "decline_reasons": {
+              "dense_first_layers": 8,
+              "non_h3_dit_attention_prefix": 8
+            },
+            "dense_calls": 16,
+            "density_sample_count": 192,
+            "fallback_calls": 0,
+            "materialized_copy_bytes": 105344139264,
+            "materialized_copy_calls": 192,
+            "sparse_calls": 192,
+            "sparse_candidate_calls": 192
+          }
         },
         "rope": {
           "audio_waveform_cosine": 0.9775986604966458,
@@ -292,13 +441,13 @@
     }
   },
   "operator_commands": [
-    "PYTHONPATH=code:. python3 -m pytest -q tests ports/minimax_h3_a6000/tests",
+    "PYTHONPATH=code:.:ports/minimax_h3_a6000/src python3 -m pytest -q tests ports/minimax_h3_a6000/tests",
     "python3 tools/verify_run.py tests/fixtures/minimal_av_case/run_record.json",
     "python3 tools/turbo_quality_suite_runner.py --dry-run --config technical_report/evidence/minimax_h3_desktop/turbo_merged/quality_suite_config.json --out technical_report/evidence/minimax_h3_desktop/turbo_merged/quality_suite_dry_run",
     "python3 tools/argus_ir04_aggregate.py --strict --input technical_report/evidence/minimax_h3_desktop --out technical_report/evidence/minimax_h3_desktop/delivery/argus_ir04_delivery_summary.json --report-out technical_report/final_technical_report.md --manifest-out technical_report/evidence/minimax_h3_desktop/delivery/package_manifest.json"
   ],
   "package_manifest": {
-    "entry_count": 58,
+    "entry_count": 93,
     "missing_optional_paths": [],
     "path": "technical_report/evidence/minimax_h3_desktop/delivery/package_manifest.json"
   },

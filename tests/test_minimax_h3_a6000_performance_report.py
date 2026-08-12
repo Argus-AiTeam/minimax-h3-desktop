@@ -228,6 +228,7 @@ def _write_r6_sol_attn_runtime(
     root: Path,
     *,
     run_id: str = "sol_attn_h3_gpu2_5step_r6_20260811T000000Z",
+    runtime_label: str = "r6",
     supervisor_status: str = "complete",
     exit_code: str = "0",
     diagnostic_status: str = "metadata_path_accepted_sparse_candidate_attempted",
@@ -246,9 +247,9 @@ def _write_r6_sol_attn_runtime(
     (supervisor / "exit_code").write_text(exit_code + "\n", encoding="utf-8")
 
     iid = "sha256:" + "a" * 64
-    image_dir = sol_root / "r6_overlay_image"
+    image_dir = sol_root / f"{runtime_label}_overlay_image"
     image_dir.mkdir(parents=True, exist_ok=True)
-    (image_dir / "r6_image_iid.txt").write_text(iid + "\n", encoding="utf-8")
+    (image_dir / f"{runtime_label}_image_iid.txt").write_text(iid + "\n", encoding="utf-8")
 
     run = sol_root / run_id
     run.mkdir(parents=True, exist_ok=True)
@@ -259,16 +260,21 @@ def _write_r6_sol_attn_runtime(
     )
     if not write_runtime_files:
         return run
-    (run / "r6_image_identity.env").write_text(
-        f"expected_r6_image_iid={iid}\n"
-        f"actual_r6_image_iid={iid}\n"
-        "actual_image_version_label=r6\n"
+    (run / f"{runtime_label}_image_identity.env").write_text(
+        f"expected_{runtime_label}_image_iid={iid}\n"
+        f"actual_{runtime_label}_image_iid={iid}\n"
+        f"required_image_version_label={runtime_label}\n"
+        f"actual_image_version_label={runtime_label}\n"
         "actual_image_base_label=argus/minimax-h3-vllm-omni:8e2e9b6b53e8-r2\n"
-        "actual_image_title_label=MiniMax-H3 A6000 r6 Sol-Attn integration overlay\n",
+        f"actual_image_title_label=MiniMax-H3 A6000 {runtime_label} Sol-Attn integration overlay\n",
         encoding="utf-8",
     )
+    materialize_line = f"sol_attn_diagnostic_materialize=on_for_{runtime_label}_only\n" if runtime_label in {"r7", "r8"} else ""
     (run / "workload.env").write_text(
-        "steps=5\nseed=0\nwidth=1344\nheight=768\nfps=24\nduration=5.166667\nattention_backend=H3_A6000_SOL_ATTN\nsol_attn_cache=off\nnetwork=none\n",
+        f"image=argus/minimax-h3-vllm-omni:8e2e9b6b53e8-{runtime_label}-sol-attn-overlay\n"
+        "steps=5\nseed=0\nwidth=1344\nheight=768\nfps=24\nduration=5.166667\nattention_backend=H3_A6000_SOL_ATTN\nsol_attn_cache=off\n"
+        f"{materialize_line}"
+        "network=none\n",
         encoding="utf-8",
     )
     for mode, sha, latency in (("dense_h3_backend_reference", dense_sha, 120.0), ("sol_attn", sol_sha, 100.0)):
@@ -342,7 +348,7 @@ def test_payload_and_markdown_preserve_lane_boundaries_and_pending(tmp_path: Pat
     assert "Sol-Attn H3 end-to-end: **pending**" in report
 
 
-def test_sol_attn_r6_completed_metadata_is_speed_only_until_quality_gate(tmp_path: Path) -> None:
+def test_sol_attn_r6_completed_metadata_is_5step_sparse_diagnostic_only(tmp_path: Path) -> None:
     evidence = tmp_path / "technical_report" / "evidence" / "minimax_h3_desktop"
     _minimal_report_evidence(evidence)
     _write_r6_sol_attn_runtime(evidence)
@@ -353,13 +359,15 @@ def test_sol_attn_r6_completed_metadata_is_speed_only_until_quality_gate(tmp_pat
     report = render_markdown(payload)
 
     assert strict["accepted_metadata"] is True
-    assert strict["classification"] == "speed_only_no_quality"
-    assert strict["paired_http_speedup_dense_over_sol_attn"] == 1.2
+    assert strict["accepted_runtime_evidence"] is True
+    assert strict["classification"] == "sparse_runtime_valid_5step_diagnostic"
+    assert strict["paired_http_ratio_dense_over_opt_in_not_speedup"] == 1.2
     assert strict["telemetry"]["sparse_candidate_calls"] == 3
     assert strict["telemetry"]["density_samples"]
     assert strict["release_manifest_eligible"] is False
-    assert any(item["section"] == "sol_attn.h3_e2e" and item["status"] == "speed_only_no_quality" for item in payload["pending_items"])
+    assert not any(item["section"] == "sol_attn.h3_e2e" for item in payload["pending_items"])
     assert "Sol-Attn r6 supervisor" in report
+    assert "diagnostic only, not a speedup claim" in report
 
 
 def test_sol_attn_r6_active_supervisor_remains_pending(tmp_path: Path) -> None:
@@ -393,7 +401,31 @@ def test_sol_attn_r6_fail_closed_missing_metadata_decline(tmp_path: Path) -> Non
     assert "paired_http_speedup_dense_over_sol_attn" not in strict
     assert strict["paired_http_ratio_dense_over_opt_in_not_speedup"] == 1.2
     assert strict["telemetry"]["decline_reasons"] == {"missing_h3_hook_metadata": 12}
-    assert "dense/opt-in timing ratio (not a speedup claim)=1.2x" in report
+    assert "dense/opt-in timing ratio (diagnostic only, not a speedup claim)=1.2x" in report
+
+
+def test_sol_attn_r8_fail_closed_uses_readable_provenance(tmp_path: Path) -> None:
+    evidence = tmp_path / "technical_report" / "evidence" / "minimax_h3_desktop"
+    _minimal_report_evidence(evidence)
+    _write_r6_sol_attn_runtime(
+        evidence,
+        run_id="sol_attn_h3_gpu2_5step_r8_20260812T000000Z",
+        runtime_label="r8",
+        diagnostic_status="fail_closed_dense_fallback",
+        sparse_candidates=0,
+        decline_reasons={"non_h3_dit_attention_prefix": 8},
+    )
+
+    payload = build_payload(evidence, repo_root=tmp_path)
+    strict = payload["sections"]["sol_attn"]["data"]["strict_r6_runtime"]
+    report = render_markdown(payload)
+
+    assert strict["runtime_label"] == "r8"
+    assert strict["image_identity"]["version_label"] == "r8"
+    assert strict["image_identity"]["required_version_label"] == "r8"
+    assert strict["classification"] == "fail_closed_missing_metadata"
+    assert strict["telemetry"]["decline_reasons"] == {"non_h3_dit_attention_prefix": 8}
+    assert "Sol-Attn r8 supervisor" in report
 
 
 def test_sol_attn_r6_runtime_failure_quality_drift_and_stale_rejection(tmp_path: Path) -> None:
@@ -407,8 +439,9 @@ def test_sol_attn_r6_runtime_failure_quality_drift_and_stale_rejection(tmp_path:
     _minimal_report_evidence(drift_root)
     _write_r6_sol_attn_runtime(drift_root, dense_sha="dense-sha", sol_sha="sol-sha")
     no_hash_drift = build_payload(drift_root, repo_root=tmp_path / "drift")["sections"]["sol_attn"]["data"]["strict_r6_runtime"]
-    assert no_hash_drift["classification"] == "speed_only_no_quality"
+    assert no_hash_drift["classification"] == "sparse_runtime_valid_5step_diagnostic"
     assert no_hash_drift["accepted_metadata"] is True
+    assert no_hash_drift["accepted_runtime_evidence"] is True
     assert no_hash_drift["opaque_integrity_policy"]["output_identifiers"] == "omitted_not_evidence"
 
     stale_root = tmp_path / "stale" / "technical_report" / "evidence" / "minimax_h3_desktop"

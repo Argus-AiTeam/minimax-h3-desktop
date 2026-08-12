@@ -1,6 +1,6 @@
 # MiniMax-H3 A6000 Sol-Engine overlay (exact-kernel + Sol-Attn candidate increment)
 
-Status: **default-off standalone Triton exact-kernel candidates, a real SM86 pointer-path Sol-Attn candidate, and a terminal fail-closed r7 H3 Sol-Attn diagnostic**. This directory does not modify the locked vLLM-Omni worktree, does not load MiniMax-H3 weights, and does not run Docker/GPU commands during CPU/static work. The external exact-kernel GPU2 gate has passed for exact kernel candidates only. The selected H3 Sol-Attn supervisor run is terminal (`complete`, exit code `0`) and is attributed by readable r7 workload/version-label provenance (image tag/version/title and `H3_A6000_SOL_ATTN` workload), not opaque image/output identifiers or the stale `r6` text prefix in the run id. Existing dense and opt-in HTTP timing plus structural AV evidence are valid, but Sol-Attn never entered the sparse path (`sparse_calls=0`, `sparse_candidate_calls=0`) because H3 hook metadata / packed video layout metadata are missing; therefore classification is fail-closed (`fail_closed_missing_metadata`) and this README makes no H3 E2E Sol-Attn pass, speedup, or fidelity claim.
+Status: **default-off standalone Triton exact-kernel candidates, a real SM86 pointer-path Sol-Attn candidate, and terminal r8 H3 Sol-Attn 5-step sparse-execution diagnostic evidence**. This directory does not modify the locked vLLM-Omni worktree, does not load MiniMax-H3 weights during CPU/static work, and keeps all runtime hooks default-off/fail-closed. The selected H3 Sol-Attn 5-step diagnostic run is terminal (`complete`, exit code `0`) and is attributed by readable r8 workload/version-label provenance (image tag/version/title and `H3_A6000_SOL_ATTN` workload), not opaque image/output identifier equality. The r8 diagnostic recorded dense and opt-in HTTP 200 plus structural AV evidence, `sparse_candidate_calls=192`, `sparse_calls=192`, `fallback_calls=0`, 192 density samples, and materialized-copy/resource telemetry; therefore the old r7 `fail_closed_missing_metadata` blocker is cleared for the fixed 5-step metadata gate. This is only a 5-step sparse-execution metadata-plumbing candidate pass, not a speedup, N10, BF16 fidelity, release, or quality-equivalence claim. The r8 N=3 matched-workload route gate is now terminal at `technical_report/evidence/minimax_h3_desktop/sol_engine_port/sol_attn_h3_matched_retest_r8_n3_20260812T013544Z/decision.json`: all three dense/opt-in pairs completed with HTTP 200, structural AV, sparse_calls=192/fallback_calls=0 per opt-in pair, median HTTP-time improvement 14.782455716069165% over a >3.0% route threshold, and resource envelope within the predeclared gate. That result recommends a future formal N>=10 Sol-Attn run, but it is not formal N10, not a speedup claim, not BF16 fidelity, and not quality-equivalence certification.
 
 ## What is included
 
@@ -11,7 +11,7 @@ Status: **default-off standalone Triton exact-kernel candidates, a real SM86 poi
 - `src/minimax_h3_a6000/sol_attn_triton_sm86.py`: real pointer-backed Triton Sol-Attn candidate adapted from Sana `triton_ref/preprocess.py` and `triton_ref/fwd.py` for A6000/SM86. It preserves the upstream SM>=8 guard and adds a strict SM86 runtime check; it is imported only after policy/tensor/metadata guards pass.
 - `src/minimax_h3_a6000/sol_attn_backend.py`: CPU-testable H3 wrapper for the SM86 Sol-Attn candidate. It enforces packed contiguous BTHD BF16/head_dim=128, valid-length/video-tail metadata, prefix KV sink, prefix-query dense overwrite, first-10-step/first-2-layer dense gates, cache-disabled contract, strict dense fallback, SM86 guard, and density/sink/dense/sparse/fallback telemetry.
 - `gpu_sol_attn_sm86_harness.py`: external single-A6000 correctness/bench harness for the Sol-Attn candidate. It loads no model, requires one visible A6000/SM86, verifies no fallback plus prefix-query dense behavior in correctness mode, and emits kernel-only benchmark JSON for the outer GPU2 run.
-- `src/minimax_h3_a6000/patch_builder.py` plus `patches/vllm_omni_h3_a6000_opt_in.patch`: repeatable opt-in vLLM-Omni patch source. The patch wires exact wrappers at the H3 transformer's AdaLN modulation/gate, RoPE, and MLP SwiGLU boundaries, logs/export telemetry when enabled, and still leaves vLLM Sol-Attn integration blocked/skeleton because true step/layer/layout propagation has not been safely rebuilt in that patch artifact. Applying the patch is done only in disposable trees/images; CPU/static work only verifies `git apply --check` against the locked source.
+- `src/minimax_h3_a6000/patch_builder.py` plus `patches/vllm_omni_h3_a6000_opt_in.patch`: repeatable opt-in vLLM-Omni patch source. The patch wires exact wrappers at the H3 transformer's AdaLN modulation/gate, RoPE, and MLP SwiGLU boundaries, logs/export telemetry when enabled, adds the opt-in H3 Sol-Attn backend, and propagates source-backed DiT packed-video layout, valid length, denoise step, and layer index while failing closed for missing/inconsistent metadata. Applying the patch is done only in disposable trees/images; CPU/static work only verifies `git apply --check` against the locked source.
 - `integration/r4/Dockerfile` and `integration/r4/build_r4_overlay_image.sh`: reproducible r4 overlay image recipe starting from P0 `argus/minimax-h3-vllm-omni:8e2e9b6b53e8-r2`, installing the local overlay, and overwriting patched vLLM-Omni files inside the derived image without editing the locked host source tree. The build script uses no GPU flags and records `gpu_flags=none` when an evidence directory is provided.
 - `integration/run_gpu2_exact_integration_5step_r4.sh`: external GPU2-only 5-step same-workload script that first runs dense reference, then enables the three exact wrapper families with Sol-Attn/cache off, verifies AV decode metadata, and requires exact telemetry call/candidate counts plus indexed stride-aware strategy/layout/copy-schema telemetry. The older r3 script remains for historical repeatability only.
 - `integration/run_gpu2_exact_ablation_5step_r4.sh`: external GPU2-only diagnostic ablation script for the r4 needs-revision result. It runs dense, indexed modulation only, indexed gate only, RoPE only, SwiGLU only, and all-exact modes; Sol-Attn/cache stay off, split AdaLN envs leave the non-selected AdaLN kernel on the original dense path, and output quality is recorded only as dense-vs-candidate diagnostic JSON.
@@ -19,7 +19,7 @@ Status: **default-off standalone Triton exact-kernel candidates, a real SM86 poi
 
 ## Default-off environment switches
 
-Every runtime switch defaults to off:
+Every enable switch defaults to off; non-boolean policy knobs keep conservative defaults:
 
 ```text
 MINIMAX_H3_A6000_ENABLE_OVERLAY=0
@@ -40,6 +40,10 @@ MINIMAX_H3_A6000_TELEMETRY_JSON=
 MINIMAX_H3_A6000_ENABLE_SOL_ATTN=0
 MINIMAX_H3_A6000_SOL_ATTN_CACHE=0
 MINIMAX_H3_A6000_SOL_ATTN_STRICT=0
+MINIMAX_H3_A6000_SOL_ATTN_DENSE_FIRST_STEPS=10
+MINIMAX_H3_A6000_SOL_ATTN_DENSE_FIRST_LAYERS=2
+MINIMAX_H3_A6000_SOL_ATTN_DIAGNOSTIC_MATERIALIZE=0
+MINIMAX_H3_A6000_SOL_ATTN_MATERIALIZE_MAX_BYTES=67108864
 ```
 
 The optional Triton candidate gate requires overlay + Triton + per-op env toggles. Launcher SM86 checks occur only when a wrapper is called; importing the package does not initialize CUDA.
@@ -48,10 +52,10 @@ The optional Triton candidate gate requires overlay + Triton + per-op env toggle
 
 The locked source under `runtime/single_a6000_bf16/src/vllm-omni` is treated read-only for this increment. The patch file adds:
 
-1. an opt-in backend enum/file for the Sol-Attn skeleton only (real Sol-Attn vLLM integration remains blocked until denoise step, layer index, packed layout, and valid length are all propagated without defaults); and
+1. an opt-in backend enum/file for the Sol-Attn path with source-backed denoise step, layer index, packed video layout, and valid length metadata; and
 2. opt-in exact wrapper calls in `vllm_omni/diffusion/models/minimax_h3/minimax_h3_transformer.py` at `_modulate_scale_shift`, `_modulate_gate`, `MiniMaxH3Attention._apply_rope`, and `MiniMaxH3MLP.forward`.
 
-With all environment variables off, the transformer path is unchanged. If env vars are on but the local wrapper package is unavailable or a launcher guard declines, the patch falls back to the existing PyTorch/vLLM operation. When `MINIMAX_H3_A6000_ENABLE_TELEMETRY=1`, wrapper calls record process-local `calls`/`candidate`/`fallback`/`decline` counters; setting `MINIMAX_H3_A6000_TELEMETRY_JSON` plus `MINIMAX_H3_A6000_TELEMETRY_ATEXIT=1` writes an exit-time JSON summary. Do not treat `H3_A6000_SOL_ATTN` in the current patch as real integration: it is intentionally blocked/skeleton and does not import the new `sol_attn_triton_sm86` candidate.
+With all environment variables off, the transformer path is unchanged. If env vars are on but the local wrapper package is unavailable or a launcher guard declines, the patch falls back to the existing PyTorch/vLLM operation. When `MINIMAX_H3_A6000_ENABLE_TELEMETRY=1`, wrapper calls record process-local `calls`/`candidate`/`fallback`/`decline` counters; setting `MINIMAX_H3_A6000_TELEMETRY_JSON` plus `MINIMAX_H3_A6000_TELEMETRY_ATEXIT=1` writes an exit-time JSON summary. The current r8 evidence may be cited only as a fixed 5-step sparse-execution diagnostic candidate (`sparse_calls>0`, full structural AV, resource and density telemetry). It must not be used as a speedup, N10, BF16 fidelity, release, or quality-equivalence claim; fail-closed dense fallback or timing jitter is never a speedup claim.
 
 To rebuild the patch artifact elsewhere without touching runtime:
 
@@ -69,10 +73,14 @@ git -C runtime/single_a6000_bf16/src/vllm-omni apply --check \
 
 ## Verification
 
+Clean-room deployment/lifecycle evidence is now separated from speed and quality claims. The gated non-dry local lifecycle verifier passed in `technical_report/evidence/minimax_h3_desktop/delivery/local_lifecycle_clean_room_20260812T014824Z`: a sanitized export was built, existing local FL2VA resources were inspected read-only, the locked runtime image tag/id matched, the CPU verifier fixture ran, and publication audit passed on the export root. No container was started, no model weights were loaded or modified, no GPU inference/media generation ran, and no speed/fidelity/quality claim is created by this packaging gate.
+
+Final delivery gate evidence is recorded in `technical_report/evidence/minimax_h3_desktop/delivery/final_cpu_static_gate_20260812T020013Z` and `technical_report/evidence/minimax_h3_desktop/delivery/final_decisive_export_audit_20260812T025605Z`: 115/115 CPU/static tests passed with the corrected `PYTHONPATH=code:.:ports/minimax_h3_a6000/src`, py_compile/patch-apply/fixture/Turbo-dry-run checks passed, strict aggregation regenerated the delivery summary/final report/package manifest, a sanitized export built 82 files, and publication audit reported 0 issues. Independent Reviewer certification has passed for the bounded r8 terminal N=3 route-gate boundary before the private-main sync. These are release-readiness gates only; they do not turn r8 Sol-Attn diagnostics or the N=3 route gate into speed, BF16 fidelity, release, or quality-equivalence claims.
+
 CPU/static verification for the full port, plus the focused launcher-guard and harness-coverage metadata increment:
 
 ```bash
-PYTHONPATH=code:ports/minimax_h3_a6000/src python3 -m pytest -q tests ports/minimax_h3_a6000/tests
+PYTHONPATH=code:.:ports/minimax_h3_a6000/src python3 -m pytest -q tests ports/minimax_h3_a6000/tests
 PYTHONPATH=code:ports/minimax_h3_a6000/src python -m pytest -q \
   ports/minimax_h3_a6000/tests/test_exact_kernel_launchers_cpu.py \
   ports/minimax_h3_a6000/tests/test_exact_kernels_static.py
@@ -87,7 +95,7 @@ git -C runtime/single_a6000_bf16/src/vllm-omni apply --check \
 
 External exact-kernel GPU evidence already absorbed (kernel-only, not H3 E2E): `${PWD}/technical_report/evidence/minimax_h3_desktop/sol_engine_port/gpu_exact_20260809T155451Z`. Correctness JSON: 8/8 cases `compiled_and_launched`, all `max_abs=0`, `max_rel=0`, `mismatch=0`. Microbenchmark median speedups: indexed modulation 22.02x, indexed gate 11.66x, RoPE 6.50x, SwiGLU 8.09-8.11x. These are raw kernel candidate timings only.
 
-Current H3 Sol-Attn r7 CPU-only ingest: `technical_report/evidence/minimax_h3_desktop/delivery/r7_sol_attn_cpu_ingest_20260811T110523Z/r7_terminal_classification.json`. It records terminal supervisor status `complete`, selected run `sol_engine_port/sol_attn_h3_gpu2_5step_r6_20260811T110523Z`, readable r7 workload/version-label provenance, valid dense/opt-in HTTP+AV, and `sparse_calls=0`, `sparse_candidate_calls=0`; classification remains fail-closed (`fail_closed_missing_metadata`) because Sol-Attn never entered a sparse runtime path due to missing H3 hook metadata / packed video layout metadata. Opaque image/output identifiers are omitted and are not classification evidence.
+Current H3 Sol-Attn r8 CPU-only ingest: `technical_report/evidence/minimax_h3_desktop/delivery/r8_sol_attn_cpu_ingest_20260812T005600Z/r8_terminal_classification.json`. It records terminal supervisor status `complete`, selected run `sol_engine_port/sol_attn_h3_gpu2_5step_r8_prompt0644_20260812T005600Z`, readable r8 workload/version-label provenance, valid dense/opt-in HTTP+AV, and sparse runtime telemetry (`sparse_candidate_calls=192`, `sparse_calls=192`, `fallback_calls=0`, density samples=192, materialized copies=192 / 105344139264 bytes). Classification is `sparse_runtime_valid_5step_diagnostic`: the r7 missing-metadata blocker is cleared for this fixed 5-step gate, but the result is not a speedup, N10, BF16 fidelity, release, or quality-equivalence claim. The matched-workload r8 follow-up is terminal at `technical_report/evidence/minimax_h3_desktop/sol_engine_port/sol_attn_h3_matched_retest_r8_n3_20260812T013544Z/decision.json`, with CPU-only posthoc finalization documented in `technical_report/evidence/minimax_h3_desktop/sol_engine_port/sol_attn_h3_matched_retest_r8_n3_20260812T013544Z/posthoc_finalization_note.json` after the supervisor completed all three pairs and then failed while emitting summaries. Classification is `proceed_to_formal_n10_candidate`: it recommends a future formal N>=10 Sol-Attn gate, but still must not be cited as a formal speedup, BF16 fidelity, release, or quality-equivalence result. Historical r7 fail-closed evidence remains at `technical_report/evidence/minimax_h3_desktop/delivery/r7_sol_attn_cpu_ingest_20260811T110523Z/r7_terminal_classification.json`.
 
 External commands for repeat or later integration gates (not run by CPU/static tasks):
 

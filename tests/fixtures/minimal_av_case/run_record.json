@@ -1,0 +1,134 @@
+{
+  "schema_version": "argus-minimax-h3-run-v1",
+  "run_id": "mock-av-metadata-fixture-0001",
+  "artifact_kind": "metadata_only_av_fixture",
+  "mock_fixture": true,
+  "real_h3_output": false,
+  "platform": {
+    "id": "current_a6000_reference",
+    "role": "reference",
+    "status": "REFERENCE_METADATA_ONLY_NO_GPU",
+    "hardware_preflight_evidence": "technical_report/evidence/minimax_h3_desktop/preflight/current_a6000/raw_host_probe.txt"
+  },
+  "track": "fidelity_bf16_exact",
+  "model_identity": {
+    "source_repo": "https://github.com/MiniMax-AI/MiniMax-H3",
+    "source_commit": "b7227fa6a6206e9fb30562383d39e53cf3866a48",
+    "checkpoint_repo": "MiniMaxAI/MiniMax-H3",
+    "checkpoint_revision": "6818f6c32d12b210915e44ad56a4228c2608f160",
+    "task_partition": "FL2VA",
+    "checkpoint_size_gib_metadata_only": 134.158118,
+    "weights_downloaded": false
+  },
+  "workload": {
+    "task": "fl2va",
+    "prompt": "MOCK FIXTURE ONLY: no MiniMax-H3 generation was run.",
+    "seeds": [0],
+    "short_edge_px": 768,
+    "aspect_ratio": "auto",
+    "duration_seconds": 8,
+    "fps": 24,
+    "steps": {
+      "status": "unresolved_pre_gate",
+      "reason": "Official public request scripts do not expose inference/denoising steps; must be frozen before any real baseline."
+    },
+    "audio": {
+      "sample_rate_hz": 32000,
+      "channels": 2
+    },
+    "conditioning_assets": [
+      {
+        "kind": "mock_keyframe_metadata",
+        "role": "keyframe",
+        "frame_index": 0,
+        "real_asset_downloaded": false
+      }
+    ]
+  },
+  "environment": {
+    "container": {
+      "image": "docker.io/pytorch/pytorch:2.7.1-cuda12.6-cudnn9-devel",
+      "image_digest": "sha256:639b8229ccfd8a3aa803cf49c33d6d6fe406750d79aaf723fe8c0eb1060d8cff",
+      "manifest_only": true,
+      "pulled": false
+    },
+    "python": "3.12.3",
+    "global_system_modified": false,
+    "env_lock": "technical_report/evidence/minimax_h3_desktop/packaging/container_lock_candidates.json"
+  },
+  "timing": {
+    "cold_load": {"status": "not_measured_mock_fixture"},
+    "first_compile": {"status": "not_measured_mock_fixture"},
+    "warm_e2e": {"status": "not_measured_mock_fixture"},
+    "hot_path": {"status": "not_measured_mock_fixture"},
+    "fps": {"status": "not_measured_mock_fixture"},
+    "speedup_claimed": false
+  },
+  "resources": {
+    "gpu_compute_performed": false,
+    "gpu_count_used": 0,
+    "n_ge_10_benchmark": false,
+    "power_measurement": {"status": "not_measured_mock_fixture"},
+    "peak_device_memory": {"status": "not_measured_mock_fixture"},
+    "host_memory": {"status": "not_measured_mock_fixture"}
+  },
+  "output_av": {
+    "metadata_only": true,
+    "output_files": [],
+    "video": {
+      "present": true,
+      "codec": "mock-h264-metadata",
+      "duration_seconds": 8,
+      "fps": 24,
+      "frame_count": 192,
+      "full_decode": false,
+      "decode_status": "not_performed_metadata_fixture_no_ffmpeg"
+    },
+    "audio": {
+      "present": true,
+      "codec": "mock-pcm-metadata",
+      "duration_seconds": 8,
+      "sample_rate_hz": 32000,
+      "channels": 2,
+      "full_decode": false,
+      "decode_status": "not_performed_metadata_fixture_no_ffmpeg"
+    },
+    "note": "Pure metadata AV fixture because ffmpeg/ffprobe are absent on the host and system package installation is not authorized."
+  },
+  "hidden_cache_controls": {
+    "declared_cache_roots": [
+      "technical_report/evidence/minimax_h3_desktop/cache/mock_fixture"
+    ],
+    "forbidden_implicit_cache_roots": [
+      "~/.cache/huggingface",
+      "~/.cache/torch",
+      "~/.cache/triton",
+      "/tmp/minimax-h3-hidden-cache"
+    ],
+    "pre_run_snapshot": {
+      "total_files": 0,
+      "total_bytes": 0,
+      "snapshot_kind": "metadata_fixture_empty"
+    },
+    "post_run_snapshot": {
+      "total_files": 0,
+      "total_bytes": 0,
+      "snapshot_kind": "metadata_fixture_empty"
+    },
+    "clean_room_required_for_claim": true,
+    "no_hidden_cache_assertion": "Metadata-only fixture: no model, output, or hidden cache files were read or written."
+  },
+  "gates": {
+    "license_territory_approved": false,
+    "large_download_approved": false,
+    "expensive_resource_approved": false,
+    "model_weights_accessed": false,
+    "large_container_pulled": false,
+    "external_publication": false
+  },
+  "claims": {
+    "argus_result": false,
+    "speedup": null,
+    "quality_claim": "none; metadata-only verifier fixture"
+  }
+}

@@ -1,19 +1,21 @@
 diff --git a/vllm_omni/diffusion/attention/backends/registry.py b/vllm_omni/diffusion/attention/backends/registry.py
+index fdfaf5f9..e0addc98 100644
 --- a/vllm_omni/diffusion/attention/backends/registry.py
 +++ b/vllm_omni/diffusion/attention/backends/registry.py
-@@ -66,6 +66,7 @@
+@@ -66,6 +66,7 @@ class DiffusionAttentionBackendEnum(Enum, metaclass=_DiffusionBackendEnumMeta):
      FLASH_ATTN_3_HUB = "vllm_omni.diffusion.attention.backends.flash_attn_hub.FlashAttention3HubBackend"
      TRTLLM_ATTN = "vllm_omni.diffusion.attention.backends.trtllm_attn.TrtllmAttentionBackend"
      RAINFUSION_ATTN = "vllm_omni.diffusion.attention.backends.rainfusion_attn.RainFusionAttentionBackend"
 +    H3_A6000_SOL_ATTN = "vllm_omni.diffusion.attention.backends.sol_attn_h3_a6000.SolAttnH3A6000Backend"
-
+ 
      def get_path(self, include_classname: bool = True) -> str:
          """Get the class path for this backend (respects overrides).
 diff --git a/vllm_omni/diffusion/attention/backends/sol_attn_h3_a6000.py b/vllm_omni/diffusion/attention/backends/sol_attn_h3_a6000.py
 new file mode 100644
+index 00000000..59c24ee0
 --- /dev/null
 +++ b/vllm_omni/diffusion/attention/backends/sol_attn_h3_a6000.py
-@@ -0,0 +1,468 @@
+@@ -0,0 +1,486 @@
 +# SPDX-License-Identifier: Apache-2.0
 +# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
 +"""Opt-in MiniMax-H3 A6000 Sol-Attn backend.
@@ -54,6 +56,8 @@ new file mode 100644
 +    "MINIMAX_H3_A6000_TELEMETRY_JSON": "",
 +    "MINIMAX_H3_A6000_SOL_ATTN_CACHE": "0",
 +    "MINIMAX_H3_A6000_SOL_ATTN_STRICT": "0",
++    "MINIMAX_H3_A6000_SOL_ATTN_DENSE_FIRST_STEPS": "10",
++    "MINIMAX_H3_A6000_SOL_ATTN_DENSE_FIRST_LAYERS": "2",
 +    "MINIMAX_H3_A6000_SOL_ATTN_DIAGNOSTIC_MATERIALIZE": "0",
 +    "MINIMAX_H3_A6000_SOL_ATTN_MATERIALIZE_MAX_BYTES": "67108864",
 +    "MINIMAX_H3_A6000_SOL_ATTN_TELEMETRY_JSON": "",
@@ -218,6 +222,18 @@ new file mode 100644
 +    return None
 +
 +
++def _read_env_int(name: str, default: int) -> int:
++    try:
++        return int(str(os.environ.get(name, DEFAULT_ENV_SWITCHES.get(name, str(default)))).strip())
++    except (TypeError, ValueError):
++        return int(default)
++
++
++def _is_minimax_h3_dit_attention_prefix(prefix: str) -> bool:
++    parts = str(prefix).split(".")
++    return len(parts) >= 3 and parts[0] == "blocks" and parts[1].isdigit() and parts[2] == "attn"
++
++
 +def _missing_hook_reason(detail: str) -> str:
 +    return f"{MISSING_H3_HOOK_METADATA_PREFIX}:{detail}"
 +
@@ -371,7 +387,7 @@ new file mode 100644
 +        backend_kwargs: dict[str, Any] | None = None,
 +        **extra_impl_args: Any,
 +    ) -> None:
-+        del num_heads, num_kv_heads, backend_kwargs, extra_impl_args
++        del num_heads, num_kv_heads, backend_kwargs
 +        if causal:
 +            raise ValueError("MiniMax-H3 Sol-Attn expects non-causal self attention")
 +        if head_size != 128:
@@ -380,8 +396,10 @@ new file mode 100644
 +            raise ValueError(f"MiniMax-H3 Sol-Attn expects BSND qkv layout, got {qkv_layout!r}")
 +        self.softmax_scale = float(softmax_scale)
 +        self.prefix = prefix
-+        self.dense_first_steps = 10
-+        self.dense_first_layers = 2
++        self.role = str(extra_impl_args.get("role", ""))
++        self._is_minimax_h3_dit_attention = _is_minimax_h3_dit_attention_prefix(prefix)
++        self.dense_first_steps = _read_env_int("MINIMAX_H3_A6000_SOL_ATTN_DENSE_FIRST_STEPS", 10)
++        self.dense_first_layers = _read_env_int("MINIMAX_H3_A6000_SOL_ATTN_DENSE_FIRST_LAYERS", 2)
 +
 +    def _decline_reason(
 +        self,
@@ -398,6 +416,8 @@ new file mode 100644
 +            return "env_disabled"
 +        if _env_enabled("MINIMAX_H3_A6000_SOL_ATTN_CACHE"):
 +            return "cache_disabled_by_contract"
++        if not self._is_minimax_h3_dit_attention:
++            return "non_h3_dit_attention_prefix"
 +        if query.shape != key.shape or query.shape != value.shape:
 +            return "qkv_shape_mismatch"
 +        if query.ndim != 4 or query.shape[-1] != 128:
@@ -483,18 +503,19 @@ new file mode 100644
 +        _TELEMETRY.merge_wrapper(wrapper_telemetry)
 +        return out
 diff --git a/vllm_omni/diffusion/models/minimax_h3/minimax_h3_transformer.py b/vllm_omni/diffusion/models/minimax_h3/minimax_h3_transformer.py
+index 610c20d1..35b21901 100644
 --- a/vllm_omni/diffusion/models/minimax_h3/minimax_h3_transformer.py
 +++ b/vllm_omni/diffusion/models/minimax_h3/minimax_h3_transformer.py
-@@ -9,6 +9,8 @@
+@@ -9,6 +9,8 @@ layout.
  from __future__ import annotations
-
+ 
  import math
 +import atexit
 +import os
  from collections.abc import Iterable, Mapping
  from dataclasses import dataclass
  from typing import TYPE_CHECKING, Any
-@@ -29,6 +31,7 @@
+@@ -29,6 +31,7 @@ from vllm.model_executor.model_loader.weight_utils import default_weight_loader
  from vllm_omni.diffusion.attention.backends.abstract import AttentionMetadata, VideoTokenLayout
  from vllm_omni.diffusion.attention.layer import Attention
  from vllm_omni.diffusion.cache.cachedit import CacheDiTAdapterConfig
@@ -502,12 +523,10 @@ diff --git a/vllm_omni/diffusion/models/minimax_h3/minimax_h3_transformer.py b/v
  from vllm_omni.diffusion.distributed.sp_plan import (
      SequenceParallelInput,
      SequenceParallelOutput,
-@@ -44,6 +47,103 @@
-     from vllm_omni.diffusion.data import OmniDiffusionConfig
-
+@@ -46,6 +49,103 @@ if TYPE_CHECKING:
  logger = init_logger(__name__)
-+
-+
+ 
+ 
 +_H3_A6000_EXACT_DEFAULTS = {
 +    "MINIMAX_H3_A6000_ENABLE_OVERLAY": "0",
 +    "MINIMAX_H3_A6000_ENABLE_TRITON_CANDIDATES": "0",
@@ -603,10 +622,12 @@ diff --git a/vllm_omni/diffusion/models/minimax_h3/minimax_h3_transformer.py b/v
 +            raise
 +        logger.debug("MiniMax-H3 A6000 exact wrapper %s declined", fn_name, exc_info=True)
 +        return None
-
-
++
++
  @dataclass
-@@ -187,6 +287,17 @@
+ class MiniMaxH3DiTArchConfig:
+     num_layers: int = 50
+@@ -187,6 +287,17 @@ def _modulate_scale_shift(
      dtype: torch.dtype,
  ) -> torch.Tensor:
      # Apply per-index affine modulation: x * (1 + scale[idx]) + shift[idx].
@@ -622,9 +643,9 @@ diff --git a/vllm_omni/diffusion/models/minimax_h3/minimax_h3_transformer.py b/v
 +        if candidate is not None:
 +            return candidate
      return (x * (1.0 + scale.index_select(0, indices)) + shift.index_select(0, indices)).to(dtype)
-
-
-@@ -199,6 +310,17 @@
+ 
+ 
+@@ -199,6 +310,17 @@ def _modulate_gate(
      dtype: torch.dtype,
  ) -> torch.Tensor:
      # Apply the per-index gated residual: x + gate[idx] * other.
@@ -640,17 +661,17 @@ diff --git a/vllm_omni/diffusion/models/minimax_h3/minimax_h3_transformer.py b/v
 +        if candidate is not None:
 +            return candidate
      return (x + gate.index_select(0, indices) * other).to(dtype)
-
-
-@@ -358,6 +480,7 @@
+ 
+ 
+@@ -358,6 +480,7 @@ class MiniMaxH3Attention(nn.Module):
              skip_sequence_parallel=skip_sequence_parallel,
              prefix=prefix,
          )
 +        self._h3_a6000_layer_index = _h3_a6000_layer_index_from_prefix(prefix)
-
+ 
      def _apply_rope(self, x: torch.Tensor, freqs: torch.Tensor) -> torch.Tensor:
          """Rotate the first rot_dim head dims; pass the rest through.
-@@ -365,6 +488,14 @@
+@@ -365,6 +488,14 @@ class MiniMaxH3Attention(nn.Module):
          x: [T, heads, head_dim]; freqs: [T, rot_dim]. In the unfused path, cos/sin
          are cast to the activation dtype before the elementwise math.
          """
@@ -665,7 +686,7 @@ diff --git a/vllm_omni/diffusion/models/minimax_h3/minimax_h3_transformer.py b/v
          rot_dim = freqs.shape[-1]
          x_rot, x_pass = x[..., :rot_dim], x[..., rot_dim:]
          cos = torch.cos(freqs).to(x.dtype)  # [T, rot_dim]
-@@ -407,15 +538,25 @@
+@@ -407,15 +538,25 @@ class MiniMaxH3Attention(nn.Module):
          )
          if used < packed_total and not prefix_slice:
              attn_mask = torch.arange(packed_total, device=q.device)[None] < used
@@ -698,8 +719,8 @@ diff --git a/vllm_omni/diffusion/models/minimax_h3/minimax_h3_transformer.py b/v
              video_layout=video_layout,
          )
          return self.attention(
-@@ -513,7 +654,16 @@
-
+@@ -513,8 +654,17 @@ class MiniMaxH3MLP(nn.Module):
+ 
      def forward(self, x: torch.Tensor) -> torch.Tensor:
          hidden, _ = self.fc1(x)
 -        gate, up = hidden.chunk(2, dim=-1)
@@ -717,3 +738,4 @@ diff --git a/vllm_omni/diffusion/models/minimax_h3/minimax_h3_transformer.py b/v
 +            hidden = candidate
          out, _ = self.fc2(hidden)
          return out
+ 

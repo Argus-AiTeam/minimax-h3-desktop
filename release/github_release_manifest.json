@@ -18,10 +18,6 @@
     {
       "kind": "gitignore",
       "path": ".gitignore"
-    },
-    {
-      "kind": "a6000_workflow",
-      "path": "scripts/a6000_one_command.sh"
     }
   ],
   "files": [
@@ -35,6 +31,12 @@
       "path": "tools/publication_audit.py"
     },
     {
+      "path": "tools/verify_run.py"
+    },
+    {
+      "path": "tools/argus_h3_verifier.py"
+    },
+    {
       "path": "tools/minimax_h3_a6000_performance_report.py"
     },
     {
@@ -45,6 +47,12 @@
     },
     {
       "path": "code/pytest.py"
+    },
+    {
+      "path": "scripts/a6000_one_command.sh"
+    },
+    {
+      "path": "schemas/minimax_h3_run.schema.json"
     },
     {
       "path": "schemas/minimax_h3_a6000_performance_report.schema.json"
@@ -108,6 +116,9 @@
     },
     {
       "path": "tests/test_minimax_h3_a6000_performance_report.py"
+    },
+    {
+      "path": "tests/fixtures/minimal_av_case/run_record.json"
     }
   ],
   "trees": [
@@ -126,7 +137,8 @@
         "integration/r3/*",
         "integration/r4/*",
         "integration/r6/*",
-        "integration/r7/*"
+        "integration/r7/*",
+        "integration/r8/*"
       ],
       "exclude": [
         "evidence/**",

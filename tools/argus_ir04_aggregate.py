@@ -34,6 +34,25 @@ SWIGLU_HTTP_REL = "sol_engine_port/r5_ablation_20260809T181515Z/swiglu/http_metr
 SOL_ATTN_RESULT_REL = "sol_engine_port/sol_attn_gpu_20260809T173323Z/result.json"
 QUALITY_CONFIG_REL = "turbo_merged/quality_suite_config.json"
 QUALITY_DRY_RUN_REL = "turbo_merged/quality_suite_dry_run"
+DELIVERY_REL = "delivery"
+LOCAL_LIFECYCLE_PREFIX = "local_lifecycle_clean_room_"
+R8_SOL_ATTN_CPU_INGEST_PREFIX = "r8_sol_attn_cpu_ingest_"
+R8_SOL_ATTN_CLASSIFICATION_FILE = "r8_terminal_classification.json"
+R8_MATCHED_RETEST_INSPECTION_PREFIX = "r8_matched_retest_nonterminal_inspection_"
+R8_MATCHED_RETEST_INSPECTION_FILE = "r8_matched_retest_nonterminal_inspection.json"
+R8_MATCHED_RETEST_TERMINAL_RUN_PREFIX = "sol_attn_h3_matched_retest_r8_n3_"
+R8_MATCHED_RETEST_DECISION_FILE = "decision.json"
+R8_MATCHED_RETEST_TERMINAL_FILES = (
+    "decision.json",
+    "RUN_REPORT.md",
+    "timing_summary.json",
+    "quality_proxy_comparison.json",
+    "resource_summary.json",
+)
+R8_MATCHED_RETEST_TERMINAL_RECHECK_PREFIX = "r8_matched_retest_terminal_recheck_"
+R8_MATCHED_RETEST_TERMINAL_RECHECK_FILE = "summary.json"
+FINAL_CPU_STATIC_GATE_PREFIX = "final_cpu_static_gate_"
+FINAL_DECISIVE_EXPORT_AUDIT_PREFIX = "final_decisive_export_audit_"
 
 Fidelity = "fidelity_bf16_exact"
 Practical = "practical_disclosed_approx"
@@ -115,6 +134,13 @@ def _read_latest_run_id(path: Path) -> str:
     if not run_id or "/" in run_id or ".." in run_id:
         raise AggregationError(f"invalid latest-run pointer in {path}: {run_id!r}")
     return run_id
+
+
+def _latest_prefixed_dir(parent: Path, prefix: str) -> Path | None:
+    if not parent.is_dir():
+        return None
+    candidates = sorted(path for path in parent.glob(f"{prefix}*") if path.is_dir())
+    return candidates[-1] if candidates else None
 
 
 def summarize_baseline(root: Path) -> dict[str, Any]:
@@ -393,6 +419,215 @@ def summarize_dmd(root: Path) -> dict[str, Any]:
     }
 
 
+def summarize_r8_h3_sol_attn(root: Path) -> dict[str, Any]:
+    delivery_dir = root / DELIVERY_REL
+    ingest_dir = _latest_prefixed_dir(delivery_dir, R8_SOL_ATTN_CPU_INGEST_PREFIX)
+    if ingest_dir is None:
+        return {
+            "status": "not_available",
+            "claim_boundary": "no r8 H3 Sol-Attn CPU terminal ingest evidence found in this evidence root",
+        }
+
+    classification_path = ingest_dir / R8_SOL_ATTN_CLASSIFICATION_FILE
+    data = load_json(classification_path)
+    classification = data.get("classification")
+    if classification != "sparse_runtime_valid_5step_diagnostic":
+        raise AggregationError(f"unexpected r8 H3 Sol-Attn classification: {classification!r}")
+    if data.get("accepted_metadata") is not True or data.get("accepted_runtime_evidence") is not True:
+        raise AggregationError("r8 H3 Sol-Attn ingest must accept both metadata and runtime evidence")
+    if data.get("release_manifest_eligible") is not False:
+        raise AggregationError("r8 H3 Sol-Attn 5-step diagnostic must not be release-manifest eligible")
+    if data.get("not_fidelity_or_performance_claim") is not True:
+        raise AggregationError("r8 H3 Sol-Attn diagnostic must reject fidelity/performance-claim status")
+
+    telemetry = data.get("telemetry")
+    if not isinstance(telemetry, dict):
+        raise AggregationError("r8 H3 Sol-Attn ingest missing telemetry object")
+    sparse_candidates = int(telemetry.get("sparse_candidate_calls") or 0)
+    sparse_calls = int(telemetry.get("sparse_calls") or 0)
+    fallback_calls = int(telemetry.get("fallback_calls") or 0)
+    density_samples = int(telemetry.get("density_sample_count") or 0)
+    materialized_calls = int(telemetry.get("materialized_copy_calls") or 0)
+    materialized_bytes = int(telemetry.get("materialized_copy_bytes") or 0)
+    if sparse_candidates <= 0 or sparse_calls <= 0:
+        raise AggregationError("r8 H3 Sol-Attn diagnostic must have sparse_candidate_calls>0 and sparse_calls>0")
+    if fallback_calls != 0:
+        raise AggregationError("r8 H3 Sol-Attn accepted diagnostic must not rely on fallback calls")
+    if density_samples <= 0:
+        raise AggregationError("r8 H3 Sol-Attn diagnostic must include density samples")
+    if materialized_calls <= 0 or materialized_bytes <= 0:
+        raise AggregationError("r8 H3 Sol-Attn diagnostic must record materialized-copy calls and bytes")
+
+    for label in ("dense_h3_backend_reference", "sol_attn_opt_in"):
+        branch = data.get(label)
+        if not isinstance(branch, dict):
+            raise AggregationError(f"r8 H3 Sol-Attn ingest missing {label}")
+        av = branch.get("av")
+        http = branch.get("http")
+        if not isinstance(av, dict) or av.get("structural_av_contract_pass") is not True:
+            raise AggregationError(f"r8 H3 Sol-Attn {label} structural AV did not pass")
+        if not isinstance(http, dict) or http.get("status") != "present":
+            raise AggregationError(f"r8 H3 Sol-Attn {label} HTTP metrics missing")
+
+    readable = data.get("readable_provenance")
+    if not isinstance(readable, dict):
+        raise AggregationError("r8 H3 Sol-Attn ingest missing readable provenance")
+    if readable.get("image_version_label") != "r8" or readable.get("required_image_version_label") != "r8":
+        raise AggregationError("r8 H3 Sol-Attn ingest must be attributed by readable r8 version labels")
+    if readable.get("workload_attention_backend") != "H3_A6000_SOL_ATTN":
+        raise AggregationError("r8 H3 Sol-Attn workload must use H3_A6000_SOL_ATTN")
+
+    resources = data.get("resource_summary")
+    if not isinstance(resources, dict) or resources.get("status") != "present":
+        raise AggregationError("r8 H3 Sol-Attn ingest missing resource summary")
+
+    dense_http = data.get("dense_h3_backend_reference", {}).get("http", {})
+    opt_http = data.get("sol_attn_opt_in", {}).get("http", {})
+    dense_av = data.get("dense_h3_backend_reference", {}).get("av", {})
+    opt_av = data.get("sol_attn_opt_in", {}).get("av", {})
+
+    result = {
+        "status": classification,
+        "classification": classification,
+        "evidence_path": rel(classification_path, root),
+        "ingest_dir": rel(ingest_dir, root),
+        "selected_run_dir": data.get("selected_run_dir"),
+        "final_pass_fail": data.get("final_pass_fail"),
+        "reason": data.get("reason"),
+        "release_manifest_eligible": data.get("release_manifest_eligible"),
+        "claim_boundary": "accepted 5-step sparse-execution metadata-plumbing diagnostic only; not a speedup, N10, BF16 fidelity, release, or quality-equivalence claim",
+        "readable_provenance": {
+            "image_tag": readable.get("workload_image"),
+            "image_version_label": readable.get("image_version_label"),
+            "runtime_label": readable.get("runtime_label"),
+            "workload_attention_backend": readable.get("workload_attention_backend"),
+        },
+        "http_time_total_s": {
+            "dense_h3_backend_reference": dense_http.get("time_total_s"),
+            "sol_attn_opt_in": opt_http.get("time_total_s"),
+        },
+        "paired_http_ratio_dense_over_opt_in_not_speedup": data.get("paired_http_ratio_dense_over_opt_in_not_speedup"),
+        "telemetry": {
+            "sparse_candidate_calls": sparse_candidates,
+            "sparse_calls": sparse_calls,
+            "dense_calls": int(telemetry.get("dense_calls") or 0),
+            "fallback_calls": fallback_calls,
+            "decline_reasons": telemetry.get("decline_reasons") or {},
+            "density_sample_count": density_samples,
+            "materialized_copy_calls": materialized_calls,
+            "materialized_copy_bytes": materialized_bytes,
+        },
+        "resource_summary": {
+            "peak_gpu_memory_mib": resources.get("peak_gpu_memory_mib"),
+            "peak_temperature_c": resources.get("peak_temperature_c"),
+            "peak_power_w": resources.get("peak_power_w"),
+        },
+        "av": {
+            "dense_structural_pass": dense_av.get("structural_av_contract_pass"),
+            "opt_in_structural_pass": opt_av.get("structural_av_contract_pass"),
+            "dense_video_frames": dense_av.get("decoded_video_frames"),
+            "opt_in_video_frames": opt_av.get("decoded_video_frames"),
+            "dense_audio_sample_rate_hz": dense_av.get("audio_sample_rate_hz"),
+            "opt_in_audio_sample_rate_hz": opt_av.get("audio_sample_rate_hz"),
+        },
+        "matched_retest": {
+            "status": "not_available",
+            "reason": "no r8 matched-workload nonterminal/terminal route-decision evidence was found by the aggregator",
+        },
+    }
+
+    terminal_run_dir = _latest_prefixed_dir(root / "sol_engine_port", R8_MATCHED_RETEST_TERMINAL_RUN_PREFIX)
+    terminal_decision_path = terminal_run_dir / R8_MATCHED_RETEST_DECISION_FILE if terminal_run_dir is not None else None
+    if terminal_decision_path is not None and terminal_decision_path.is_file():
+        decision = load_json(terminal_decision_path)
+        classification = decision.get("classification")
+        allowed_terminal = {
+            "proceed_to_formal_n10_candidate",
+            "diagnostic_only_rejected_no_n10_timing_gate",
+            "diagnostic_only_rejected_resource_envelope",
+            "needs_fix_incomplete_matched_retest",
+            "needs_fix_invalid_http_or_structural_av",
+            "needs_fix_sparse_runtime_or_telemetry_gate_failed",
+            "needs_fix_quality_proxy_red_flags",
+        }
+        if classification not in allowed_terminal:
+            raise AggregationError(f"unexpected r8 matched retest terminal classification: {classification!r}")
+        if decision.get("not_fidelity_or_performance_claim") is not True or decision.get("not_formal_n10") is not True:
+            raise AggregationError("r8 matched retest terminal decision must reject fidelity/performance/formal-N10 claim status")
+        if decision.get("lane") != "diagnostic_practical_opt_in_sol_attn_not_bf16_fidelity":
+            raise AggregationError("r8 matched retest terminal decision must remain in the diagnostic practical opt-in lane")
+        gates = decision.get("gates")
+        if not isinstance(gates, dict):
+            raise AggregationError("r8 matched retest terminal decision missing gates object")
+        if classification == "proceed_to_formal_n10_candidate":
+            required_true = [
+                "all_pairs_completed",
+                "all_http_200",
+                "all_structural_av_valid",
+                "all_sparse_calls_positive",
+                "all_fallback_calls_zero",
+                "complete_density_and_materialization_telemetry",
+                "resource_envelope_comparable_to_prior_r8",
+                "no_quality_proxy_red_flags",
+                "no_pair_slower",
+                "median_improvement_exceeds_threshold",
+            ]
+            missing_true = [name for name in required_true if gates.get(name) is not True]
+            if missing_true:
+                raise AggregationError(f"r8 matched retest proceed classification has failed gates: {missing_true}")
+            if decision.get("proceed_to_n10_recommended") is not True or decision.get("failed_gates") not in ([], None):
+                raise AggregationError("r8 matched retest proceed classification must recommend N10 with no failed gates")
+        terminal_artifacts = {name: (terminal_run_dir / name).is_file() for name in R8_MATCHED_RETEST_TERMINAL_FILES}
+        if not all(terminal_artifacts.values()):
+            raise AggregationError(f"r8 matched retest terminal artifact set incomplete: {terminal_artifacts}")
+        supervisor_status_path = terminal_run_dir / "supervisor_status.json"
+        supervisor_status = load_json(supervisor_status_path) if supervisor_status_path.is_file() else {}
+        posthoc_note_path = terminal_run_dir / "posthoc_finalization_note.json"
+        terminal_recheck_dir = _latest_prefixed_dir(delivery_dir, R8_MATCHED_RETEST_TERMINAL_RECHECK_PREFIX)
+        terminal_recheck_path = terminal_recheck_dir / R8_MATCHED_RETEST_TERMINAL_RECHECK_FILE if terminal_recheck_dir is not None else None
+        if terminal_recheck_path is not None and terminal_recheck_path.is_file():
+            terminal_recheck = load_json(terminal_recheck_path)
+            if terminal_recheck.get("classification") != classification:
+                raise AggregationError("latest r8 matched terminal recheck classification disagrees with decision.json")
+        result["matched_retest"] = {
+            "status": classification,
+            "evidence_path": rel(terminal_decision_path, root),
+            "source_run_dir": rel(terminal_run_dir, root),
+            "supervisor_status": supervisor_status.get("status"),
+            "supervisor_return_code": supervisor_status.get("return_code"),
+            "supervisor_pid_alive": False,
+            "posthoc_finalization_note": rel(posthoc_note_path, root) if posthoc_note_path.is_file() else None,
+            "terminal_recheck_evidence_path": rel(terminal_recheck_path, root) if terminal_recheck_path is not None and terminal_recheck_path.is_file() else None,
+            "terminal_artifacts_present": terminal_artifacts,
+            "requested_pairs": gates.get("requested_pairs"),
+            "completed_pairs": gates.get("completed_pairs"),
+            "median_http_time_improvement_pct": decision.get("median_http_time_improvement_pct"),
+            "timing_threshold_pct": decision.get("timing_threshold_pct"),
+            "n10_recommendation": "proceed_to_formal_n10_candidate" if decision.get("proceed_to_n10_recommended") is True else "do_not_promote_without_new_evidence",
+            "reason": decision.get("reason"),
+        }
+    else:
+        matched_dir = _latest_prefixed_dir(delivery_dir, R8_MATCHED_RETEST_INSPECTION_PREFIX)
+        if matched_dir is not None:
+            matched_path = matched_dir / R8_MATCHED_RETEST_INSPECTION_FILE
+            matched = load_json(matched_path)
+            if matched.get("not_fidelity_or_speedup_claim") is not True:
+                raise AggregationError("r8 matched retest inspection must reject fidelity/speedup-claim status")
+            if matched.get("classification") != "pending_nonterminal_do_not_promote_or_stop":
+                raise AggregationError(f"unexpected r8 matched retest nonterminal classification: {matched.get('classification')!r}")
+            result["matched_retest"] = {
+                "status": matched.get("classification"),
+                "evidence_path": rel(matched_path, root),
+                "source_run_dir": matched.get("source_run_dir"),
+                "supervisor_status": matched.get("supervisor_status", {}).get("status"),
+                "supervisor_pid_alive": matched.get("supervisor_pid_liveness", {}).get("alive"),
+                "terminal_artifacts_present": matched.get("terminal_artifacts_present"),
+                "n10_recommendation": matched.get("n10_recommendation"),
+                "reason": matched.get("reason"),
+            }
+    return result
+
+
 def summarize_sol(root: Path, baseline: dict[str, Any]) -> dict[str, Any]:
     adaln_quality_path = root / ADALN_QUALITY_REL
     adaln_posthoc_path = root / ADALN_POSTHOC_REL
@@ -489,6 +724,79 @@ def summarize_sol(root: Path, baseline: dict[str, Any]) -> dict[str, Any]:
             "dense_median_ms": bench.get("dense_ms", {}).get("median_ms"),
             "sparse_median_ms": bench.get("sparse_ms", {}).get("median_ms"),
         },
+        "h3_sol_attn_r8": summarize_r8_h3_sol_attn(root),
+    }
+
+
+def summarize_final_gates(root: Path) -> dict[str, Any]:
+    delivery_dir = root / DELIVERY_REL
+    cpu_dir = _latest_prefixed_dir(delivery_dir, FINAL_CPU_STATIC_GATE_PREFIX)
+    decisive_dir = _latest_prefixed_dir(delivery_dir, FINAL_DECISIVE_EXPORT_AUDIT_PREFIX)
+
+    cpu_status = "not_available"
+    cpu_summary = ""
+    if cpu_dir is not None:
+        summary_path = cpu_dir / "summary.txt"
+        cpu_summary = read_text(summary_path) if summary_path.is_file() else ""
+        cpu_status = "pass" if "status=pass" in cpu_summary else "present_but_not_pass"
+
+    decisive_status = "not_available"
+    decisive_summary: dict[str, Any] = {}
+    if decisive_dir is not None:
+        summary_path = decisive_dir / "summary.json"
+        decisive_summary = load_json(summary_path) if summary_path.is_file() else {}
+        decisive_status = decisive_summary.get("status") or "present_but_not_pass"
+
+    overall = "pass" if cpu_status == "pass" and decisive_status == "pass" else "pending_or_failed"
+    return {
+        "status": overall,
+        "cpu_static_gate": {
+            "status": cpu_status,
+            "dir": rel(cpu_dir, root) if cpu_dir is not None else None,
+            "summary_path": rel(cpu_dir / "summary.txt", root) if cpu_dir is not None else None,
+            "summary_tail": cpu_summary.strip().splitlines()[-4:] if cpu_summary else [],
+        },
+        "decisive_export_audit_gate": {
+            "status": decisive_status,
+            "dir": rel(decisive_dir, root) if decisive_dir is not None else None,
+            "summary_path": rel(decisive_dir / "summary.json", root) if decisive_dir is not None else None,
+            "export_file_count": decisive_summary.get("export_file_count"),
+            "publication_audit_status": decisive_summary.get("publication_audit_status"),
+            "publication_issue_count": decisive_summary.get("publication_issue_count"),
+        },
+        "claim_boundary": "CPU/static/export/audit gates only; no GPU, Docker-run, model-load, speed, fidelity, or quality claim is created by these gates.",
+    }
+
+
+def summarize_local_lifecycle(root: Path) -> dict[str, Any]:
+    delivery_dir = root / DELIVERY_REL
+    candidates = sorted(p for p in delivery_dir.glob(f"{LOCAL_LIFECYCLE_PREFIX}*") if p.is_dir())
+    if not candidates:
+        raise AggregationError("missing clean-room local lifecycle evidence")
+    selected = candidates[-1]
+    summary_rel = selected.relative_to(root).as_posix() + "/lifecycle/stages/05_lifecycle_summary.json"
+    model_rel = selected.relative_to(root).as_posix() + "/lifecycle/stages/02_model_prepare.json"
+    deploy_rel = selected.relative_to(root).as_posix() + "/lifecycle/stages/03_deploy.json"
+    summary = load_json(root / summary_rel)
+    model = load_json(root / model_rel)
+    deploy = load_json(root / deploy_rel)
+    if summary.get("status") != "pass" or summary.get("publication_audit_status") != "pass":
+        raise AggregationError(f"local lifecycle did not pass: {summary_rel}")
+    if model.get("status") != "pass" or int(model.get("local_non_symlink_file_count", 0)) <= 0:
+        raise AggregationError(f"local lifecycle model-prepare did not pass: {model_rel}")
+    if deploy.get("status") != "pass":
+        raise AggregationError(f"local lifecycle deploy did not pass: {deploy_rel}")
+    return {
+        "status": "pass_packaging_lifecycle_only",
+        "run_dir": selected.relative_to(root).as_posix(),
+        "summary_path": summary_rel,
+        "model_prepare_path": model_rel,
+        "deploy_path": deploy_rel,
+        "publication_audit_status": summary["publication_audit_status"],
+        "model_file_count": model["local_non_symlink_file_count"],
+        "model_total_bytes": model["local_total_bytes"],
+        "deploy_status": deploy["status"],
+        "claim_boundary": summary["claim_boundary"],
     }
 
 
@@ -498,6 +806,8 @@ def aggregate_evidence(root: Path, *, repo_root: Path | None = None) -> dict[str
     turbo = summarize_turbo(root, baseline)
     dmd = summarize_dmd(root)
     sol = summarize_sol(root, baseline)
+    lifecycle = summarize_local_lifecycle(root)
+    final_gates = summarize_final_gates(root)
     quality_config_path = root / QUALITY_CONFIG_REL
     quality_dry_run_dir = root / QUALITY_DRY_RUN_REL
 
@@ -537,6 +847,12 @@ def aggregate_evidence(root: Path, *, repo_root: Path | None = None) -> dict[str
                     "track": Practical,
                     "evidence": [ADALN_QUALITY_REL, ADALN_POSTHOC_REL, ADALN_VERDICT_REL],
                     "limits": "Not an accepted N=10 speedup and not deployed as a certified fidelity path.",
+                },
+                {
+                    "claim": "The gated one-command local lifecycle passed in a clean-room export/work directory using existing local locked resources only.",
+                    "track": "packaging_deployment_only",
+                    "evidence": [lifecycle["summary_path"], lifecycle["model_prepare_path"], lifecycle["deploy_path"]],
+                    "limits": "Packaging/deployment evidence only: no container start, model load, GPU inference, media generation, speed, fidelity, or quality claim.",
                 },
             ],
             "rejected": [
@@ -578,7 +894,16 @@ def aggregate_evidence(root: Path, *, repo_root: Path | None = None) -> dict[str
                     "evidence": [TURBO_QUALITY_LATEST_REL, f"{TURBO_QUALITY_RUNS_REL}/{turbo['quality_suite']['run_id']}/quality_suite_analysis.json", f"{TURBO_QUALITY_RUNS_REL}/{turbo['quality_suite']['run_id']}/human_review.md"],
                 },
             ],
+            "pending": [
+                {
+                    "claim": "Formal DLO N10 performance promotion is complete.",
+                    "status": "pending_no_formal_n10_because_current_candidate_is_below_baseline_noise",
+                    "evidence": ["dlo_autotune/detached_continuation/status.txt", "dlo_autotune/runs/a6000_dlo_candidate_50_rl16_20260810T141257Z/candidate50_summary.json"],
+                },
+            ],
         },
+        "delivery_lifecycle": lifecycle,
+        "final_gates": final_gates,
         "quality_suite_runner": {
             "config_path": rel(quality_config_path, root) if quality_config_path.exists() else None,
             "dry_run_plan_dir": rel(quality_dry_run_dir, root) if quality_dry_run_dir.exists() else None,
@@ -591,12 +916,52 @@ def aggregate_evidence(root: Path, *, repo_root: Path | None = None) -> dict[str
             "cpu_static_tests_are_the_only_tests_counted_in_this_delivery": True,
         },
         "operator_commands": [
-            "PYTHONPATH=code:. python3 -m pytest -q tests ports/minimax_h3_a6000/tests",
+            "PYTHONPATH=code:.:ports/minimax_h3_a6000/src python3 -m pytest -q tests ports/minimax_h3_a6000/tests",
             "python3 tools/verify_run.py tests/fixtures/minimal_av_case/run_record.json",
             f"python3 tools/turbo_quality_suite_runner.py --dry-run --config {repo_rel(quality_config_path, repo_root)} --out {repo_rel(quality_dry_run_dir, repo_root)}",
             f"python3 tools/argus_ir04_aggregate.py --strict --input {repo_rel(root, repo_root)} --out technical_report/evidence/minimax_h3_desktop/delivery/argus_ir04_delivery_summary.json --report-out technical_report/final_technical_report.md --manifest-out technical_report/evidence/minimax_h3_desktop/delivery/package_manifest.json",
         ],
     }
+
+    h3_sol = sol.get("h3_sol_attn_r8", {})
+    if h3_sol.get("status") == "sparse_runtime_valid_5step_diagnostic":
+        summary["claims"]["accepted"].append(
+            {
+                "claim": "H3 Sol-Attn r8 metadata plumbing reached the real 5-step H3 attention boundary and executed the sparse path with valid structural AV/resource telemetry.",
+                "track": "diagnostic_metadata_plumbing_only",
+                "evidence": [h3_sol["evidence_path"]],
+                "limits": h3_sol["claim_boundary"],
+            }
+        )
+        matched = h3_sol.get("matched_retest", {})
+        promotion_status = "pending_matched_workload_gate_required_before_speedup_n10_or_quality_claim"
+        promotion_evidence = [h3_sol["evidence_path"]]
+        if matched.get("status") == "proceed_to_formal_n10_candidate":
+            summary["claims"]["accepted"].append(
+                {
+                    "claim": "The r8 N=3 matched-workload route gate is terminal and recommends formal N>=10 Sol-Attn testing.",
+                    "track": "diagnostic_metadata_plumbing_only",
+                    "evidence": [matched["evidence_path"]],
+                    "limits": "Bounded N=3 5-step route decision only; not formal N10, not a speedup, not BF16 fidelity, and not quality-equivalence certification.",
+                }
+            )
+            promotion_status = "pending_formal_n10_required_after_r8_n3_candidate_before_speedup_or_quality_claim"
+            promotion_evidence = [matched["evidence_path"]]
+        summary["claims"]["pending"].append(
+            {
+                "claim": "Sol-Attn matched-workload correctness/quality and performance promotion is complete.",
+                "status": promotion_status,
+                "evidence": promotion_evidence,
+            }
+        )
+        if matched.get("status") == "pending_nonterminal_do_not_promote_or_stop":
+            summary["claims"]["pending"].append(
+                {
+                    "claim": "The started r8 matched-workload retest has a terminal route decision.",
+                    "status": matched["status"],
+                    "evidence": [matched["evidence_path"]],
+                }
+            )
     return summary
 
 
@@ -604,7 +969,10 @@ def report_markdown(summary: dict[str, Any]) -> str:
     baseline = summary["lanes"][Fidelity]["baseline"]
     turbo = summary["lanes"][Practical]["turbo_merged"]
     sol = summary["lanes"][Practical]["sol_exact_and_sol_attn"]
+    h3_sol = sol.get("h3_sol_attn_r8", {})
     dmd = summary["lanes"][Practical]["dmd"]
+    lifecycle = summary["delivery_lifecycle"]
+    final_gates = summary.get("final_gates", {})
     lines = [
         "# ARGUS-IR-04 Final Technical Report",
         "",
@@ -640,6 +1008,20 @@ def report_markdown(summary: dict[str, Any]) -> str:
         "- Human auditory listening remains pending; semantic AV quality is not certified.",
         f"- GPU2 smoke scope: {turbo['gpu2_bringup_scope']}.",
         "",
+        "## Clean-room one-command local lifecycle",
+        "",
+        f"- Evidence: `{lifecycle['run_dir']}`.",
+        f"- Status: `{lifecycle['status']}`; publication audit `{lifecycle['publication_audit_status']}`; deploy `{lifecycle['deploy_status']}`.",
+        f"- Existing local FL2VA resource inspection: {lifecycle['model_file_count']} files, {lifecycle['model_total_bytes']} bytes.",
+        f"- Boundary: {lifecycle['claim_boundary']}.",
+        "",
+        "## Final CPU/static/export/audit gates",
+        "",
+        f"- Overall gate status: `{final_gates.get('status', 'not_available')}`.",
+        f"- CPU/static gate: `{final_gates.get('cpu_static_gate', {}).get('status', 'not_available')}`; evidence `{final_gates.get('cpu_static_gate', {}).get('summary_path')}`; summary tail={final_gates.get('cpu_static_gate', {}).get('summary_tail', [])}.",
+        f"- Strict aggregation/export/publication audit gate: `{final_gates.get('decisive_export_audit_gate', {}).get('status', 'not_available')}`; evidence `{final_gates.get('decisive_export_audit_gate', {}).get('summary_path')}`; export_file_count={final_gates.get('decisive_export_audit_gate', {}).get('export_file_count')}; publication_audit={final_gates.get('decisive_export_audit_gate', {}).get('publication_audit_status')}; issues={final_gates.get('decisive_export_audit_gate', {}).get('publication_issue_count')}.",
+        f"- Boundary: {final_gates.get('claim_boundary', 'gate evidence unavailable')}.",
+        "",
         "## Reproducible Turbo quality-suite runner",
         "",
         f"- Config: `{summary['quality_suite_runner']['config_path']}`.",
@@ -655,6 +1037,27 @@ def report_markdown(summary: dict[str, Any]) -> str:
         f"- All-exact: `{sol['all_exact']['status']}`; video MSE {sol['all_exact']['video_mean_mse']}; audio cosine {sol['all_exact']['audio_waveform_cosine']}.",
         f"- SwiGLU: `{sol['swiglu']['status']}`; exact diagnostic output retained no accepted speedup gain.",
         f"- Toy Sol-Attn: `{sol['toy_sol_attn']['status']}`; dense median {sol['toy_sol_attn']['dense_median_ms']} ms, sparse median {sol['toy_sol_attn']['sparse_median_ms']} ms, dense/sparse median speedup {sol['toy_sol_attn']['speedup_dense_over_sparse_median']}.",
+    ]
+    if h3_sol.get("status") != "not_available":
+        tele = h3_sol["telemetry"]
+        resources = h3_sol["resource_summary"]
+        lines.extend(
+            [
+                f"- H3 Sol-Attn r8: `{h3_sol['classification']}`; evidence `{h3_sol['evidence_path']}`; sparse candidates={tele['sparse_candidate_calls']}, sparse calls={tele['sparse_calls']}, dense calls={tele['dense_calls']}, fallback calls={tele['fallback_calls']}, density samples={tele['density_sample_count']}, materialized copies={tele['materialized_copy_calls']} / {tele['materialized_copy_bytes']} bytes.",
+                f"- H3 Sol-Attn r8 HTTP/resource boundary: dense={h3_sol['http_time_total_s']['dense_h3_backend_reference']}s, opt-in={h3_sol['http_time_total_s']['sol_attn_opt_in']}s, dense/opt-in ratio={h3_sol['paired_http_ratio_dense_over_opt_in_not_speedup']} (diagnostic only, not a speedup); peak GPU memory={resources['peak_gpu_memory_mib']} MiB, peak temperature={resources['peak_temperature_c']} C, peak power={resources['peak_power_w']} W.",
+                f"- H3 Sol-Attn r8 claim boundary: {h3_sol['claim_boundary']}.",
+            ]
+        )
+        matched = h3_sol.get("matched_retest", {})
+        if matched.get("status") == "proceed_to_formal_n10_candidate":
+            lines.append(
+                f"- R8 matched-workload retest route decision: `{matched['status']}`; evidence `{matched['evidence_path']}`; terminal_recheck=`{matched.get('terminal_recheck_evidence_path')}`; completed_pairs={matched.get('completed_pairs')}/{matched.get('requested_pairs')}; median_http_time_improvement={matched.get('median_http_time_improvement_pct')}%; threshold={matched.get('timing_threshold_pct')}%; supervisor_status={matched.get('supervisor_status')}; supervisor_return_code={matched.get('supervisor_return_code')}; posthoc_finalization_note=`{matched.get('posthoc_finalization_note')}`; n10_recommendation={matched.get('n10_recommendation')}. Reason: {matched.get('reason')}. This is still only a bounded route gate, not formal N10 or a speedup/quality/fidelity claim."
+            )
+        elif matched.get("status") != "not_available":
+            lines.append(
+                f"- R8 matched-workload retest route decision: `{matched['status']}`; evidence `{matched['evidence_path']}`; supervisor_status={matched['supervisor_status']}; pid_alive={matched['supervisor_pid_alive']}; n10_recommendation={matched['n10_recommendation']}. Reason: {matched['reason']}"
+            )
+    lines.extend([
         "",
         "## DMD / DMD2",
         "",
@@ -665,7 +1068,7 @@ def report_markdown(summary: dict[str, Any]) -> str:
         "## Accepted / rejected / blocked matrix",
         "",
         "### Accepted",
-    ]
+    ])
     for item in summary["claims"]["accepted"]:
         lines.append(f"- {item['claim']} Evidence: {', '.join('`' + e + '`' for e in item['evidence'])}. Limit: {item['limits']}")
     lines.extend(["", "### Rejected"])
@@ -674,10 +1077,13 @@ def report_markdown(summary: dict[str, Any]) -> str:
     lines.extend(["", "### Blocked"])
     for item in summary["claims"]["blocked"]:
         lines.append(f"- {item['claim']} Status: {item['status']} Evidence: {', '.join('`' + e + '`' for e in item['evidence'])}.")
+    lines.extend(["", "### Pending"])
+    for item in summary["claims"].get("pending", []):
+        lines.append(f"- {item['claim']} Status: {item['status']} Evidence: {', '.join('`' + e + '`' for e in item['evidence'])}.")
     lines.extend(
         [
             "",
-            "## Exact operator commands left for follow-up",
+            "## Reproduction / final gate commands",
             "",
         ]
     )
@@ -699,15 +1105,71 @@ def default_manifest_paths(repo_root: Path, evidence_root: Path, out_path: Path 
     timing_run_id = _read_latest_run_id(evidence_root / TURBO_TIMING_LATEST_REL)
     quality_run_id = _read_latest_run_id(evidence_root / TURBO_QUALITY_LATEST_REL)
     quality_run_dir = evidence_root / TURBO_QUALITY_RUNS_REL / quality_run_id
+    lifecycle = summarize_local_lifecycle(evidence_root)
+    lifecycle_paths = [evidence_root / lifecycle[key] for key in ("summary_path", "model_prepare_path", "deploy_path")]
+    r8_paths: list[Path] = []
+    delivery_dir = evidence_root / DELIVERY_REL
+    r8_ingest_dir = _latest_prefixed_dir(delivery_dir, R8_SOL_ATTN_CPU_INGEST_PREFIX)
+    if r8_ingest_dir is not None:
+        r8_paths.extend(
+            [
+                r8_ingest_dir / R8_SOL_ATTN_CLASSIFICATION_FILE,
+                r8_ingest_dir / "README.md",
+                r8_ingest_dir / "performance_summary.json",
+            ]
+        )
+    r8_matched_terminal_dir = _latest_prefixed_dir(evidence_root / "sol_engine_port", R8_MATCHED_RETEST_TERMINAL_RUN_PREFIX)
+    if r8_matched_terminal_dir is not None and (r8_matched_terminal_dir / R8_MATCHED_RETEST_DECISION_FILE).is_file():
+        r8_paths.extend(r8_matched_terminal_dir / name for name in R8_MATCHED_RETEST_TERMINAL_FILES)
+        posthoc_note = r8_matched_terminal_dir / "posthoc_finalization_note.json"
+        if posthoc_note.is_file():
+            r8_paths.append(posthoc_note)
+        terminal_recheck_dir = _latest_prefixed_dir(delivery_dir, R8_MATCHED_RETEST_TERMINAL_RECHECK_PREFIX)
+        if terminal_recheck_dir is not None:
+            r8_paths.append(terminal_recheck_dir / R8_MATCHED_RETEST_TERMINAL_RECHECK_FILE)
+    else:
+        r8_matched_dir = _latest_prefixed_dir(delivery_dir, R8_MATCHED_RETEST_INSPECTION_PREFIX)
+        if r8_matched_dir is not None:
+            r8_paths.append(r8_matched_dir / R8_MATCHED_RETEST_INSPECTION_FILE)
+    final_gate_paths: list[Path] = []
+    cpu_gate_dir = _latest_prefixed_dir(delivery_dir, FINAL_CPU_STATIC_GATE_PREFIX)
+    if cpu_gate_dir is not None:
+        final_gate_paths.extend(
+            [
+                cpu_gate_dir / "summary.txt",
+                cpu_gate_dir / "commands.txt",
+                cpu_gate_dir / "full_pytest.log",
+                cpu_gate_dir / "verify_run.log",
+                cpu_gate_dir / "turbo_quality_dry_run.log",
+            ]
+        )
+    decisive_gate_dir = _latest_prefixed_dir(delivery_dir, FINAL_DECISIVE_EXPORT_AUDIT_PREFIX)
+    if decisive_gate_dir is not None:
+        final_gate_paths.extend(
+            [
+                decisive_gate_dir / "summary.json",
+                decisive_gate_dir / "commands.txt",
+                decisive_gate_dir / "strict_aggregation.log",
+                decisive_gate_dir / "publication_audit.json",
+                decisive_gate_dir / "export_build.json",
+            ]
+        )
     candidates = [
+        repo_root / "release/github_release_manifest.json",
+        repo_root / "tools/build_github_release_tree.py",
+        repo_root / "tools/publication_audit.py",
         repo_root / "tools/turbo_quality_suite_runner.py",
         repo_root / "tools/turbo_quality_suite_analyze.py",
+        repo_root / "tools/minimax_h3_a6000_performance_report.py",
+        repo_root / "tools/build_periodic_progress.py",
         repo_root / "tools/argus_ir04_aggregate.py",
         repo_root / "tools/argus_h3_verifier.py",
         repo_root / "tools/verify_run.py",
+        repo_root / "scripts/a6000_one_command.sh",
         repo_root / "scripts/run_a6000_fidelity_baseline_repeats.sh",
         repo_root / "scripts/run_a6000_adaln_candidate_50step.sh",
         repo_root / "scripts/run_a6000_turbo_timing_repeats.sh",
+        repo_root / "ports/minimax_h3_a6000/README.md",
         repo_root / "ports/minimax_h3_a6000/NOTICE",
         repo_root / "ports/minimax_h3_a6000/UPSTREAM.md",
         repo_root / "ports/minimax_h3_a6000/gpu_exact_kernel_test.py",
@@ -719,6 +1181,9 @@ def default_manifest_paths(repo_root: Path, evidence_root: Path, out_path: Path 
         repo_root / "ports/minimax_h3_a6000/src/minimax_h3_a6000/sol_attn_backend.py",
         repo_root / "ports/minimax_h3_a6000/src/minimax_h3_a6000/sol_attn_triton_sm86.py",
         repo_root / "code/pytest.py",
+        repo_root / "tests/test_github_release_tree_builder.py",
+        repo_root / "tests/test_publication_audit.py",
+        repo_root / "tests/test_minimax_h3_a6000_performance_report.py",
         repo_root / "tests/test_turbo_quality_suite_runner.py",
         repo_root / "tests/test_argus_ir04_aggregate.py",
         repo_root / "tests/test_verify_run.py",
@@ -726,6 +1191,8 @@ def default_manifest_paths(repo_root: Path, evidence_root: Path, out_path: Path 
         evidence_root / QUALITY_DRY_RUN_REL / "quality_suite_plan.json",
         evidence_root / QUALITY_DRY_RUN_REL / "quality_suite_requests.jsonl",
         evidence_root / QUALITY_DRY_RUN_REL / "operator_commands.sh",
+        repo_root / "technical_report/progress_update.md",
+        repo_root / "technical_report/minimax_h3_a6000_performance.md",
         evidence_root / BASELINE_REL,
         evidence_root / "baseline_a6000/baseline_certification_v1_superseded_notice.md",
         evidence_root / TURBO_TIMING_LATEST_REL,
@@ -751,6 +1218,9 @@ def default_manifest_paths(repo_root: Path, evidence_root: Path, out_path: Path 
         evidence_root / SWIGLU_QUALITY_REL,
         evidence_root / SWIGLU_HTTP_REL,
         evidence_root / SOL_ATTN_RESULT_REL,
+        *r8_paths,
+        *lifecycle_paths,
+        *final_gate_paths,
     ]
     if out_path is not None:
         candidates.append(out_path)

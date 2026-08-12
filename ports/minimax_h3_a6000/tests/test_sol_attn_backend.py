@@ -77,8 +77,24 @@ def test_env_switches_are_default_off():
     assert DEFAULT_ENV_SWITCHES.get("MINIMAX_H3_A6000_EXACT_INDEXED_STRATEGY") == "auto"
     assert DEFAULT_ENV_SWITCHES.get("MINIMAX_H3_A6000_TELEMETRY_JSON", "") == ""
     assert DEFAULT_ENV_SWITCHES.get("MINIMAX_H3_A6000_SOL_ATTN_TELEMETRY_JSON", "") == ""
+    assert DEFAULT_ENV_SWITCHES.get("MINIMAX_H3_A6000_SOL_ATTN_DENSE_FIRST_STEPS") == "10"
+    assert DEFAULT_ENV_SWITCHES.get("MINIMAX_H3_A6000_SOL_ATTN_DENSE_FIRST_LAYERS") == "2"
     assert DEFAULT_ENV_SWITCHES.get("MINIMAX_H3_A6000_SOL_ATTN_DIAGNOSTIC_MATERIALIZE") == "0"
     assert DEFAULT_ENV_SWITCHES.get("MINIMAX_H3_A6000_SOL_ATTN_MATERIALIZE_MAX_BYTES") == "67108864"
+
+
+def test_sol_attn_policy_from_env_reads_diagnostic_dense_gate_override():
+    env = {
+        "MINIMAX_H3_A6000_ENABLE_OVERLAY": "1",
+        "MINIMAX_H3_A6000_ENABLE_TRITON_CANDIDATES": "1",
+        "MINIMAX_H3_A6000_ENABLE_SOL_ATTN": "1",
+        "MINIMAX_H3_A6000_SOL_ATTN_DENSE_FIRST_STEPS": "0",
+        "MINIMAX_H3_A6000_SOL_ATTN_DENSE_FIRST_LAYERS": "2",
+    }
+    policy = SolAttnPolicy.from_env(env)
+    assert policy.allow_sparse is True
+    assert policy.dense_first_steps == 0
+    assert policy.dense_first_layers == 2
 
 
 def test_h3_hook_metadata_derivation_uses_source_backed_layout_only():

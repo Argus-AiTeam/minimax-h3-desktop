@@ -1,0 +1,111 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://argus.local/schemas/minimax_h3_run.schema.json",
+  "title": "ARGUS-IR-04 MiniMax-H3 run or metadata fixture record",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema_version",
+    "run_id",
+    "artifact_kind",
+    "mock_fixture",
+    "real_h3_output",
+    "platform",
+    "track",
+    "model_identity",
+    "workload",
+    "environment",
+    "timing",
+    "resources",
+    "output_av",
+    "hidden_cache_controls",
+    "gates",
+    "claims"
+  ],
+  "properties": {
+    "schema_version": {"const": "argus-minimax-h3-run-v1"},
+    "run_id": {"type": "string", "minLength": 1},
+    "artifact_kind": {"enum": ["metadata_only_av_fixture", "real_h3_run"]},
+    "mock_fixture": {"type": "boolean"},
+    "real_h3_output": {"type": "boolean"},
+    "platform": {
+      "type": "object",
+      "required": ["id", "role", "status"],
+      "properties": {
+        "id": {"enum": ["single_a6000_48gb_workstation", "current_a6000_reference", "dgx_spark", "rtx_5090_single"]},
+        "role": {"enum": ["reference", "target", "blocked_target"]},
+        "status": {"type": "string"}
+      }
+    },
+    "track": {"enum": ["fidelity_bf16_exact", "practical_disclosed_approx"]},
+    "model_identity": {
+      "type": "object",
+      "required": ["source_repo", "source_commit", "checkpoint_repo", "checkpoint_revision", "task_partition", "weights_downloaded"],
+      "properties": {
+        "source_commit": {"const": "b7227fa6a6206e9fb30562383d39e53cf3866a48"},
+        "checkpoint_revision": {"const": "6818f6c32d12b210915e44ad56a4228c2608f160"},
+        "task_partition": {"enum": ["FL2VA", "Ref2VA"]},
+        "weights_downloaded": {"type": "boolean"}
+      }
+    },
+    "workload": {
+      "type": "object",
+      "required": ["task", "prompt", "seeds", "short_edge_px", "aspect_ratio", "duration_seconds", "fps", "audio", "steps"],
+      "properties": {
+        "task": {"enum": ["t2va", "fl2va", "ref2va"]},
+        "seeds": {"type": "array", "items": {"type": "integer"}, "minItems": 1},
+        "duration_seconds": {"type": "number", "exclusiveMinimum": 0},
+        "fps": {"const": 24},
+        "audio": {
+          "type": "object",
+          "required": ["sample_rate_hz", "channels"],
+          "properties": {
+            "sample_rate_hz": {"const": 32000},
+            "channels": {"const": 2}
+          }
+        }
+      }
+    },
+    "environment": {
+      "type": "object",
+      "required": ["container", "global_system_modified"],
+      "properties": {
+        "container": {
+          "type": "object",
+          "required": ["image", "image_digest"],
+          "properties": {
+            "image": {"type": "string"},
+            "image_digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"}
+          }
+        },
+        "global_system_modified": {"const": false}
+      }
+    },
+    "output_av": {
+      "type": "object",
+      "required": ["metadata_only", "output_files", "video", "audio"],
+      "properties": {
+        "metadata_only": {"type": "boolean"},
+        "output_files": {"type": "array"},
+        "video": {"type": "object", "required": ["present"]},
+        "audio": {"type": "object", "required": ["present", "channels", "sample_rate_hz"]}
+      }
+    },
+    "hidden_cache_controls": {
+      "type": "object",
+      "required": [
+        "declared_cache_roots",
+        "forbidden_implicit_cache_roots",
+        "pre_run_snapshot",
+        "post_run_snapshot",
+        "clean_room_required_for_claim",
+        "no_hidden_cache_assertion"
+      ],
+      "properties": {
+        "declared_cache_roots": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+        "forbidden_implicit_cache_roots": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+        "clean_room_required_for_claim": {"const": true}
+      }
+    }
+  }
+}

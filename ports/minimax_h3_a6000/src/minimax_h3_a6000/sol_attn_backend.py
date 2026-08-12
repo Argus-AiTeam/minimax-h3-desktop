@@ -235,6 +235,16 @@ class SolAttnPolicy:
     def from_env(cls, env: Mapping[str, str] | None = None) -> "SolAttnPolicy":
         env = os.environ if env is None else env
         return cls(
+            dense_first_steps=_read_env_int(
+                env,
+                "MINIMAX_H3_A6000_SOL_ATTN_DENSE_FIRST_STEPS",
+                default=10,
+            ),
+            dense_first_layers=_read_env_int(
+                env,
+                "MINIMAX_H3_A6000_SOL_ATTN_DENSE_FIRST_LAYERS",
+                default=2,
+            ),
             allow_sparse=(
                 env_enabled("MINIMAX_H3_A6000_ENABLE_OVERLAY", env)
                 and env_enabled("MINIMAX_H3_A6000_ENABLE_TRITON_CANDIDATES", env)
