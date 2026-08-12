@@ -50,7 +50,7 @@ A sleek silver exploration starship slowly launches from a glowing circular dock
 as coherent blue plasma thrusters ignite ...
 ```
 
-该文件已完成 124 帧全解码、双声道音频解码、非静音/峰值检查、冻结转场 proxy 和六帧人工视觉检查。Turbo 属于明确披露的近似路线，不应被写成 BF16-exact 结果。
+该文件已完成 124 帧全解码、双声道音频解码、非静音/峰值检查、冻结转场 proxy 和六帧人工视觉检查。
 
 ---
 
