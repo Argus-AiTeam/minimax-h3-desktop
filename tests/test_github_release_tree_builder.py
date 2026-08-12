@@ -18,10 +18,8 @@ from build_github_release_tree import (  # noqa: E402
 from publication_audit import audit_tree  # noqa: E402
 
 
-def test_default_destination_is_operator_export_sibling_without_literal_in_test() -> None:
-    expected = Path("/") / "data" / "chenxi" / "minimax-h3-desktop-github"
-
-    assert default_destination() == expected
+def test_default_destination_is_project_sibling() -> None:
+    assert default_destination() == ROOT.parent / "github-release"
 
 
 def test_real_manifest_builds_sanitized_export_to_tmp_path(tmp_path: Path) -> None:
@@ -59,7 +57,8 @@ def test_real_manifest_builds_sanitized_export_to_tmp_path(tmp_path: Path) -> No
     assert (dest / "tests" / "fixtures" / "minimal_av_case" / "run_record.json").is_file()
     readme = (dest / "README.md").read_text(encoding="utf-8")
     assert "MiniMax-H3 on a Single RTX A6000" in readme
-    assert "Argus](https://github.com/lbx154/Argus)" in readme
+    assert "CURRENT_WORK.md" in readme
+    assert "自主" + "完成" not in readme
     assert "orbital-shipyard-turbo-8step.mp4" in readme
     assert "1792.202" in readme
     assert "290.998" in readme

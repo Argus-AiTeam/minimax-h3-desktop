@@ -5,7 +5,8 @@
 # lease/supervisor so the terminal evidence outlives the agent turn.
 set -euo pipefail
 
-ROOT=${ROOT:-${PWD}}
+SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)
+ROOT=${ROOT:-$(cd -- "$SCRIPT_DIR/../../.." && pwd -P)}
 GPU_INDEX=${GPU_INDEX:-2}
 EXPECTED_UUID=${EXPECTED_UUID:-GPU-5a6b7f13-4a03-c3c5-bb17-ea86b46d8aed}
 N_PAIRS=${N_PAIRS:-10}

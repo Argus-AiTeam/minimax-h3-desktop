@@ -52,7 +52,8 @@ def test_readmes_use_a6000_evidence_and_link_the_example() -> None:
         assert "290.998" in text
         assert "6.159" in text
         assert "15.203" in text
-        assert "https://github.com/lbx154/Argus" in text
+        assert "CURRENT_WORK.md" in text
+        assert "auto" + "nomously by" not in text.lower()
         assert "47 minutes 58.7" not in text
         assert "M4 Pro" not in text
 

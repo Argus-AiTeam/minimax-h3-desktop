@@ -5,6 +5,7 @@
 </p>
 
 <p align="center">
+  <a href="CURRENT_WORK.md"><strong>Current Work / 当前工作</strong></a> ·
   <a href="README.md">中文</a> ·
   <a href="#generated-result">Generated result</a> ·
   <a href="#quick-start">Quick start</a> ·
@@ -19,9 +20,7 @@
   <img alt="License Apache 2.0" src="https://img.shields.io/badge/code-Apache--2.0-blue">
 </p>
 
-> **Most A6000 adaptation, long-running experiments, failure diagnosis, performance validation, Reviewer work, and documentation in this repository were completed autonomously by [Argus](https://github.com/lbx154/Argus), with maintenance by Argus-AiTeam.**
->
-> Argus continuously read and modified the runtime, scheduled safe single-GPU experiments, inspected real audiovisual outputs, and iterated from honest r6/r7 fail-closed results to r8 sparse execution and a formal N=10 acceptance gate.
+> **Long-video work:** the current focus is 720p-class 30/60-second audiovisual production on one RTX A6000. See [`CURRENT_WORK.md`](CURRENT_WORK.md) for accepted evidence, negative results, active hypotheses, and the next experiment. Short-clip baselines are not presented as long-video results.
 
 This project runs the complete MiniMax-H3 FL2VA pipeline on **one real NVIDIA RTX A6000 48 GB (SM86)**. It does not substitute a smaller model and does not report a multi-GPU server as a desktop result. The repository includes a reproducible BF16 baseline, practical Turbo deployment, default-off Sol-Attn work, build/run scripts, tests, and compact evidence.
 
@@ -266,7 +265,6 @@ For Apple Silicon, see the sibling project [`Argus-AiTeam/minimax-h3-mac`](https
 
 ## Projects and acknowledgements
 
-- [Argus Agent](https://github.com/lbx154/Argus) — autonomous adaptation, experimentation, diagnosis, validation, and documentation
 - [MiniMax-H3](https://huggingface.co/MiniMaxAI/MiniMax-H3) — architecture and official weights
 - [vLLM-Omni](https://github.com/vllm-project/vllm-omni) — CUDA serving foundation
 - [Larry MiniMax-H3 Turbo LoRA](https://huggingface.co/larryvrh/MiniMax-H3-Turbo-Lora) — practical few-step adapter

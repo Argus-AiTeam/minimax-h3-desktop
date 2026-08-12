@@ -13,7 +13,7 @@ Prerequisites:
 
 ## Completed exact-kernel candidate sequence
 
-Evidence path: `${PWD}/technical_report/evidence/minimax_h3_desktop/sol_engine_port/gpu_exact_20260809T155451Z`.
+Evidence path: `technical_report/evidence/minimax_h3_desktop/sol_engine_port/gpu_exact_20260809T155451Z`.
 
 - Correctness: 8/8 cases compiled and launched; all `max_abs=0`, `max_rel=0`, `mismatch=0`.
 - Microbenchmark: kernel-only raw latency JSON, not H3 E2E. Median speedups from the absorbed JSON are indexed modulation 22.02x, indexed gate 11.66x, RoPE 6.50x, and SwiGLU 8.09-8.11x.
@@ -40,7 +40,7 @@ Evidence path: `${PWD}/technical_report/evidence/minimax_h3_desktop/sol_engine_p
 Build the disposable integration image from the r2 base without GPU:
 
 ```bash
-ROOT=${PWD} \
+ROOT="$PWD" \
 EVIDENCE_DIR=/tmp/h3_r3_build \
 ports/minimax_h3_a6000/integration/r3/build_r3_overlay_image.sh
 ```
@@ -48,10 +48,10 @@ ports/minimax_h3_a6000/integration/r3/build_r3_overlay_image.sh
 External GPU2 5-step same-workload integration gate, after operator authorization and after mapping physical GPU2 as the only visible in-container device:
 
 ```bash
-ROOT=${PWD} \
+ROOT="$PWD" \
 GPU_INDEX=2 \
 IMAGE=argus/minimax-h3-vllm-omni:8e2e9b6b53e8-r3-exact-overlay \
-OUT_DIR=${PWD}/technical_report/evidence/minimax_h3_desktop/sol_engine_port/r3_integration_$(date -u +%Y%m%dT%H%M%SZ) \
+OUT_DIR="$PWD/technical_report/evidence/minimax_h3_desktop/sol_engine_port/r3_integration_$(date -u +%Y%m%dT%H%M%SZ)" \
 ports/minimax_h3_a6000/integration/run_gpu2_exact_integration_5step.sh
 ```
 
@@ -62,10 +62,10 @@ This script first runs dense reference, then enables `MINIMAX_H3_A6000_ENABLE_FU
 The r4 all-exact result is needs-revision, not fidelity evidence: all candidates avoided fallback and the 5-step run showed 1.79% apparent speedup, but dense-vs-exact quality differed (video PSNR 24.63 dB, audio waveform cosine 0.9776). To localize that drift after rebuilding the r4 overlay image from the current port, run the external GPU2 ablation gate:
 
 ```bash
-ROOT=${PWD} \
+ROOT="$PWD" \
 GPU_INDEX=2 \
 IMAGE=argus/minimax-h3-vllm-omni:8e2e9b6b53e8-r4-exact-overlay \
-OUT_DIR=${PWD}/technical_report/evidence/minimax_h3_desktop/sol_engine_port/r4_ablation_$(date -u +%Y%m%dT%H%M%SZ) \
+OUT_DIR="$PWD/technical_report/evidence/minimax_h3_desktop/sol_engine_port/r4_ablation_$(date -u +%Y%m%dT%H%M%SZ)" \
 ports/minimax_h3_a6000/integration/run_gpu2_exact_ablation_5step_r4.sh
 ```
 

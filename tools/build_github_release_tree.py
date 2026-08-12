@@ -22,7 +22,7 @@ from typing import Any, Iterable, Sequence
 SCHEMA_VERSION = "argus-github-release-manifest-v1"
 BUILD_MANIFEST_VERSION = "argus-github-release-build-v1"
 DEFAULT_MANIFEST = Path("release/github_release_manifest.json")
-DEFAULT_DESTINATION_PARTS = ("data", "chenxi", "minimax-h3-desktop-github")
+DEFAULT_DESTINATION_NAME = "github-release"
 DEFAULT_MAX_BYTES = 15_000_000
 MARKER_FILE = ".argus_release_tree"
 CURATED_MEDIA_ROOT = "examples"
@@ -89,10 +89,7 @@ class CopiedFile:
 
 
 def default_destination() -> Path:
-    path = Path(os.sep)
-    for part in DEFAULT_DESTINATION_PARTS:
-        path /= part
-    return path
+    return Path(__file__).resolve().parents[2] / DEFAULT_DESTINATION_NAME
 
 
 def sha256_bytes(data: bytes) -> str:

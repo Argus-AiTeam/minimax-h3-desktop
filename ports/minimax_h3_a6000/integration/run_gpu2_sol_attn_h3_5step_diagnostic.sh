@@ -5,7 +5,8 @@
 # network access, downloads, model loading, inference, cache enablement, or publication.
 set -euo pipefail
 
-ROOT=${ROOT:-${PWD}}
+SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)
+ROOT=${ROOT:-$(cd -- "$SCRIPT_DIR/../../.." && pwd -P)}
 GPU_INDEX=${GPU_INDEX:-2}
 EXPECTED_UUID=${EXPECTED_UUID:-}
 IMAGE=${IMAGE:-argus/minimax-h3-vllm-omni:8e2e9b6b53e8-r8-sol-attn-overlay}

@@ -5,6 +5,7 @@
 </p>
 
 <p align="center">
+  <a href="CURRENT_WORK.md"><strong>当前工作 / Current Work</strong></a> ·
   <a href="README_EN.md">English</a> ·
   <a href="#实际生成效果">生成效果</a> ·
   <a href="#5-分钟快速开始">快速开始</a> ·
@@ -19,9 +20,7 @@
   <img alt="License Apache 2.0" src="https://img.shields.io/badge/code-Apache--2.0-blue">
 </p>
 
-> **本仓库的 A6000 适配、长时间实验、性能验证、失败诊断、Reviewer 审核和文档整理主要由 [Argus](https://github.com/lbx154/Argus) 自主完成，并由 Argus-AiTeam 维护。**
->
-> Argus 在这个项目中持续读取代码、修改运行时、调度单卡实验、分析真实音视频结果，并从 r6/r7 的 fail-closed 失败迭代到 r8 的真实 sparse execution 与 formal N=10 验收。
+> **长视频研发状态：** 当前聚焦单张 RTX A6000 的 720p 级 30/60 秒音视频生产；已验收数据、负结果、待检验假设与下一实验见 [`CURRENT_WORK.md`](CURRENT_WORK.md)。短片基线不会被表述为长视频结果。
 
 **不需要 A100/H100，也没有把多卡服务器结果冒充桌面结果。** 本项目在一张真实的 **NVIDIA RTX A6000 48GB（SM86）**上跑通完整 MiniMax-H3 FL2VA，并提供可复现的 BF16 baseline、Turbo practical 路线、默认关闭的 Sol-Attn 实验实现、部署脚本、测试和原始证据摘要。
 
@@ -29,7 +28,7 @@
 
 ## 实际生成效果
 
-下面的视频是本仓库使用单张 RTX A6000 新生成的 **Turbo 8-step practical** 示例。
+下面的视频是本仓库使用单张 RTX A6000 新生成的 **Turbo 8-step practical** 示例，不是引用其他项目的数据或媒体。
 
 <a href="examples/a6000-turbo-8step-sci-fi/orbital-shipyard-turbo-8step.mp4">
   <img src="examples/a6000-turbo-8step-sci-fi/contact-sheet.jpg" alt="MiniMax-H3 A6000 orbital shipyard six-frame preview">
@@ -296,6 +295,7 @@ python3 tools/publication_audit.py \
 ## 平台边界
 
 - 当前正式目标平台是 **单张 RTX A6000 48GB**；
+- 测试主机虽然有 4 张 A6000，但每个正式模型进程只看见一张，结果没有聚合多卡；
 - 不能将本仓库数字当作 RTX 5090、DGX Spark、A100、H100 或 8×GB200 结果；
 - Turbo 是 practical approximation；BF16 baseline 才属于 fidelity 分母；
 - 实际耗时会受 prompt 长度、驱动、温度、存储、host RAM 和后台负载影响。
@@ -306,7 +306,6 @@ python3 tools/publication_audit.py \
 
 ## 项目与上游
 
-- Argus Agent：<https://github.com/lbx154/Argus>
 - 本项目：<https://github.com/Argus-AiTeam/minimax-h3-desktop>
 - Mac 姐妹项目：<https://github.com/Argus-AiTeam/minimax-h3-mac>
 - MiniMax-H3：<https://huggingface.co/MiniMaxAI/MiniMax-H3>
@@ -316,7 +315,6 @@ python3 tools/publication_audit.py \
 
 ## 致谢
 
-- **Argus**：自主完成本仓库的大部分 A6000 适配、实验执行、持续诊断、性能验证和文档工作；
 - **MiniMaxAI**：MiniMax-H3 架构与官方权重；
 - **vLLM / vLLM-Omni**：CUDA 推理和 omni-modal serving 基础；
 - **Larry / community Turbo work**：few-step practical adapter；

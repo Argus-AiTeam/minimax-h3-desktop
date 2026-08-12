@@ -68,7 +68,7 @@ To check applicability without applying:
 
 ```bash
 git -C runtime/single_a6000_bf16/src/vllm-omni apply --check \
-  ${PWD}/ports/minimax_h3_a6000/patches/vllm_omni_h3_a6000_opt_in.patch
+  "$PWD/ports/minimax_h3_a6000/patches/vllm_omni_h3_a6000_opt_in.patch"
 ```
 
 ## Verification
@@ -90,10 +90,10 @@ tmp=$(mktemp -d); PYTHONPYCACHEPREFIX="$tmp" python3 -m py_compile \
   ports/minimax_h3_a6000/gpu_exact_kernel_bench.py \
   ports/minimax_h3_a6000/gpu_sol_attn_sm86_harness.py; rm -rf "$tmp"
 git -C runtime/single_a6000_bf16/src/vllm-omni apply --check \
-  ${PWD}/ports/minimax_h3_a6000/patches/vllm_omni_h3_a6000_opt_in.patch
+  "$PWD/ports/minimax_h3_a6000/patches/vllm_omni_h3_a6000_opt_in.patch"
 ```
 
-External exact-kernel GPU evidence already absorbed (kernel-only, not H3 E2E): `${PWD}/technical_report/evidence/minimax_h3_desktop/sol_engine_port/gpu_exact_20260809T155451Z`. Correctness JSON: 8/8 cases `compiled_and_launched`, all `max_abs=0`, `max_rel=0`, `mismatch=0`. Microbenchmark median speedups: indexed modulation 22.02x, indexed gate 11.66x, RoPE 6.50x, SwiGLU 8.09-8.11x. These are raw kernel candidate timings only.
+External exact-kernel GPU evidence already absorbed (kernel-only, not H3 E2E): `technical_report/evidence/minimax_h3_desktop/sol_engine_port/gpu_exact_20260809T155451Z`. Correctness JSON: 8/8 cases `compiled_and_launched`, all `max_abs=0`, `max_rel=0`, `mismatch=0`. Microbenchmark median speedups: indexed modulation 22.02x, indexed gate 11.66x, RoPE 6.50x, SwiGLU 8.09-8.11x. These are raw kernel candidate timings only.
 
 Current H3 Sol-Attn r8 CPU-only ingest: `technical_report/evidence/minimax_h3_desktop/delivery/r8_sol_attn_cpu_ingest_20260812T005600Z/r8_terminal_classification.json`. It records terminal supervisor status `complete`, selected run `sol_engine_port/sol_attn_h3_gpu2_5step_r8_prompt0644_20260812T005600Z`, readable r8 workload/version-label provenance, valid dense/opt-in HTTP+AV, and sparse runtime telemetry (`sparse_candidate_calls=192`, `sparse_calls=192`, `fallback_calls=0`, density samples=192, materialized copies=192 / 105344139264 bytes). Classification is `sparse_runtime_valid_5step_diagnostic`: the r7 missing-metadata blocker is cleared for this fixed 5-step gate, but that diagnostic alone is not a speedup, N10, BF16 fidelity, release, or quality-equivalence claim. The matched-workload r8 follow-up is terminal at `technical_report/evidence/minimax_h3_desktop/sol_engine_port/sol_attn_h3_matched_retest_r8_n3_20260812T013544Z/decision.json`, with CPU-only posthoc finalization documented in `technical_report/evidence/minimax_h3_desktop/sol_engine_port/sol_attn_h3_matched_retest_r8_n3_20260812T013544Z/posthoc_finalization_note.json` after the supervisor completed all three pairs and then failed while emitting summaries. Classification is `proceed_to_formal_n10_candidate`. The formal N>=10 run is terminal at `technical_report/evidence/minimax_h3_desktop/sol_engine_port/sol_attn_h3_formal_n10_r8_n10_20260812T031757Z/formal_n10_decision.json` with `formal_classification=accepted_formal_n10_same_gpu_sol_attn_speed_candidate`; `formal_n10_summary.json`, `RUN_REPORT.md`, `timing_summary.json`, `quality_proxy_comparison.json`, and `resource_summary.json` summarize the accepted formal lane and its limits. Historical r7 fail-closed evidence remains at `technical_report/evidence/minimax_h3_desktop/delivery/r7_sol_attn_cpu_ingest_20260811T110523Z/r7_terminal_classification.json`.
 
@@ -106,7 +106,7 @@ PYTHONPATH=ports/minimax_h3_a6000/src \
 python3 ports/minimax_h3_a6000/gpu_exact_kernel_bench.py --device cuda:0 --output /tmp/h3_exact_bench.json
 PYTHONPATH=ports/minimax_h3_a6000/src \
 python3 ports/minimax_h3_a6000/gpu_sol_attn_sm86_harness.py --device cuda:0 --mode both --output /tmp/h3_sol_attn_sm86.json
-ROOT=${PWD} \
+ROOT="$PWD" \
 GPU_INDEX=2 \
 ports/minimax_h3_a6000/integration/run_gpu2_exact_ablation_5step_r4.sh
 ```

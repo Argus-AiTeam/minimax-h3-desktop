@@ -50,6 +50,12 @@ PRIVATE_PATH_RE = re.compile(
     r"|[A-Za-z]:\\\\Users\\\\[A-Za-z0-9._-]+(?:\\\\[^\s\"'`<>)]*)?"
     r")",
 )
+AUTOMATED_ATTRIBUTION_PATTERNS: tuple[re.Pattern[str], ...] = (
+    re.compile(r"(?i)\bauto" + r"nomously\s+by\b"),
+    re.compile(r"(?i)\bauto" + r"nomous\s+(?:adaptation|experimentation|documentation|agent)\b"),
+    re.compile(r"(?i)\bAI[- ]gen" + r"erated\b"),
+    re.compile("自主" + "完成"),
+)
 SECRET_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
     (
         "secret_assignment",
@@ -120,6 +126,10 @@ def _term_hits(text: str, terms: Sequence[str]) -> list[str]:
         elif term_norm and term_norm in normalised:
             hits.append(term)
     return hits
+
+
+def _has_automated_attribution(text: str) -> bool:
+    return any(pattern.search(text) for pattern in AUTOMATED_ATTRIBUTION_PATTERNS)
 
 
 def _iter_files(root: Path) -> Iterable[Path]:
@@ -208,6 +218,16 @@ def audit_tree(root: Path, *, max_bytes: int = DEFAULT_MAX_BYTES, prohibited_ter
         if path_hits:
             issues.append(AuditIssue("prohibited_term", rel, "operator-prohibited term appears in path", ",".join(path_hits)))
         if text is None:
+            # Container metadata and JPEG comments are commonly embedded as ASCII
+            # runs in otherwise binary files. Scan those runs for publication
+            # terms and authoring attribution without treating arbitrary bytes as
+            # credentials or private paths.
+            binary_metadata = data.decode("latin-1", errors="ignore")
+            binary_hits = _term_hits(binary_metadata, prohibited_terms)
+            if binary_hits:
+                issues.append(AuditIssue("prohibited_term", rel, "operator-prohibited term appears in binary/media metadata", ",".join(binary_hits)))
+            if _has_automated_attribution(binary_metadata):
+                issues.append(AuditIssue("automated_generation_attribution", rel, "automated-generation attribution appears in binary/media metadata"))
             continue
 
         for match in PRIVATE_PATH_RE.finditer(text):
@@ -222,6 +242,8 @@ def audit_tree(root: Path, *, max_bytes: int = DEFAULT_MAX_BYTES, prohibited_ter
         content_hits = _term_hits(text, prohibited_terms)
         if content_hits:
             issues.append(AuditIssue("prohibited_term", rel, "operator-prohibited term appears in file content", ",".join(content_hits)))
+        if _has_automated_attribution(text):
+            issues.append(AuditIssue("automated_generation_attribution", rel, "automated-generation attribution appears in public text or comments"))
 
     return issues
 

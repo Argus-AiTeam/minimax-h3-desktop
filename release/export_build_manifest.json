@@ -5,7 +5,7 @@
     "virtual environments, caches, pycache, PID files, raw logs, non-curated generated media/audio, Docker layers, archives, and credentials",
     "Git remotes, tags, releases, and publication actions"
   ],
-  "file_count": 102,
+  "file_count": 103,
   "files": [
     {
       "path": ".argus_release_tree",
@@ -18,6 +18,12 @@
       "sha256": "374ac95d8779e04195ca73bbe8dfcd0431b5a092916aa6516e2bf0790d008efc",
       "size_bytes": 396,
       "source": "generated:gitignore"
+    },
+    {
+      "path": "CURRENT_WORK.md",
+      "sha256": "34d893c4b6391ea610d8c87638f8db4051986062277535cc880829ab880c8c19",
+      "size_bytes": 6152,
+      "source": "CURRENT_WORK.md"
     },
     {
       "path": "LICENSE",
@@ -39,14 +45,14 @@
     },
     {
       "path": "README.md",
-      "sha256": "cf3f37ed3ce3aa0e58ad68ebab7f2e5cb04e8390972ed64ed69a553308efe58a",
-      "size_bytes": 13349,
+      "sha256": "575b2696eee7f0c81dd794294e54a407734a729abffd31b43fc5333dfc1b7db7",
+      "size_bytes": 13002,
       "source": "README.md"
     },
     {
       "path": "README_EN.md",
-      "sha256": "dd1442289da3518cde5c95f2f813af7b064ab94715cae4c49bb5fa43faeeebfb",
-      "size_bytes": 12692,
+      "sha256": "e482a2284de3a7b0bbc3f53bb4f7332ea1999c78afec1d528362f42674cca52b",
+      "size_bytes": 12440,
       "source": "README_EN.md"
     },
     {
@@ -87,8 +93,8 @@
     },
     {
       "path": "ports/minimax_h3_a6000/README.md",
-      "sha256": "6211cd4d100dd91ad730c79d79746dcd3b58724d0e19331f4eeb68e32541f08f",
-      "size_bytes": 16394,
+      "sha256": "9c2ed450bd649bf6d4cb8db6d9c104f3ea53aad45dff21c3b42f065e234234a0",
+      "size_bytes": 16387,
       "source": "ports/minimax_h3_a6000/README.md"
     },
     {
@@ -123,8 +129,8 @@
     },
     {
       "path": "ports/minimax_h3_a6000/gpu_test_plan.md",
-      "sha256": "d786f0df9db6fce678f5dd0f1db82bec953106cff69705572fb1f588762e5074",
-      "size_bytes": 6169,
+      "sha256": "9ca0cb409a427798b16997f99e0446f27413ce312db53a3f4aaa4c624f1c7d21",
+      "size_bytes": 6162,
       "source": "ports/minimax_h3_a6000/gpu_test_plan.md"
     },
     {
@@ -135,8 +141,8 @@
     },
     {
       "path": "ports/minimax_h3_a6000/integration/r3/build_r3_overlay_image.sh",
-      "sha256": "0fbb19e9e44a7f4397019ed397fe889e86ef0a1bff1f4eaef0d3ed9cb3d40dc0",
-      "size_bytes": 1082,
+      "sha256": "0a6b309a7d53cc8fdbb1a3db8d5b41ba83f5246fe28edbabc86ca3dafbd881aa",
+      "size_bytes": 1186,
       "source": "ports/minimax_h3_a6000/integration/r3/build_r3_overlay_image.sh"
     },
     {
@@ -147,8 +153,8 @@
     },
     {
       "path": "ports/minimax_h3_a6000/integration/r4/build_r4_overlay_image.sh",
-      "sha256": "b1f0a7a29e77857f98361a756190adc8883a6e92a4767415d93bccba4dd9ac11",
-      "size_bytes": 1082,
+      "sha256": "9ab41a2fae76cf58bddb5fa2a71a19af4b04003271447c02060d062c5f0900e3",
+      "size_bytes": 1186,
       "source": "ports/minimax_h3_a6000/integration/r4/build_r4_overlay_image.sh"
     },
     {
@@ -159,8 +165,8 @@
     },
     {
       "path": "ports/minimax_h3_a6000/integration/r6/build_r6_overlay_image.sh",
-      "sha256": "440c9b71f17f2fc2cff741e7f4cc79f6eceb9cfd5b2a830355f08fce9533ec4a",
-      "size_bytes": 3571,
+      "sha256": "2f85bd250f3ba2e0af98d4b574bc7d38b033f1a069be276f51e501e9135fcbca",
+      "size_bytes": 3675,
       "source": "ports/minimax_h3_a6000/integration/r6/build_r6_overlay_image.sh"
     },
     {
@@ -177,8 +183,8 @@
     },
     {
       "path": "ports/minimax_h3_a6000/integration/r7/build_r7_overlay_image.sh",
-      "sha256": "01de3cac21f3a062d910dc42c80ef01e4866091ff0fd0df6f6d785154231470e",
-      "size_bytes": 3571,
+      "sha256": "325625b1c6ed8fefd9ab8d892ddbd63abe2cb8f956d0821a5e520a9988b4bba2",
+      "size_bytes": 3675,
       "source": "ports/minimax_h3_a6000/integration/r7/build_r7_overlay_image.sh"
     },
     {
@@ -195,8 +201,8 @@
     },
     {
       "path": "ports/minimax_h3_a6000/integration/r8/build_r8_overlay_image.sh",
-      "sha256": "70b32dd2e8c040a969aced66f45246b778c6b4507e20ef1843368bbc95e88ba2",
-      "size_bytes": 3571,
+      "sha256": "6c1344990c584a0a69544d9ddb983837496dce92611f4547674164f96bfa2150",
+      "size_bytes": 3675,
       "source": "ports/minimax_h3_a6000/integration/r8/build_r8_overlay_image.sh"
     },
     {
@@ -207,38 +213,38 @@
     },
     {
       "path": "ports/minimax_h3_a6000/integration/run_gpu2_exact_ablation_5step_r4.sh",
-      "sha256": "b3cfd22422fd594098304421fa1e9cb4cf59af464eb337ba40f33ae55f874dda",
-      "size_bytes": 18351,
+      "sha256": "a8960b0b633c213509e0d035c977bc3132d914ffcc5568ed5a9b7b9d48cb4cf4",
+      "size_bytes": 18452,
       "source": "ports/minimax_h3_a6000/integration/run_gpu2_exact_ablation_5step_r4.sh"
     },
     {
       "path": "ports/minimax_h3_a6000/integration/run_gpu2_exact_integration_5step.sh",
-      "sha256": "01a84d7b04fd1d8fdafd0232284eac4ee2aa24ce1d76445a06ad600d154e3edd",
-      "size_bytes": 8737,
+      "sha256": "c909dc39c66ef1723e28cd6c887158e2d9fadc1e49004d27c67c0981a21fa335",
+      "size_bytes": 8838,
       "source": "ports/minimax_h3_a6000/integration/run_gpu2_exact_integration_5step.sh"
     },
     {
       "path": "ports/minimax_h3_a6000/integration/run_gpu2_exact_integration_5step_r4.sh",
-      "sha256": "f9611dddb808cfb66aa6edf83fb34e644e9f240b58d6f7f60652332ef810670f",
-      "size_bytes": 9234,
+      "sha256": "42b444a4669f87e7ad277b09c9161ed3a82c9b28ef20fadde85d1a10d6136c45",
+      "size_bytes": 9335,
       "source": "ports/minimax_h3_a6000/integration/run_gpu2_exact_integration_5step_r4.sh"
     },
     {
       "path": "ports/minimax_h3_a6000/integration/run_gpu2_sol_attn_h3_5step_diagnostic.sh",
-      "sha256": "c31c52163a07dd0511f8172d1924480b2c77f4315a59c4d600e4cd1b24176553",
-      "size_bytes": 28173,
+      "sha256": "ccd5d2e98f5995e42912153623a072db26993966305702bb9538d27148f4ed6b",
+      "size_bytes": 28274,
       "source": "ports/minimax_h3_a6000/integration/run_gpu2_sol_attn_h3_5step_diagnostic.sh"
     },
     {
       "path": "ports/minimax_h3_a6000/integration/run_sol_attn_h3_formal_n10_r8.sh",
-      "sha256": "230180b4a468b84d2a6b9e6592848e56b5baad2739e1e9ca8bd2237a57245706",
-      "size_bytes": 15853,
+      "sha256": "0ff3eed0a68399aa779fd18a74aa810581b695f2aadf96ac6f688857687fa439",
+      "size_bytes": 15954,
       "source": "ports/minimax_h3_a6000/integration/run_sol_attn_h3_formal_n10_r8.sh"
     },
     {
       "path": "ports/minimax_h3_a6000/integration/run_sol_attn_h3_matched_retest_r8.sh",
-      "sha256": "c17c68dde0ecd0b88e775cc484e8c6d3b6a5375b19192bc2fc04f2a68a31ef50",
-      "size_bytes": 30158,
+      "sha256": "886c66d937e50e91d4e3b2a2dcd5059903d97bb78da8c1e702383e6d9a29e154",
+      "size_bytes": 30259,
       "source": "ports/minimax_h3_a6000/integration/run_sol_attn_h3_matched_retest_r8.sh"
     },
     {
@@ -345,8 +351,8 @@
     },
     {
       "path": "release/github_release_manifest.json",
-      "sha256": "f1a7bf692f0c9eace09780279aba7c8f0c5f739cebb905f00246f13d4dc7bbc0",
-      "size_bytes": 6027,
+      "sha256": "5bc2446abbfeaad83bc806b0a3415e7c88478670cf2f5490730eace36f198b37",
+      "size_bytes": 6072,
       "source": "release/github_release_manifest.json"
     },
     {
@@ -543,8 +549,8 @@
     },
     {
       "path": "tests/test_github_release_tree_builder.py",
-      "sha256": "1f03736089f35e17483f1b16499a2f04df9acab4e7b08f12114542f822d0c76d",
-      "size_bytes": 6342,
+      "sha256": "9042290974454b936734d60b4115c0ecdce95090707089bcc4e7f74e8c0ad081",
+      "size_bytes": 6277,
       "source": "tests/test_github_release_tree_builder.py"
     },
     {
@@ -555,14 +561,14 @@
     },
     {
       "path": "tests/test_public_quickstart.py",
-      "sha256": "960a4879fdb9f777ea63a2681d34cbf62d20fedf2702a9be33affc4ccabd2c84",
-      "size_bytes": 2954,
+      "sha256": "569b2db95b3dcba9afcc22ad9e92ea9be0a23dd45ceffe38f717e70ccd1f2ab2",
+      "size_bytes": 2996,
       "source": "tests/test_public_quickstart.py"
     },
     {
       "path": "tests/test_publication_audit.py",
-      "sha256": "253d425783ca4f224e0d430655351c825159ed2896f37f992faabe9cfc7135d5",
-      "size_bytes": 3561,
+      "sha256": "ab76121d22f74d195dc6d906bbfe51693b7488d0e9fae6978c03707236e31e87",
+      "size_bytes": 4366,
       "source": "tests/test_publication_audit.py"
     },
     {
@@ -579,8 +585,8 @@
     },
     {
       "path": "tools/build_github_release_tree.py",
-      "sha256": "7205b8e9f84f6a66a8a53780d4572f9b91b5caa4e10f61d0b842e255c5551309",
-      "size_bytes": 29430,
+      "sha256": "0d22ca6c9b80163e6b6ee16020bb2d097bd609a7d86d8a1ae42a0e0104cf7af9",
+      "size_bytes": 29368,
       "source": "tools/build_github_release_tree.py"
     },
     {
@@ -597,8 +603,8 @@
     },
     {
       "path": "tools/publication_audit.py",
-      "sha256": "e5acb7498e6e59169f41bdfd148ad8ff7c779152ae046df2616f9dfbe7f0fc01",
-      "size_bytes": 9276,
+      "sha256": "092d99dde85f0a979fbd17f2c3a5f18d307ca093d3450e87f70feb1b04c38f24",
+      "size_bytes": 10728,
       "source": "tools/publication_audit.py"
     },
     {
@@ -624,5 +630,5 @@
   "publication_audit_command": "python3 tools/publication_audit.py --root . --max-bytes 1000000 --prohibited-terms-file <local-file-not-committed>",
   "release_name": "Argus-AiTeam/minimax-h3-desktop",
   "schema_version": "argus-github-release-build-v1",
-  "source_root_name": "minimax-h3-desktop"
+  "source_root_name": "source"
 }

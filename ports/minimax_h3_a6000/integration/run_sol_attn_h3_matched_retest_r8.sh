@@ -5,7 +5,8 @@
 # argus_skill.tools.gpu_lease run --detach so the GPU lease outlives the agent turn.
 set -euo pipefail
 
-ROOT=${ROOT:-${PWD}}
+SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)
+ROOT=${ROOT:-$(cd -- "$SCRIPT_DIR/../../.." && pwd -P)}
 GPU_INDEX=${GPU_INDEX:-2}
 EXPECTED_UUID=${EXPECTED_UUID:-}
 N_PAIRS=${N_PAIRS:-3}

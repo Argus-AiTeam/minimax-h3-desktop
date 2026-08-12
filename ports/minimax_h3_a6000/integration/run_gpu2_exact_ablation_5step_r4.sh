@@ -11,7 +11,8 @@ if [[ ${MINIMAX_H3_A6000_RUN_ABLATION:-0} != 1 ]]; then
   exit 0
 fi
 
-ROOT=${ROOT:-${PWD}}
+SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)
+ROOT=${ROOT:-$(cd -- "$SCRIPT_DIR/../../.." && pwd -P)}
 GPU_INDEX=${GPU_INDEX:-2}
 EXPECTED_UUID=${EXPECTED_UUID:-}
 IMAGE=${IMAGE:-argus/minimax-h3-vllm-omni:8e2e9b6b53e8-r4-exact-overlay}

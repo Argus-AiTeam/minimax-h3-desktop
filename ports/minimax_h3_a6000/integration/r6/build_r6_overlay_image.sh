@@ -4,7 +4,8 @@
 # IID, and inspect evidence, then stops after the image build/inspect steps.
 set -euo pipefail
 
-ROOT=${ROOT:-${PWD}}
+SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)
+ROOT=${ROOT:-$(cd -- "$SCRIPT_DIR/../../../.." && pwd -P)}
 BASE_IMAGE=${BASE_IMAGE:-argus/minimax-h3-vllm-omni:8e2e9b6b53e8-r2}
 TAG=${TAG:-argus/minimax-h3-vllm-omni:8e2e9b6b53e8-r6-sol-attn-overlay}
 EVIDENCE_DIR=${EVIDENCE_DIR:-technical_report/evidence/minimax_h3_desktop/sol_engine_port/r6_overlay_image}

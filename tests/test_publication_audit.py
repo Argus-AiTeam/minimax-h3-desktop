@@ -89,6 +89,28 @@ def test_publication_audit_detects_prohibited_terms_from_external_file(tmp_path:
     assert "prohibited_term" in _kinds(issues)
 
 
+def test_publication_audit_detects_automated_generation_attribution(tmp_path: Path) -> None:
+    root = tmp_path / "export"
+    root.mkdir()
+    phrase = "Work completed auto" + "nomously by an agent.\n"
+    (root / "README.md").write_text(phrase, encoding="utf-8")
+
+    issues = audit_tree(root, max_bytes=1024, prohibited_terms=[])
+
+    assert "automated_generation_attribution" in _kinds(issues)
+
+
+def test_publication_audit_scans_binary_media_metadata(tmp_path: Path) -> None:
+    root = tmp_path / "export"
+    media = root / "examples" / "demo" / "result.mp4"
+    media.parent.mkdir(parents=True)
+    media.write_bytes(b"\x00\x01metadata: AI-gen" + b"erated\x00")
+
+    issues = audit_tree(root, max_bytes=1024, prohibited_terms=[])
+
+    assert "automated_generation_attribution" in _kinds(issues)
+
+
 def test_publication_audit_cli_json_returns_nonzero_on_failure(tmp_path: Path) -> None:
     root = tmp_path / "export"
     root.mkdir()

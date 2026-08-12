@@ -5,7 +5,8 @@
 # inside the container (CUDA_VISIBLE_DEVICES=0 in-container) via --gpus device=2.
 set -euo pipefail
 
-ROOT=${ROOT:-${PWD}}
+SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)
+ROOT=${ROOT:-$(cd -- "$SCRIPT_DIR/../../.." && pwd -P)}
 GPU_INDEX=${GPU_INDEX:-2}
 EXPECTED_UUID=${EXPECTED_UUID:-}
 IMAGE=${IMAGE:-argus/minimax-h3-vllm-omni:8e2e9b6b53e8-r3-exact-overlay}
