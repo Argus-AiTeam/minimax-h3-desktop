@@ -1,0 +1,72 @@
+{
+  "completed_pairs": 10,
+  "median_http_time_improvement_pct": 15.203295894081867,
+  "not_speedup_claim": true,
+  "per_pair_http_time_improvement_pct": [
+    15.18836370925908,
+    15.4352464662105,
+    15.047395877107942,
+    14.013549343803225,
+    15.218228078904653,
+    15.53077142577784,
+    14.323919845774649,
+    15.652795360873197,
+    15.287806992575312,
+    14.142860861993364
+  ],
+  "per_pair_http_time_total_s": [
+    {
+      "dense": 187.526356,
+      "pair": "pair01",
+      "sol_attn": 159.044171
+    },
+    {
+      "dense": 188.239495,
+      "pair": "pair02",
+      "sol_attn": 159.184265
+    },
+    {
+      "dense": 187.192337,
+      "pair": "pair03",
+      "sol_attn": 159.024765
+    },
+    {
+      "dense": 186.926248,
+      "pair": "pair04",
+      "sol_attn": 160.731246
+    },
+    {
+      "dense": 187.040665,
+      "pair": "pair05",
+      "sol_attn": 158.57639
+    },
+    {
+      "dense": 188.042018,
+      "pair": "pair06",
+      "sol_attn": 158.837642
+    },
+    {
+      "dense": 187.396434,
+      "pair": "pair07",
+      "sol_attn": 160.553919
+    },
+    {
+      "dense": 188.016762,
+      "pair": "pair08",
+      "sol_attn": 158.586883
+    },
+    {
+      "dense": 187.622005,
+      "pair": "pair09",
+      "sol_attn": 158.938715
+    },
+    {
+      "dense": 186.564057,
+      "pair": "pair10",
+      "sol_attn": 160.178562
+    }
+  ],
+  "requested_pairs": 10,
+  "schema_version": "minimax_h3_a6000_sol_attn_matched_retest_timing_summary_v1",
+  "threshold_pct": 3.0
+}

@@ -1,0 +1,93 @@
+{
+  "accepted": true,
+  "baseline_warm_cv_pct": 0.8371622556580874,
+  "blocked": false,
+  "claim_boundaries": {
+    "not_bf16_fidelity": true,
+    "not_human_audio_or_semantic_quality_certification": true,
+    "not_public_release": true,
+    "not_turbo_dlo_dmd": true,
+    "opaque_integrity_policy": {
+      "image_identifiers": "readable labels/tags only; digests not used as classification evidence",
+      "output_identifiers": "sha256/output identity not used as classification evidence"
+    }
+  },
+  "completed_pairs": 10,
+  "evidence_paths": {
+    "decision": "formal_n10_decision.json",
+    "formal_run_report": "FORMAL_N10_RUN_REPORT.md",
+    "pair_ledger": "pair_runs.tsv",
+    "quality_proxy_comparison": "quality_proxy_comparison.json",
+    "resource_summary": "resource_summary.json",
+    "run_report": "RUN_REPORT.md",
+    "supervisor_status": "formal_n10_supervisor_status.json",
+    "timing_summary": "timing_summary.json"
+  },
+  "failed_gates": [],
+  "formal_classification": "accepted_formal_n10_same_gpu_sol_attn_speed_candidate",
+  "formal_pair_count_ok": true,
+  "gates": {
+    "all_fallback_calls_zero": true,
+    "all_http_200": true,
+    "all_pairs_completed": true,
+    "all_sparse_calls_positive": true,
+    "all_structural_av_valid": true,
+    "complete_density_and_materialization_telemetry": true,
+    "completed_pairs": 10,
+    "median_improvement_exceeds_threshold": true,
+    "no_pair_slower": true,
+    "no_quality_proxy_red_flags": true,
+    "requested_pairs": 10,
+    "resource_envelope_comparable_to_prior_r8": true
+  },
+  "generated_at_utc": "2026-08-12T06:29:27Z",
+  "lane": "formal_n10_matched_5step_sol_attn_opt_in_not_bf16_fidelity",
+  "median_http_time_improvement_pct": 15.203295894081867,
+  "pair_count": 10,
+  "per_pair_names": [
+    "pair01",
+    "pair02",
+    "pair03",
+    "pair04",
+    "pair05",
+    "pair06",
+    "pair07",
+    "pair08",
+    "pair09",
+    "pair10"
+  ],
+  "quality_proxy_red_flags": [],
+  "raw_matched_retest_classification": "proceed_to_formal_n10_candidate",
+  "reason": "N>=10 same-GPU matched workload passed sparse-runtime, structural AV, resource, quality-proxy, and timing gates",
+  "rejected": false,
+  "requested_pairs": 10,
+  "resource_peak_summary": {
+    "peak_gpu_memory_mib": 27354.0,
+    "peak_power_w": 301.67,
+    "peak_temperature_c": 85.0
+  },
+  "resource_thresholds": {
+    "peak_gpu_memory_mib_max": 30089.4,
+    "peak_power_w_max": 310.0,
+    "peak_temperature_c_max": 89.0
+  },
+  "same_baseline_physical_gpu_evidence": {
+    "expected_uuid": "GPU-5a6b7f13-4a03-c3c5-bb17-ea86b46d8aed",
+    "gpu_index": "2",
+    "same_expected_gpu": true,
+    "selected_uuid": "GPU-5a6b7f13-4a03-c3c5-bb17-ea86b46d8aed"
+  },
+  "same_expected_gpu": true,
+  "schema_version": "minimax_h3_a6000_sol_attn_formal_n10_summary_v1",
+  "source": "posthoc CPU/static terminal summary derived from existing formal_n10_decision.json and FORMAL_N10_RUN_REPORT.md; no GPU/Docker/model run was launched",
+  "terminal_artifacts": {
+    "FORMAL_N10_RUN_REPORT.md": true,
+    "RUN_REPORT.md": true,
+    "formal_n10_decision.json": true,
+    "formal_n10_summary.json": true,
+    "quality_proxy_comparison.json": true,
+    "resource_summary.json": true,
+    "timing_summary.json": true
+  },
+  "timing_threshold_pct": 3.0
+}

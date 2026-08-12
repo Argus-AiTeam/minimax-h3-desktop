@@ -28,6 +28,15 @@ R8_MATCHED_TERMINAL_FILES = (
     "quality_proxy_comparison.json",
     "resource_summary.json",
 )
+R8_FORMAL_N10_PREFIX = "sol_attn_h3_formal_n10_r8_n"
+R8_FORMAL_N10_TERMINAL_FILES = (
+    "formal_n10_decision.json",
+    "RUN_REPORT.md",
+    "formal_n10_summary.json",
+    "timing_summary.json",
+    "quality_proxy_comparison.json",
+    "resource_summary.json",
+)
 
 
 def load(path: Path) -> dict[str, Any]:
@@ -70,6 +79,60 @@ def latest_terminal_decision_dir(evidence: Path) -> Path | None:
         if (path / "decision.json").is_file():
             return path
     return None
+
+
+def formal_pair_completed(pair_dir: Path) -> bool:
+    if (pair_dir / "decision.json").is_file():
+        return True
+    return text(pair_dir.parent / f"{pair_dir.name}.exit_code", "") == "0"
+
+
+def collect_r8_formal_n10(evidence: Path) -> dict[str, Any]:
+    parent = evidence / "sol_engine_port"
+    formal_dir = latest_dir(parent, R8_FORMAL_N10_PREFIX)
+    if formal_dir is None:
+        return {}
+    status_path = formal_dir / "formal_n10_supervisor_status.json"
+    decision_path = formal_dir / "formal_n10_decision.json"
+    report_path = formal_dir / "RUN_REPORT.md"
+    supervisor = load(status_path)
+    pair_dirs = sorted(path for path in formal_dir.glob("pair[0-9][0-9]") if path.is_dir())
+    completed_pair_dirs = [path for path in pair_dirs if formal_pair_completed(path)]
+    terminal_artifacts = {name: (formal_dir / name).is_file() for name in R8_FORMAL_N10_TERMINAL_FILES}
+    if decision_path.is_file():
+        decision = load(decision_path)
+        gates = decision.get("gates") if isinstance(decision.get("gates"), dict) else {}
+        gpu = decision.get("same_baseline_physical_gpu_evidence") if isinstance(decision.get("same_baseline_physical_gpu_evidence"), dict) else {}
+        return {
+            "status_kind": "terminal",
+            "status": decision.get("formal_classification", "待定"),
+            "reason": decision.get("reason", "待定"),
+            "source_run_dir": rel(formal_dir, evidence),
+            "decision_evidence": rel(decision_path, evidence),
+            "report_evidence": rel(report_path, evidence) if report_path.is_file() else None,
+            "summary_evidence": rel(formal_dir / "formal_n10_summary.json", evidence) if (formal_dir / "formal_n10_summary.json").is_file() else None,
+            "terminal_artifacts_present": terminal_artifacts,
+            "requested_pairs": gates.get("requested_pairs", decision.get("requested_pairs", supervisor.get("n_pairs", 10))),
+            "started_pairs": len(pair_dirs),
+            "completed_pairs": gates.get("completed_pairs", decision.get("completed_pairs", len(completed_pair_dirs))),
+            "median_http_time_improvement_pct": decision.get("median_http_time_improvement_pct"),
+            "timing_threshold_pct": decision.get("timing_threshold_pct"),
+            "failed_gates": decision.get("failed_gates", []),
+            "supervisor_status": supervisor.get("status", "待定"),
+            "same_expected_gpu": gpu.get("same_expected_gpu", decision.get("same_expected_gpu")),
+        }
+    status = "incomplete_formal_n10_running_no_terminal_decision" if supervisor.get("status") == "running" else "incomplete_formal_n10_no_terminal_decision"
+    return {
+        "status_kind": "nonterminal",
+        "status": status,
+        "reason": "formal N>=10 run has no formal_n10_decision.json/RUN_REPORT terminal artifacts; do not promote or claim speedup",
+        "source_run_dir": rel(formal_dir, evidence),
+        "decision_evidence": rel(status_path, evidence) if status_path.is_file() else rel(formal_dir, evidence),
+        "requested_pairs": supervisor.get("n_pairs", 10),
+        "started_pairs": len(pair_dirs),
+        "completed_pairs": len(completed_pair_dirs),
+        "supervisor_status": supervisor.get("status", "待定"),
+    }
 
 
 def collect_r8_matched_retest(evidence: Path) -> dict[str, Any]:
@@ -176,6 +239,7 @@ def main() -> int:
     r8_res = r8.get("resource_summary", {}) if isinstance(r8.get("resource_summary", {}), dict) else {}
 
     matched = collect_r8_matched_retest(evidence)
+    formal = collect_r8_formal_n10(evidence)
 
     lifecycle_dir = latest_dir(delivery, "local_lifecycle_clean_room_")
     lifecycle = load(lifecycle_dir / "lifecycle/stages/05_lifecycle_summary.json") if lifecycle_dir else {}
@@ -187,17 +251,49 @@ def main() -> int:
     decisive_gate_dir = latest_dir(delivery, "final_decisive_export_audit_")
     decisive_gate = load(decisive_gate_dir / "summary.json") if decisive_gate_dir else {}
     decisive_gate_status = decisive_gate.get("status", "待定")
-    final_gates_pass = cpu_gate_status == "pass" and decisive_gate_status == "pass"
+    formal_sync_gate_dir = latest_dir(delivery, "formal_n10_cpu_sync_export_audit_")
+    formal_sync_gate = load(formal_sync_gate_dir / "summary.json") if formal_sync_gate_dir else {}
+    formal_sync_gate_status = formal_sync_gate.get("status", "not_available")
+    formal_sync_reviewer_status = str(formal_sync_gate.get("reviewer_status", ""))
+    formal_sync_reviewer_accepted = "accepted" in formal_sync_reviewer_status or formal_sync_reviewer_status in {
+        "passed",
+        "reviewer_passed",
+        "independent_reviewer_passed",
+    }
+    formal_sync_private_synced = bool(formal_sync_gate.get("push_performed"))
+    final_gates_pass = cpu_gate_status == "pass" and decisive_gate_status == "pass" and formal_sync_gate_status in {"not_available", "pass"}
     matched_terminal = matched.get("status_kind") == "terminal"
+    formal_accepted = formal.get("status") == "accepted_formal_n10_same_gpu_sol_attn_speed_candidate"
+    formal_incomplete = str(formal.get("status", "")).startswith("incomplete_")
     sol_matched_boundary = (
-        "- Sol-Attn r8已有terminal N=3 matched-workload route gate；它只支持未来formal N>=10候选推荐，不是正式speedup、BF16 fidelity、release或质量等价声明。"
-        if matched_terminal
-        else "- Sol-Attn r8只清除了5-step metadata sparse路径执行gate；matched-workload correctness/quality/performance仍需终端证据。"
+        "- Sol-Attn r8 formal N>=10 matched-workload gate已终端接受：仅限formal 5-step Sol-Attn opt-in lane；不是BF16 fidelity、release或人类听感/语义质量认证。"
+        if formal_accepted
+        else (
+            "- Sol-Attn r8已有terminal N=3 matched-workload route gate；它只支持未来formal N>=10候选推荐，不是正式speedup、BF16 fidelity、release或质量等价声明。"
+            if matched_terminal
+            else "- Sol-Attn r8只清除了5-step metadata sparse路径执行gate；matched-workload correctness/quality/performance仍需终端证据。"
+        )
     )
     matched_next_step = (
-        "如获授权，下一步是formal N>=10 matched-workload gate；不得把N=3 route gate写成正式speedup、BF16 fidelity或质量等价。"
-        if matched_terminal
-        else "等待/复核r8 matched retest终端artifact；未终端前不晋级N>=10或写speedup。"
+        (
+            "formal N>=10已终端接受且独立Reviewer已通过；post-review private main同步已完成，后续不要重复formal run或扩大为BF16/质量/release声明。"
+            if formal_sync_private_synced
+            else "formal N>=10已终端接受且独立Reviewer已通过；下一步只是在fresh audit pass后做非强制private main同步，不要重复formal run或扩大为BF16/质量/release声明。"
+        )
+        if formal_accepted and formal_sync_reviewer_accepted
+        else (
+            "formal N>=10已终端接受；下一步是同步report/export/audit证据并请求独立Reviewer，不要自行push或扩大为BF16/质量/release声明。"
+            if formal_accepted
+            else (
+                "formal N>=10已发现非终端/不完整artifact；先诊断/补齐terminal evidence，不得重复启动同一formal run。"
+                if formal_incomplete
+                else (
+                    "如获授权，下一步是formal N>=10 matched-workload gate；不得把N=3 route gate写成正式speedup、BF16 fidelity或质量等价。"
+                    if matched_terminal
+                    else "等待/复核r8 matched retest终端artifact；未终端前不晋级N>=10或写speedup。"
+                )
+            )
+        )
     )
 
     now = datetime.now(timezone.utc).isoformat(timespec="seconds")
@@ -236,7 +332,7 @@ def main() -> int:
             [
                 f"- matched retest route-decision：{matched.get('classification', '待定')}；completed_pairs={matched.get('completed_pairs', '待定')}/{matched.get('requested_pairs', '待定')}；median_http_time_improvement={f(matched.get('median_http_time_improvement_pct'))}%；threshold={f(matched.get('timing_threshold_pct'))}%；failed_gates={matched.get('failed_gates', '待定')}；n10_recommendation={matched.get('n10_recommendation', '待定')}。",
                 f"- matched retest evidence：decision={matched.get('decision_evidence') or '待定'}；terminal_recheck={matched.get('terminal_recheck_evidence') or '待定'}。",
-                "- matched retest边界：这是terminal N=3 route gate，仅建议未来formal N>=10候选；不是正式speedup、BF16 fidelity、release或质量等价声明，也不替代人类听感。",
+                "- matched retest边界：这是terminal N=3 route gate，已导向后续formal N>=10终端接受；N=3本身仍不是正式speedup、BF16 fidelity、release或质量等价声明，也不替代人类听感。" if formal_accepted else "- matched retest边界：这是terminal N=3 route gate，仅建议未来formal N>=10候选；不是正式speedup、BF16 fidelity、release或质量等价声明，也不替代人类听感。",
                 f"- matched retest reason：{matched.get('reason', '待定')}",
                 "",
             ]
@@ -251,10 +347,28 @@ def main() -> int:
     else:
         lines.append("")
 
+    if formal:
+        lines.extend(
+            [
+                f"- formal N>=10：{formal.get('status', '待定')}；completed_pairs={formal.get('completed_pairs', '待定')}/{formal.get('requested_pairs', '待定')}；median_http_time_improvement={f(formal.get('median_http_time_improvement_pct'))}%；threshold={f(formal.get('timing_threshold_pct'))}%；same_expected_gpu={formal.get('same_expected_gpu', '待定')}；supervisor_status={formal.get('supervisor_status', '待定')}。",
+                f"- formal N>=10 evidence：decision={formal.get('decision_evidence') or '待定'}；summary={formal.get('summary_evidence') or '待定'}；terminal_artifacts={formal.get('terminal_artifacts_present', '待定')}。",
+                "- formal N>=10边界：仅限formal 5-step Sol-Attn opt-in matched-workload lane；不是BF16 fidelity、release或人类听感/语义质量认证。" if formal_accepted else "- formal N>=10边界：未终端/未接受前不得称为speedup、BF16 fidelity、release或质量等价。",
+                "",
+            ]
+        )
+
     gate_next_step = (
-        "CPU/static、fixture、Turbo dry-run、strict aggregation、export和publication audit gate已通过；下一步是独立Reviewer，而不是自行push。"
-        if final_gates_pass
-        else "运行CPU/static、fixture、Turbo dry-run、strict aggregation和publication audit最终gate。"
+        (
+            "CPU/static、fixture、Turbo dry-run、strict aggregation、export和publication audit gate已通过；独立Reviewer已通过且private main非强制同步已完成。"
+            if formal_sync_private_synced
+            else "CPU/static、fixture、Turbo dry-run、strict aggregation、export和publication audit gate已通过；独立Reviewer已通过，剩余动作是fresh audit后的非强制private main同步。"
+        )
+        if final_gates_pass and formal_sync_reviewer_accepted
+        else (
+            "CPU/static、fixture、Turbo dry-run、strict aggregation、export和publication audit gate已通过；下一步是独立Reviewer，而不是自行push。"
+            if final_gates_pass
+            else "运行CPU/static、fixture、Turbo dry-run、strict aggregation和publication audit最终gate。"
+        )
     )
     lines.extend(
         [
@@ -267,7 +381,8 @@ def main() -> int:
             "",
             f"- CPU/static gate：{cpu_gate_status}；evidence={cpu_gate_dir.relative_to(evidence).as_posix() if cpu_gate_dir else '待定'}。",
             f"- strict aggregation/export/publication audit：{decisive_gate_status}；export_file_count={decisive_gate.get('export_file_count', '待定')}；publication_issue_count={decisive_gate.get('publication_issue_count', '待定')}；evidence={decisive_gate_dir.relative_to(evidence).as_posix() if decisive_gate_dir else '待定'}。",
-            "- 边界：这些是CPU/static/export/audit gate，不产生GPU、Docker-run、model-load、速度、保真或质量新声明。",
+            f"- formal N10 report-sync export/publication audit：{formal_sync_gate_status}；export_file_count={formal_sync_gate.get('export_file_count', '待定')}；publication_issue_count={formal_sync_gate.get('publication_issue_count', '待定')}；reviewer_status={formal_sync_gate.get('reviewer_status', '待定')}；push_performed={formal_sync_gate.get('push_performed', False)}；evidence={formal_sync_gate_dir.relative_to(evidence).as_posix() if formal_sync_gate_dir else '待定'}。",
+            "- 边界：这些是CPU/static/export/audit gate，不产生GPU、Docker-run、model-load、保真或质量新声明；formal N10速度候选只来自已落盘GPU证据，不由CPU sync gate新产生。",
             "",
             "## 当前边界",
             "",
@@ -280,7 +395,15 @@ def main() -> int:
             "",
             f"1. {matched_next_step}",
             f"2. {gate_next_step}",
-            "3. 独立Reviewer通过后，才把sanitized release tree提交并push到既有Private GitHub main。",
+            (
+                "3. sanitized release tree已在Reviewer通过和fresh audit pass后提交/同步到既有Private GitHub main。"
+                if formal_sync_private_synced
+                else (
+                    "3. 独立Reviewer已通过；fresh audit pass后把sanitized release tree提交并非强制push到既有Private GitHub main。"
+                    if formal_sync_reviewer_accepted
+                    else "3. 独立Reviewer通过后，才把sanitized release tree提交并push到既有Private GitHub main。"
+                )
+            ),
             "4. 如果只剩人类主观听感，保留operator listening gate和文件映射。",
             "",
         ]

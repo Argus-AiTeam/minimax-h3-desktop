@@ -1,0 +1,116 @@
+{
+  "per_pair": [
+    {
+      "pair": "pair01",
+      "path": "pair01/resource_monitor.csv",
+      "peak_gpu_memory_mib": 27354.0,
+      "peak_gpu_util_percent": 100.0,
+      "peak_power_w": 301.01,
+      "peak_temperature_c": 85.0,
+      "samples": 210,
+      "status": "present"
+    },
+    {
+      "pair": "pair02",
+      "path": "pair02/resource_monitor.csv",
+      "peak_gpu_memory_mib": 27354.0,
+      "peak_gpu_util_percent": 100.0,
+      "peak_power_w": 300.99,
+      "peak_temperature_c": 85.0,
+      "samples": 209,
+      "status": "present"
+    },
+    {
+      "pair": "pair03",
+      "path": "pair03/resource_monitor.csv",
+      "peak_gpu_memory_mib": 27354.0,
+      "peak_gpu_util_percent": 100.0,
+      "peak_power_w": 300.54,
+      "peak_temperature_c": 85.0,
+      "samples": 210,
+      "status": "present"
+    },
+    {
+      "pair": "pair04",
+      "path": "pair04/resource_monitor.csv",
+      "peak_gpu_memory_mib": 27354.0,
+      "peak_gpu_util_percent": 100.0,
+      "peak_power_w": 301.67,
+      "peak_temperature_c": 84.0,
+      "samples": 209,
+      "status": "present"
+    },
+    {
+      "pair": "pair05",
+      "path": "pair05/resource_monitor.csv",
+      "peak_gpu_memory_mib": 27354.0,
+      "peak_gpu_util_percent": 100.0,
+      "peak_power_w": 300.7,
+      "peak_temperature_c": 84.0,
+      "samples": 210,
+      "status": "present"
+    },
+    {
+      "pair": "pair06",
+      "path": "pair06/resource_monitor.csv",
+      "peak_gpu_memory_mib": 27354.0,
+      "peak_gpu_util_percent": 100.0,
+      "peak_power_w": 301.56,
+      "peak_temperature_c": 84.0,
+      "samples": 210,
+      "status": "present"
+    },
+    {
+      "pair": "pair07",
+      "path": "pair07/resource_monitor.csv",
+      "peak_gpu_memory_mib": 27354.0,
+      "peak_gpu_util_percent": 100.0,
+      "peak_power_w": 299.71,
+      "peak_temperature_c": 84.0,
+      "samples": 210,
+      "status": "present"
+    },
+    {
+      "pair": "pair08",
+      "path": "pair08/resource_monitor.csv",
+      "peak_gpu_memory_mib": 27354.0,
+      "peak_gpu_util_percent": 100.0,
+      "peak_power_w": 300.51,
+      "peak_temperature_c": 84.0,
+      "samples": 209,
+      "status": "present"
+    },
+    {
+      "pair": "pair09",
+      "path": "pair09/resource_monitor.csv",
+      "peak_gpu_memory_mib": 27354.0,
+      "peak_gpu_util_percent": 100.0,
+      "peak_power_w": 299.82,
+      "peak_temperature_c": 84.0,
+      "samples": 210,
+      "status": "present"
+    },
+    {
+      "pair": "pair10",
+      "path": "pair10/resource_monitor.csv",
+      "peak_gpu_memory_mib": 27354.0,
+      "peak_gpu_util_percent": 100.0,
+      "peak_power_w": 299.79,
+      "peak_temperature_c": 84.0,
+      "samples": 210,
+      "status": "present"
+    }
+  ],
+  "resource_envelope_comparable_to_prior_r8": true,
+  "resource_peak_summary": {
+    "peak_gpu_memory_mib": 27354.0,
+    "peak_power_w": 301.67,
+    "peak_temperature_c": 85.0
+  },
+  "resource_thresholds": {
+    "peak_gpu_memory_mib_max": 30089.4,
+    "peak_power_w_max": 310.0,
+    "peak_temperature_c_max": 89.0
+  },
+  "schema_version": "minimax_h3_a6000_sol_attn_matched_retest_resource_summary_v1"
+}

@@ -57,7 +57,9 @@ def test_real_manifest_builds_sanitized_export_to_tmp_path(tmp_path: Path) -> No
     assert "proceed_to_formal_n10_candidate" in readme
     assert "sparse_candidate_calls=192" in readme
     assert "sparse_calls=192" in readme
-    assert "not a formal speedup, N10 promotion, BF16 fidelity, release, or quality-equivalence claim" in readme
+    assert "accepted_formal_n10_same_gpu_sol_attn_speed_candidate" in readme
+    assert "formal N=10 median HTTP-time improvement" in readme
+    assert "not BF16 fidelity, release approval" in readme
     assert "git init" not in readme
     assert "gh auth" not in readme
     assert (dest / "ports" / "minimax_h3_a6000" / "src" / "minimax_h3_a6000" / "exact_kernels.py").is_file()
@@ -72,6 +74,9 @@ def test_real_manifest_builds_sanitized_export_to_tmp_path(tmp_path: Path) -> No
     assert build_manifest["schema_version"] == "argus-github-release-build-v1"
     assert any(item["path"] == "technical_report/minimax_h3_a6000_performance.md" for item in build_manifest["files"])
     assert any(item["path"].endswith("quantization_feasibility_a6000.md") for item in build_manifest["files"])
+    assert any(item["path"].endswith("sol_attn_h3_matched_retest_r8_n3_20260812T013544Z/decision.json") for item in build_manifest["files"])
+    assert any(item["path"].endswith("sol_attn_h3_formal_n10_r8_n10_20260812T031757Z/formal_n10_decision.json") for item in build_manifest["files"])
+    assert any(item["path"].endswith("sol_attn_h3_formal_n10_r8_n10_20260812T031757Z/formal_n10_summary.json") for item in build_manifest["files"])
     assert not any("sol_attn_h3_gpu2_5step_r6_" in item["path"] for item in build_manifest["files"])
     script = dest / "scripts" / "a6000_one_command.sh"
     assert script.read_text(encoding="utf-8").startswith("#!/usr/bin/env bash")

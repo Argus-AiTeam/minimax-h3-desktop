@@ -92,8 +92,8 @@ E2E diagnostic ablation quality/telemetry:
 - Sol-Attn r8 resource envelope: peak GPU memory 27354.0 MiB; peak temperature 84.0 C; peak power 299.88 W.
 - Sol-Attn H3 end-to-end: **sparse_runtime_valid_5step_diagnostic** — Sol-Attn sparse_calls>0 with HTTP 200, structural AV, resource, density, and materialization telemetry; this is only a 5-step sparse-execution diagnostic candidate, not a speedup, N10, BF16 fidelity, release, or quality-equivalence claim.
 - Sol-Attn diagnostic boundary: the selected 5-step run may be used only as sparse-execution metadata plumbing evidence; matched-workload quality/correctness and formal performance promotion remain separate follow-up gates.
-- Latest r8 matched-workload route decision: `proceed_to_formal_n10_candidate`; evidence `sol_engine_port/sol_attn_h3_matched_retest_r8_n3_20260812T013544Z/decision.json`, terminal recheck `delivery/r8_matched_retest_terminal_recheck_20260812T024043Z/summary.json`. Completed pairs=3/3; median HTTP-time improvement=14.782455716069165%; route threshold>3.0%; failed_gates=[]. This recommends a future formal N>=10 Sol-Attn run, but is not formal N10, not a speedup claim, not BF16 fidelity, and not quality-equivalence certification.
-- Latest r8 formal N>=10 gate CPU inspection: `incomplete_formal_n10_running_no_terminal_decision`; evidence `sol_engine_port/sol_attn_h3_formal_n10_r8_n10_20260812T031757Z/formal_n10_supervisor_status.json`. Requested pairs=10; started pairs=8; completed pairs=7; supervisor_status=running. formal N>=10 supervisor is marked running and has no formal_n10_decision.json/RUN_REPORT terminal artifacts; the run is not accepted, rejected, or a speedup claim until terminal per-pair evidence and summary are present. No formal Sol-Attn speedup, BF16 fidelity, release, or quality-equivalence claim is created by a nonterminal/incomplete gate.
+- Latest r8 matched-workload route decision: `proceed_to_formal_n10_candidate`; evidence `sol_engine_port/sol_attn_h3_matched_retest_r8_n3_20260812T013544Z/decision.json`, terminal recheck `delivery/r8_matched_retest_terminal_recheck_20260812T024043Z/summary.json`. Completed pairs=3/3; median HTTP-time improvement=14.782455716069165%; route threshold>3.0%; failed_gates=[]. This N=3 route gate led to the later accepted formal N>=10 gate; the N=3 gate itself is not formal N10, not a speedup claim, not BF16 fidelity, and not quality-equivalence certification.
+- Latest r8 formal N>=10 gate CPU inspection: `accepted_formal_n10_same_gpu_sol_attn_speed_candidate`; evidence `sol_engine_port/sol_attn_h3_formal_n10_r8_n10_20260812T031757Z/formal_n10_decision.json`. Requested pairs=10; started pairs=10; completed pairs=10; supervisor_status=complete; same_expected_gpu=True. N>=10 same-GPU matched workload passed sparse-runtime, structural AV, resource, quality-proxy, and timing gates. Accepted only inside the formal matched 5-step Sol-Attn opt-in lane; not BF16 fidelity, not Turbo/DLO/DMD evidence, not release approval, and not human-auditory/semantic quality certification.
 
 ## DMD / DMD2 status
 
@@ -103,7 +103,6 @@ E2E diagnostic ablation quality/telemetry:
 ## Pending stages and blockers
 
 - `dlo.formal_n10`: **pending** — no DLO formal N10 timing evidence found.
-- `sol_attn.formal_n10`: **incomplete_formal_n10_running_no_terminal_decision** — formal N>=10 supervisor is marked running and has no formal_n10_decision.json/RUN_REPORT terminal artifacts; the run is not accepted, rejected, or a speedup claim until terminal per-pair evidence and summary are present.
 
 Blockers:
 - `Turbo quality`: **pending** — semantic quality is not certified and human auditory listening remains pending.
@@ -155,8 +154,15 @@ Blockers:
 - `sol_engine_port/sol_attn_gpu2_supervisor/latest_run_id`
 - `sol_engine_port/sol_attn_gpu2_supervisor/status.txt`
 - `sol_engine_port/sol_attn_gpu_20260809T173323Z/result.json`
+- `sol_engine_port/sol_attn_h3_formal_n10_r8_n10_20260812T031757Z/FORMAL_N10_RUN_REPORT.md`
+- `sol_engine_port/sol_attn_h3_formal_n10_r8_n10_20260812T031757Z/RUN_REPORT.md`
+- `sol_engine_port/sol_attn_h3_formal_n10_r8_n10_20260812T031757Z/formal_n10_decision.json`
+- `sol_engine_port/sol_attn_h3_formal_n10_r8_n10_20260812T031757Z/formal_n10_summary.json`
 - `sol_engine_port/sol_attn_h3_formal_n10_r8_n10_20260812T031757Z/formal_n10_supervisor_status.json`
 - `sol_engine_port/sol_attn_h3_formal_n10_r8_n10_20260812T031757Z/formal_n10_supervisor_stdout.log`
+- `sol_engine_port/sol_attn_h3_formal_n10_r8_n10_20260812T031757Z/quality_proxy_comparison.json`
+- `sol_engine_port/sol_attn_h3_formal_n10_r8_n10_20260812T031757Z/resource_summary.json`
+- `sol_engine_port/sol_attn_h3_formal_n10_r8_n10_20260812T031757Z/timing_summary.json`
 - `sol_engine_port/sol_attn_h3_gpu2_5step_r8_prompt0644_20260812T005600Z/dense_h3_backend_reference/av_validation.json`
 - `sol_engine_port/sol_attn_h3_gpu2_5step_r8_prompt0644_20260812T005600Z/dense_h3_backend_reference/http_metrics.txt`
 - `sol_engine_port/sol_attn_h3_gpu2_5step_r8_prompt0644_20260812T005600Z/r8_image_identity.env`

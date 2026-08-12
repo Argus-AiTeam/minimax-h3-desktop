@@ -48,12 +48,20 @@
         "track": "diagnostic_metadata_plumbing_only"
       },
       {
-        "claim": "The r8 N=3 matched-workload route gate is terminal and recommends formal N>=10 Sol-Attn testing.",
+        "claim": "The r8 N=3 matched-workload route gate is terminal and led to the later accepted formal N>=10 Sol-Attn gate.",
         "evidence": [
           "sol_engine_port/sol_attn_h3_matched_retest_r8_n3_20260812T013544Z/decision.json"
         ],
         "limits": "Bounded N=3 5-step route decision only; not formal N10, not a speedup, not BF16 fidelity, and not quality-equivalence certification.",
         "track": "diagnostic_metadata_plumbing_only"
+      },
+      {
+        "claim": "Formal r8 Sol-Attn N>=10 matched-workload promotion is complete.",
+        "evidence": [
+          "sol_engine_port/sol_attn_h3_formal_n10_r8_n10_20260812T031757Z/formal_n10_decision.json"
+        ],
+        "limits": "Formal matched 5-step Sol-Attn lane only; not BF16 fidelity, Turbo, DLO, DMD, release, or human-auditory quality certification.",
+        "track": "formal_n10_matched_5step_sol_attn_opt_in_not_bf16_fidelity"
       }
     ],
     "blocked": [
@@ -82,14 +90,6 @@
           "dlo_autotune/runs/a6000_dlo_candidate_50_rl16_20260810T141257Z/candidate50_summary.json"
         ],
         "status": "pending_no_formal_n10_because_current_candidate_is_below_baseline_noise"
-      },
-      {
-        "claim": "Sol-Attn matched-workload correctness/quality and performance promotion is complete.",
-        "evidence": [
-          "sol_engine_port/sol_attn_h3_formal_n10_r8_n10_20260812T031757Z/formal_n10_supervisor_status.json",
-          "delivery/formal_n10_live_recheck_20260812T035433Z/summary.json"
-        ],
-        "status": "incomplete_formal_n10_running_no_terminal_decision"
       }
     ],
     "rejected": [
@@ -167,16 +167,14 @@
       "summary_path": "delivery/final_decisive_export_audit_20260812T025605Z/summary.json"
     },
     "formal_n10_cpu_sync_export_audit_gate": {
-      "dir": "delivery/formal_n10_cpu_sync_export_audit_20260812T032659Z",
-      "export_file_count": 83,
-      "latest_live_recheck_path": "delivery/formal_n10_live_recheck_20260812T035433Z/summary.json",
-      "latest_live_recheck_synced_after_gate_without_new_export_audit": true,
+      "dir": "delivery/formal_n10_cpu_sync_export_audit_20260812T065502Z",
+      "export_file_count": 89,
       "publication_audit_status": "pass",
       "publication_issue_count": 0,
-      "push_performed": false,
-      "reviewer_status": "pending_not_spawned_in_this_turn",
-      "status": "pass_previous_nonterminal_boundary",
-      "summary_path": "delivery/formal_n10_cpu_sync_export_audit_20260812T032659Z/summary.json"
+      "push_performed": true,
+      "reviewer_status": "accepted_independent_reviewer_passed",
+      "status": "pass",
+      "summary_path": "delivery/formal_n10_cpu_sync_export_audit_20260812T065502Z/summary.json"
     },
     "status": "pass"
   },
@@ -265,25 +263,34 @@
           "evidence_path": "delivery/r8_sol_attn_cpu_ingest_20260812T005600Z/r8_terminal_classification.json",
           "final_pass_fail": "candidate_pass",
           "formal_n10": {
-            "completed_pairs": 2,
-            "expected_uuid": "GPU-5a6b7f13-4a03-c3c5-bb17-ea86b46d8aed",
-            "gpu_index": "2",
+            "completed_pairs": 10,
+            "decision_path": "sol_engine_port/sol_attn_h3_formal_n10_r8_n10_20260812T031757Z/formal_n10_decision.json",
+            "failed_gates": [],
             "lane": "formal_n10_matched_5step_sol_attn_opt_in_not_bf16_fidelity",
-            "latest_live_recheck_path": "delivery/formal_n10_live_recheck_20260812T035433Z/summary.json",
-            "latest_live_recheck_observed_utc": "2026-08-12T03:54:33Z",
-            "reason": "formal N>=10 supervisor is marked running; pair01 and pair02 have per-pair sparse_runtime_valid diagnostics, pair03 has started but has no terminal per-pair artifact, and no formal_n10_decision.json/RUN_REPORT terminal artifacts exist; the run is not accepted, rejected, or a speedup claim until terminal per-pair evidence and summary are present",
+            "median_http_time_improvement_pct": 15.203295894081867,
+            "quality_proxy_comparison_path": "sol_engine_port/sol_attn_h3_formal_n10_r8_n10_20260812T031757Z/quality_proxy_comparison.json",
+            "raw_matched_classification": "proceed_to_formal_n10_candidate",
+            "reason": "N>=10 same-GPU matched workload passed sparse-runtime, structural AV, resource, quality-proxy, and timing gates",
+            "report_path": "sol_engine_port/sol_attn_h3_formal_n10_r8_n10_20260812T031757Z/RUN_REPORT.md",
             "requested_pairs": 10,
+            "resource_summary_path": "sol_engine_port/sol_attn_h3_formal_n10_r8_n10_20260812T031757Z/resource_summary.json",
+            "same_expected_gpu": true,
             "source_run_dir": "sol_engine_port/sol_attn_h3_formal_n10_r8_n10_20260812T031757Z",
-            "started_pairs": 3,
-            "status": "incomplete_formal_n10_running_no_terminal_decision",
-            "status_path": "sol_engine_port/sol_attn_h3_formal_n10_r8_n10_20260812T031757Z/formal_n10_supervisor_status.json",
-            "stdout_path": "sol_engine_port/sol_attn_h3_formal_n10_r8_n10_20260812T031757Z/formal_n10_supervisor_stdout.log",
-            "supervisor_pid": 1269211,
-            "supervisor_status": "running",
+            "started_pairs": 10,
+            "status": "accepted_formal_n10_same_gpu_sol_attn_speed_candidate",
+            "summary_path": "sol_engine_port/sol_attn_h3_formal_n10_r8_n10_20260812T031757Z/formal_n10_summary.json",
+            "supervisor_return_code": 0,
+            "supervisor_status": "complete",
             "terminal_artifacts_present": {
-              "RUN_REPORT.md": false,
-              "formal_n10_decision.json": false
-            }
+              "RUN_REPORT.md": true,
+              "formal_n10_decision.json": true,
+              "formal_n10_summary.json": true,
+              "quality_proxy_comparison.json": true,
+              "resource_summary.json": true,
+              "timing_summary.json": true
+            },
+            "timing_summary_path": "sol_engine_port/sol_attn_h3_formal_n10_r8_n10_20260812T031757Z/timing_summary.json",
+            "timing_threshold_pct": 3.0
           },
           "http_time_total_s": {
             "dense_h3_backend_reference": 186.498762,
@@ -481,7 +488,7 @@
     "python3 tools/argus_ir04_aggregate.py --strict --input technical_report/evidence/minimax_h3_desktop --out technical_report/evidence/minimax_h3_desktop/delivery/argus_ir04_delivery_summary.json --report-out technical_report/final_technical_report.md --manifest-out technical_report/evidence/minimax_h3_desktop/delivery/package_manifest.json"
   ],
   "package_manifest": {
-    "entry_count": 100,
+    "entry_count": 107,
     "missing_optional_paths": [],
     "path": "technical_report/evidence/minimax_h3_desktop/delivery/package_manifest.json"
   },

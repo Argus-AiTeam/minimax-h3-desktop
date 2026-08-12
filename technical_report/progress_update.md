@@ -1,6 +1,6 @@
 # MiniMax-H3 A6000 验证进度
 
-> 更新时间：2026-08-12T05:35:47+00:00
+> 更新时间：2026-08-12T06:56:32+00:00
 > 仅汇总已落盘证据；实验中或缺失结果明确标记，不估算。
 
 ## 固定工作负载
@@ -28,8 +28,12 @@
 - 边界：这是5-step metadata-plumbing sparse-execution diagnostic candidate pass，不是speedup、N10、BF16 fidelity、release或质量等价声明。
 - matched retest route-decision：proceed_to_formal_n10_candidate；completed_pairs=3/3；median_http_time_improvement=14.782%；threshold=3.000%；failed_gates=[]；n10_recommendation=proceed_to_formal_n10_candidate。
 - matched retest evidence：decision=sol_engine_port/sol_attn_h3_matched_retest_r8_n3_20260812T013544Z/decision.json；terminal_recheck=delivery/r8_matched_retest_terminal_recheck_20260812T024043Z/summary.json。
-- matched retest边界：这是terminal N=3 route gate，仅建议未来formal N>=10候选；不是正式speedup、BF16 fidelity、release或质量等价声明，也不替代人类听感。
+- matched retest边界：这是terminal N=3 route gate，已导向后续formal N>=10终端接受；N=3本身仍不是正式speedup、BF16 fidelity、release或质量等价声明，也不替代人类听感。
 - matched retest reason：bounded matched retest passed correctness, sparse-runtime, resource, quality-proxy, and timing gates
+
+- formal N>=10：accepted_formal_n10_same_gpu_sol_attn_speed_candidate；completed_pairs=10/10；median_http_time_improvement=15.203%；threshold=3.000%；same_expected_gpu=True；supervisor_status=complete。
+- formal N>=10 evidence：decision=sol_engine_port/sol_attn_h3_formal_n10_r8_n10_20260812T031757Z/formal_n10_decision.json；summary=sol_engine_port/sol_attn_h3_formal_n10_r8_n10_20260812T031757Z/formal_n10_summary.json；terminal_artifacts={'formal_n10_decision.json': True, 'RUN_REPORT.md': True, 'formal_n10_summary.json': True, 'timing_summary.json': True, 'quality_proxy_comparison.json': True, 'resource_summary.json': True}。
+- formal N>=10边界：仅限formal 5-step Sol-Attn opt-in matched-workload lane；不是BF16 fidelity、release或人类听感/语义质量认证。
 
 ## Clean-room one-command local lifecycle
 
@@ -40,18 +44,19 @@
 
 - CPU/static gate：pass；evidence=delivery/final_cpu_static_gate_20260812T033107Z。
 - strict aggregation/export/publication audit：pass；export_file_count=82；publication_issue_count=0；evidence=delivery/final_decisive_export_audit_20260812T025605Z。
-- 边界：这些是CPU/static/export/audit gate，不产生GPU、Docker-run、model-load、速度、保真或质量新声明。
+- formal N10 report-sync export/publication audit：pass；export_file_count=89；publication_issue_count=0；reviewer_status=accepted_independent_reviewer_passed；push_performed=True；evidence=delivery/formal_n10_cpu_sync_export_audit_20260812T065502Z。
+- 边界：这些是CPU/static/export/audit gate，不产生GPU、Docker-run、model-load、保真或质量新声明；formal N10速度候选只来自已落盘GPU证据，不由CPU sync gate新产生。
 
 ## 当前边界
 
 - BF16 fidelity lane仅包含baseline；Turbo属于practical_disclosed_approx，不得混入无损结论。
-- Sol-Attn r8已有terminal N=3 matched-workload route gate；它只支持未来formal N>=10候选推荐，不是正式speedup、BF16 fidelity、release或质量等价声明。
+- Sol-Attn r8 formal N>=10 matched-workload gate已终端接受：仅限formal 5-step Sol-Attn opt-in lane；不是BF16 fidelity、release或人类听感/语义质量认证。
 - Turbo自动结构/音频指标已完成；真实人工听感仍需操作者本人完成，agent不得冒充。
 - DMD/DMD2在无合法可复现H3 recipe/checkpoint时保持blocked。
 
 ## 下一步
 
-1. 如获授权，下一步是formal N>=10 matched-workload gate；不得把N=3 route gate写成正式speedup、BF16 fidelity或质量等价。
-2. CPU/static、fixture、Turbo dry-run、strict aggregation、export和publication audit gate已通过；下一步是独立Reviewer，而不是自行push。
-3. 独立Reviewer通过后，才把sanitized release tree提交并push到既有Private GitHub main。
+1. formal N>=10已终端接受且独立Reviewer已通过；post-review private main同步已完成，后续不要重复formal run或扩大为BF16/质量/release声明。
+2. CPU/static、fixture、Turbo dry-run、strict aggregation、export和publication audit gate已通过；独立Reviewer已通过且private main非强制同步已完成。
+3. sanitized release tree已在Reviewer通过和fresh audit pass后提交/同步到既有Private GitHub main。
 4. 如果只剩人类主观听感，保留operator listening gate和文件映射。

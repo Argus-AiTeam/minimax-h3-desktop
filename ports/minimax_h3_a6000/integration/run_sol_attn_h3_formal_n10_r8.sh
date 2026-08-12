@@ -278,10 +278,12 @@ decision = {
     "review_required": True,
     "matched_retest_return_code": matched_rc,
     "raw_matched_retest_classification": raw_classification,
+    "raw_matched_classification": raw_classification,
     "raw_matched_retest_decision": "decision.json" if raw else None,
     "requested_pairs": requested_pairs,
     "completed_pairs": completed_pairs,
     "formal_pair_count_ok": formal_pair_count_ok,
+    "same_expected_gpu": same_expected_gpu,
     "same_baseline_physical_gpu_required": True,
     "same_baseline_physical_gpu_evidence": {
         "gpu_index": commands_env.get("gpu_index"),
@@ -300,6 +302,7 @@ decision = {
     "pairs": raw.get("pairs"),
     "lane": "formal_n10_matched_5step_sol_attn_opt_in_not_bf16_fidelity",
     "not_bf16_fidelity": True,
+    "not_fidelity_or_performance_claim": False,
     "not_turbo_dlo_dmd": True,
     "not_human_audio_or_semantic_quality_certification": True,
     "not_public_release": True,
@@ -310,9 +313,43 @@ decision = {
     "generated_at_unix": time.time(),
 }
 (root / "formal_n10_decision.json").write_text(json.dumps(decision, indent=2, sort_keys=True) + "\n")
+summary = {
+    "schema_version": "minimax_h3_a6000_sol_attn_formal_n10_summary_v1",
+    "formal_classification": formal_classification,
+    "accepted": accepted,
+    "rejected": rejected,
+    "blocked": blocked,
+    "reason": reason,
+    "lane": decision["lane"],
+    "requested_pairs": requested_pairs,
+    "completed_pairs": completed_pairs,
+    "formal_pair_count_ok": formal_pair_count_ok,
+    "same_expected_gpu": same_expected_gpu,
+    "same_baseline_physical_gpu_evidence": decision["same_baseline_physical_gpu_evidence"],
+    "raw_matched_retest_classification": raw_classification,
+    "median_http_time_improvement_pct": raw.get("median_http_time_improvement_pct"),
+    "timing_threshold_pct": raw.get("timing_threshold_pct"),
+    "baseline_warm_cv_pct": raw.get("baseline_warm_cv_pct"),
+    "failed_gates": failed_gates,
+    "gates": raw_gates,
+    "resource_peak_summary": raw.get("resource_peak_summary"),
+    "resource_thresholds": raw.get("resource_thresholds"),
+    "quality_proxy_red_flags": raw.get("quality_proxy_red_flags"),
+    "pair_count": len(raw.get("pairs") or []),
+    "claim_boundaries": {
+        "not_bf16_fidelity": True,
+        "not_turbo_dlo_dmd": True,
+        "not_human_audio_or_semantic_quality_certification": True,
+        "not_public_release": True,
+        "opaque_integrity_policy": decision["opaque_integrity_policy"],
+    },
+    "source": "derived from formal_n10_decision.json at supervisor terminalization; no extra GPU work",
+}
+(root / "formal_n10_summary.json").write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n")
 report = f"""# Sol-Attn r8 formal N>=10 matched workload report\n\nStatus: `{formal_classification}`.\n\nThis is a formal N={requested_pairs} same-physical-GPU 5-step dense-vs-opt-in Sol-Attn matched-workload gate. It is not BF16 fidelity certification, not Turbo/DLO/DMD evidence, not a human auditory/semantic quality judgment, and not a public release.\n\n- Decision reason: {reason}\n- Completed pairs: {completed_pairs}/{requested_pairs}\n- Same baseline physical GPU: {same_expected_gpu} (expected `{expected_uuid}`, observed `{selected_uuid}`)\n- Raw matched-retest classification: `{raw_classification}`\n- Median HTTP-time improvement: {raw.get('median_http_time_improvement_pct') if raw else 'pending'}%\n- Timing threshold: > {raw.get('timing_threshold_pct') if raw else 'pending'}%\n- Failed gates: {', '.join(failed_gates) if failed_gates else 'none'}\n- Review required: true\n\nRaw artifacts are in this directory and its per-pair subdirectories. Opaque image/output identifiers are not used as classification evidence.\n"""
 (root / "FORMAL_N10_RUN_REPORT.md").write_text(report)
-print(json.dumps({"formal_classification": formal_classification, "decision": str(root / "formal_n10_decision.json"), "matched_rc": matched_rc}, sort_keys=True))
+(root / "RUN_REPORT.md").write_text(report)
+print(json.dumps({"formal_classification": formal_classification, "decision": str(root / "formal_n10_decision.json"), "summary": str(root / "formal_n10_summary.json"), "matched_rc": matched_rc}, sort_keys=True))
 PY
 
 exit "$matched_rc"

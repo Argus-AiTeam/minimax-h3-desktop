@@ -5,7 +5,7 @@
     "virtual environments, caches, pycache, PID files, raw logs, generated media/audio, Docker layers, archives, and credentials",
     "Git remotes, tags, releases, and publication actions"
   ],
-  "file_count": 82,
+  "file_count": 88,
   "files": [
     {
       "path": ".argus_release_tree",
@@ -33,8 +33,8 @@
     },
     {
       "path": "README.md",
-      "sha256": "3e06bb5894a84191eae72eb43aac0b5bb28af3e7a6afd72a082776eb1bb02614",
-      "size_bytes": 12083,
+      "sha256": "7bb0a4141897152a38d529a4d082184545815a3037cc8604a3b60fec91869ffb",
+      "size_bytes": 12774,
       "source": "generated:readme"
     },
     {
@@ -51,8 +51,8 @@
     },
     {
       "path": "ports/minimax_h3_a6000/README.md",
-      "sha256": "850d4250dde2e1c1348900cb816460dc050e8a3fd9a0f4774fa3b0fc7e4f7ebf",
-      "size_bytes": 15551,
+      "sha256": "8d3da0d2f267c1980dfa765c9e94801845c392ef83dbf05f8d45c95a03b08584",
+      "size_bytes": 15193,
       "source": "ports/minimax_h3_a6000/README.md"
     },
     {
@@ -195,8 +195,8 @@
     },
     {
       "path": "ports/minimax_h3_a6000/integration/run_sol_attn_h3_formal_n10_r8.sh",
-      "sha256": "9e8ed25f8b309fd83ae68959757d2485c69a16dc30ff0ebf21d0638244af7f9a",
-      "size_bytes": 14036,
+      "sha256": "230180b4a468b84d2a6b9e6592848e56b5baad2739e1e9ca8bd2237a57245706",
+      "size_bytes": 15853,
       "source": "ports/minimax_h3_a6000/integration/run_sol_attn_h3_formal_n10_r8.sh"
     },
     {
@@ -309,8 +309,8 @@
     },
     {
       "path": "release/github_release_manifest.json",
-      "sha256": "26c24326d2f664877895cd21086fc9ec8c31c68570c4aee26063a1d1afd0ebcd",
-      "size_bytes": 4040,
+      "sha256": "43f698e577877591be38dc18da159c00c952731698f1c55ba2fcad44f1098d6d",
+      "size_bytes": 5000,
       "source": "release/github_release_manifest.json"
     },
     {
@@ -369,8 +369,8 @@
     },
     {
       "path": "technical_report/evidence/minimax_h3_desktop/delivery/argus_ir04_delivery_summary.json",
-      "sha256": "3b8641b5f69a924dcad9ce9dd7da39cd7640e28b52892fab0a1cf71bafe91976",
-      "size_bytes": 26865,
+      "sha256": "f94242a2f9d6121cbe4ffedceee1f850a93bdaab5635a819ec4d999eec938d87",
+      "size_bytes": 27137,
       "source": "technical_report/evidence/minimax_h3_desktop/delivery/argus_ir04_delivery_summary.json"
     },
     {
@@ -416,21 +416,57 @@
       "source": "technical_report/evidence/minimax_h3_desktop/quantization_feasibility_a6000.md"
     },
     {
+      "path": "technical_report/evidence/minimax_h3_desktop/sol_engine_port/sol_attn_h3_formal_n10_r8_n10_20260812T031757Z/formal_n10_decision.json",
+      "sha256": "10020c14df474ba3b5eb5c64cae6f1d481f657fabc3ba23842ef0052ed198842",
+      "size_bytes": 16499,
+      "source": "technical_report/evidence/minimax_h3_desktop/sol_engine_port/sol_attn_h3_formal_n10_r8_n10_20260812T031757Z/formal_n10_decision.json"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/sol_engine_port/sol_attn_h3_formal_n10_r8_n10_20260812T031757Z/formal_n10_summary.json",
+      "sha256": "9fae1a1431b3c7a089650303e21a019a440035e83620b2452ea65eae0745e53a",
+      "size_bytes": 3273,
+      "source": "technical_report/evidence/minimax_h3_desktop/sol_engine_port/sol_attn_h3_formal_n10_r8_n10_20260812T031757Z/formal_n10_summary.json"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/sol_engine_port/sol_attn_h3_formal_n10_r8_n10_20260812T031757Z/quality_proxy_comparison.json",
+      "sha256": "0c3add16691c2465e78eb7c721fb43f21bdfff3822eba6252d6bd7eeede98f7f",
+      "size_bytes": 1448,
+      "source": "technical_report/evidence/minimax_h3_desktop/sol_engine_port/sol_attn_h3_formal_n10_r8_n10_20260812T031757Z/quality_proxy_comparison.json"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/sol_engine_port/sol_attn_h3_formal_n10_r8_n10_20260812T031757Z/resource_summary.json",
+      "sha256": "3e9bf6a18e19d8631e73876e0c33dc14337e9c064ff1d29c4105698a3adc8467",
+      "size_bytes": 3125,
+      "source": "technical_report/evidence/minimax_h3_desktop/sol_engine_port/sol_attn_h3_formal_n10_r8_n10_20260812T031757Z/resource_summary.json"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/sol_engine_port/sol_attn_h3_formal_n10_r8_n10_20260812T031757Z/timing_summary.json",
+      "sha256": "3a8439778ab8e0d4cc678daf10ac01cc71d3900ef8266fe513c9d9b3f2f1d54f",
+      "size_bytes": 1495,
+      "source": "technical_report/evidence/minimax_h3_desktop/sol_engine_port/sol_attn_h3_formal_n10_r8_n10_20260812T031757Z/timing_summary.json"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/sol_engine_port/sol_attn_h3_matched_retest_r8_n3_20260812T013544Z/decision.json",
+      "sha256": "fc22c0f037c5926d64054bcaf5252a6c73b09a544f5ee514df6ecbc187ca8b14",
+      "size_bytes": 5893,
+      "source": "technical_report/evidence/minimax_h3_desktop/sol_engine_port/sol_attn_h3_matched_retest_r8_n3_20260812T013544Z/decision.json"
+    },
+    {
       "path": "technical_report/final_technical_report.md",
-      "sha256": "0499783baa3d66f8a60dbfc41e345d4dcb624886f1c090f16fa2b0ae20e8239c",
-      "size_bytes": 16053,
+      "sha256": "a963b55a49a0df871b61bb0ad9f13edcdd73e528e4293426effbbaf962609ffc",
+      "size_bytes": 15498,
       "source": "technical_report/final_technical_report.md"
     },
     {
       "path": "technical_report/minimax_h3_a6000_performance.md",
-      "sha256": "44d98b59efc64905928d590b2c7f17105b886d4505ea9e25cd4b58d502fed51b",
-      "size_bytes": 19033,
+      "sha256": "d63e5714511e6b9d9203e279a742ad82ec90e392f653093839d0aab452714880",
+      "size_bytes": 19366,
       "source": "technical_report/minimax_h3_a6000_performance.md"
     },
     {
       "path": "technical_report/progress_update.md",
-      "sha256": "c3da6e3c6abb0b19c4a2c63eaa5ca109fb9da1970cb8b68e93b59920df7bbc7f",
-      "size_bytes": 3803,
+      "sha256": "0ecd09fd70610ade9bd0a3661cd0a6bc8c695d7f9dd56955a0a4409b2df70c2c",
+      "size_bytes": 4997,
       "source": "technical_report/progress_update.md"
     },
     {
@@ -441,8 +477,8 @@
     },
     {
       "path": "tests/test_github_release_tree_builder.py",
-      "sha256": "5f82a7b3bf39d2f0d6aa4a06ed2562e2b93986e552099e77529564f235c61e23",
-      "size_bytes": 5238,
+      "sha256": "e1da975970e8c3fe5ff2e62b190b941d79b76ac64fa37aad5ed22d4e8bba6f0a",
+      "size_bytes": 5763,
       "source": "tests/test_github_release_tree_builder.py"
     },
     {
@@ -465,26 +501,26 @@
     },
     {
       "path": "tools/argus_ir04_aggregate.py",
-      "sha256": "1d883e5e25fdb8f1d744b92e7baba1e77312703e016ee58f901ddce162224066",
-      "size_bytes": 88945,
+      "sha256": "45cb8235a44caa32e83d8f87e6c9fdcaa89c2d5a5f28895f669d153cc5100314",
+      "size_bytes": 92943,
       "source": "tools/argus_ir04_aggregate.py"
     },
     {
       "path": "tools/build_github_release_tree.py",
-      "sha256": "e82bfe5ceba0490d29c9e175065aed0637c1814370f95f7e31ad90bc6ebc683b",
-      "size_bytes": 28326,
+      "sha256": "1491a8d3f16b2b64af139dff357d4ccfc61b4c96c822c0e9d2c895c87e944356",
+      "size_bytes": 29017,
       "source": "tools/build_github_release_tree.py"
     },
     {
       "path": "tools/build_periodic_progress.py",
-      "sha256": "a3748171b7ebf15e72daacfe7b7982999aeb716be3b9e856b8a3426d42a92bc5",
-      "size_bytes": 16239,
+      "sha256": "5239b223ab67f01d7536d257f02430c4fce2d6f9be9eadbbdf79915f4cf4aa2c",
+      "size_bytes": 24854,
       "source": "tools/build_periodic_progress.py"
     },
     {
       "path": "tools/minimax_h3_a6000_performance_report.py",
-      "sha256": "d413b2e299476d8cd930f71c4186551c575a803a6800486da9ab9551c757076d",
-      "size_bytes": 99854,
+      "sha256": "1c91d3aedae25fe6fc5e3437a9f8c46921cca1c6f25bab00e2a9a85d07f25c68",
+      "size_bytes": 102387,
       "source": "tools/minimax_h3_a6000_performance_report.py"
     },
     {

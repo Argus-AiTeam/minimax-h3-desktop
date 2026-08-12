@@ -54,6 +54,14 @@ R8_MATCHED_RETEST_TERMINAL_RECHECK_FILE = "summary.json"
 R8_FORMAL_N10_PREFIX = "sol_attn_h3_formal_n10_r8_n"
 R8_FORMAL_N10_DECISION_FILE = "formal_n10_decision.json"
 R8_FORMAL_N10_REPORT_FILE = "RUN_REPORT.md"
+R8_FORMAL_N10_TERMINAL_FILES = (
+    "formal_n10_decision.json",
+    "RUN_REPORT.md",
+    "formal_n10_summary.json",
+    "timing_summary.json",
+    "quality_proxy_comparison.json",
+    "resource_summary.json",
+)
 FINAL_CPU_STATIC_GATE_PREFIX = "final_cpu_static_gate_"
 FINAL_DECISIVE_EXPORT_AUDIT_PREFIX = "final_decisive_export_audit_"
 FORMAL_N10_CPU_SYNC_EXPORT_AUDIT_PREFIX = "formal_n10_cpu_sync_export_audit_"
@@ -100,6 +108,37 @@ def formal_pair_completed(pair_dir: Path) -> bool:
         return exit_path.read_text(encoding="utf-8").strip() == "0"
     except FileNotFoundError:
         return False
+
+
+def _formal_same_expected_gpu(decision: dict[str, Any]) -> bool | None:
+    if isinstance(decision.get("same_expected_gpu"), bool):
+        return bool(decision["same_expected_gpu"])
+    gpu = decision.get("same_baseline_physical_gpu_evidence")
+    if isinstance(gpu, dict) and isinstance(gpu.get("same_expected_gpu"), bool):
+        return bool(gpu["same_expected_gpu"])
+    return None
+
+
+def _formal_raw_classification(decision: dict[str, Any]) -> str | None:
+    value = decision.get("raw_matched_classification") or decision.get("raw_matched_retest_classification")
+    return value if isinstance(value, str) else None
+
+
+def _formal_accepted_gate_failures(decision: dict[str, Any], requested_pairs: int, completed_pairs: int) -> list[str]:
+    """Validate both legacy and current formal decision schemas.
+
+    Older report readers expected normalized gate names.  The actual r8 formal
+    supervisor preserved the delegated matched-retest gate names in
+    ``decision['gates']``.  Treat only derivable facts as accepted gates.
+    """
+    gates = decision.get("gates") if isinstance(decision.get("gates"), dict) else {}
+    checks = {
+        "completed_pairs_ge_10": bool(decision.get("formal_pair_count_ok")) or (requested_pairs >= 10 and completed_pairs >= 10),
+        "same_expected_gpu": _formal_same_expected_gpu(decision) is True,
+        "raw_route_gate_passed": _formal_raw_classification(decision) == "proceed_to_formal_n10_candidate" and not decision.get("failed_gates"),
+        "timing_gate_passed": gates.get("timing_gate_passed") is True or (gates.get("median_improvement_exceeds_threshold") is True and gates.get("no_pair_slower") is True),
+    }
+    return [name for name, ok in checks.items() if not ok]
 
 
 def sha256_file(path: Path) -> str:
@@ -446,10 +485,11 @@ def summarize_r8_formal_n10(root: Path) -> dict[str, Any]:
     stdout_path = formal_dir / "formal_n10_supervisor_stdout.log"
     decision_path = formal_dir / R8_FORMAL_N10_DECISION_FILE
     report_path = formal_dir / R8_FORMAL_N10_REPORT_FILE
-    terminal_artifacts = {
-        R8_FORMAL_N10_DECISION_FILE: decision_path.is_file(),
-        R8_FORMAL_N10_REPORT_FILE: report_path.is_file(),
-    }
+    summary_path = formal_dir / "formal_n10_summary.json"
+    timing_path = formal_dir / "timing_summary.json"
+    quality_path = formal_dir / "quality_proxy_comparison.json"
+    resource_path = formal_dir / "resource_summary.json"
+    terminal_artifacts = {name: (formal_dir / name).is_file() for name in R8_FORMAL_N10_TERMINAL_FILES}
     pair_dirs = sorted(path for path in formal_dir.glob("pair[0-9][0-9]") if path.is_dir())
     completed_pair_dirs = [path for path in pair_dirs if formal_pair_completed(path)]
     supervisor = load_json(status_path) if status_path.is_file() else {}
@@ -471,14 +511,15 @@ def summarize_r8_formal_n10(root: Path) -> dict[str, Any]:
         if classification not in allowed:
             raise AggregationError(f"unexpected formal N10 classification: {classification!r}")
         gates = decision.get("gates") if isinstance(decision.get("gates"), dict) else {}
+        requested = int(gates.get("requested_pairs") or requested_pairs or decision.get("requested_pairs") or 0)
+        completed = int(gates.get("completed_pairs") or decision.get("completed_pairs") or 0)
+        same_expected_gpu = _formal_same_expected_gpu(decision)
+        raw_classification = _formal_raw_classification(decision)
         if classification == "accepted_formal_n10_same_gpu_sol_attn_speed_candidate":
-            required_true = [
-                "completed_pairs_ge_10",
-                "same_expected_gpu",
-                "raw_route_gate_passed",
-                "timing_gate_passed",
-            ]
-            failed = [name for name in required_true if gates.get(name) is not True]
+            missing_terminal = [name for name, present in terminal_artifacts.items() if not present]
+            if missing_terminal:
+                raise AggregationError(f"accepted formal N10 decision is missing terminal artifacts: {missing_terminal}")
+            failed = _formal_accepted_gate_failures(decision, requested, completed)
             if failed:
                 raise AggregationError(f"accepted formal N10 decision has failed gates: {failed}")
         return {
@@ -486,14 +527,18 @@ def summarize_r8_formal_n10(root: Path) -> dict[str, Any]:
             "source_run_dir": rel(formal_dir, root),
             "decision_path": rel(decision_path, root),
             "report_path": rel(report_path, root) if report_path.is_file() else None,
+            "summary_path": rel(summary_path, root) if summary_path.is_file() else None,
+            "timing_summary_path": rel(timing_path, root) if timing_path.is_file() else None,
+            "quality_proxy_comparison_path": rel(quality_path, root) if quality_path.is_file() else None,
+            "resource_summary_path": rel(resource_path, root) if resource_path.is_file() else None,
             "reason": decision.get("reason"),
-            "requested_pairs": gates.get("requested_pairs", requested_pairs),
-            "completed_pairs": gates.get("completed_pairs", decision.get("completed_pairs")),
+            "requested_pairs": requested,
+            "completed_pairs": completed,
             "started_pairs": len(pair_dirs),
             "supervisor_status": supervisor.get("status"),
             "supervisor_return_code": supervisor.get("return_code"),
-            "same_expected_gpu": decision.get("same_expected_gpu"),
-            "raw_matched_classification": decision.get("raw_matched_classification"),
+            "same_expected_gpu": same_expected_gpu,
+            "raw_matched_classification": raw_classification,
             "median_http_time_improvement_pct": decision.get("median_http_time_improvement_pct"),
             "timing_threshold_pct": decision.get("timing_threshold_pct"),
             "failed_gates": decision.get("failed_gates"),
@@ -1066,9 +1111,14 @@ def aggregate_evidence(root: Path, *, repo_root: Path | None = None) -> dict[str
         promotion_evidence = [h3_sol["evidence_path"]]
         promotion_recorded = False
         if matched.get("status") == "proceed_to_formal_n10_candidate":
+            matched_claim = (
+                "The r8 N=3 matched-workload route gate is terminal and led to the later accepted formal N>=10 Sol-Attn gate."
+                if formal.get("status") == "accepted_formal_n10_same_gpu_sol_attn_speed_candidate"
+                else "The r8 N=3 matched-workload route gate is terminal and recommends formal N>=10 Sol-Attn testing."
+            )
             summary["claims"]["accepted"].append(
                 {
-                    "claim": "The r8 N=3 matched-workload route gate is terminal and recommends formal N>=10 Sol-Attn testing.",
+                    "claim": matched_claim,
                     "track": "diagnostic_metadata_plumbing_only",
                     "evidence": [matched["evidence_path"]],
                     "limits": "Bounded N=3 5-step route decision only; not formal N10, not a speedup, not BF16 fidelity, and not quality-equivalence certification.",
@@ -1205,9 +1255,15 @@ def report_markdown(summary: dict[str, Any]) -> str:
             ]
         )
         matched = h3_sol.get("matched_retest", {})
+        formal_for_matched_boundary = h3_sol.get("formal_n10", {})
         if matched.get("status") == "proceed_to_formal_n10_candidate":
+            matched_boundary = (
+                "This N=3 route gate led to the later accepted formal N>=10 gate; the N=3 gate itself remains bounded route evidence, not formal N10 or a speedup/quality/fidelity claim."
+                if formal_for_matched_boundary.get("status") == "accepted_formal_n10_same_gpu_sol_attn_speed_candidate"
+                else "This is still only a bounded route gate, not formal N10 or a speedup/quality/fidelity claim."
+            )
             lines.append(
-                f"- R8 matched-workload retest route decision: `{matched['status']}`; evidence `{matched['evidence_path']}`; terminal_recheck=`{matched.get('terminal_recheck_evidence_path')}`; completed_pairs={matched.get('completed_pairs')}/{matched.get('requested_pairs')}; median_http_time_improvement={matched.get('median_http_time_improvement_pct')}%; threshold={matched.get('timing_threshold_pct')}%; supervisor_status={matched.get('supervisor_status')}; supervisor_return_code={matched.get('supervisor_return_code')}; posthoc_finalization_note=`{matched.get('posthoc_finalization_note')}`; n10_recommendation={matched.get('n10_recommendation')}. Reason: {matched.get('reason')}. This is still only a bounded route gate, not formal N10 or a speedup/quality/fidelity claim."
+                f"- R8 matched-workload retest route decision: `{matched['status']}`; evidence `{matched['evidence_path']}`; terminal_recheck=`{matched.get('terminal_recheck_evidence_path')}`; completed_pairs={matched.get('completed_pairs')}/{matched.get('requested_pairs')}; median_http_time_improvement={matched.get('median_http_time_improvement_pct')}%; threshold={matched.get('timing_threshold_pct')}%; supervisor_status={matched.get('supervisor_status')}; supervisor_return_code={matched.get('supervisor_return_code')}; posthoc_finalization_note=`{matched.get('posthoc_finalization_note')}`; n10_recommendation={matched.get('n10_recommendation')}. Reason: {matched.get('reason')}. {matched_boundary}"
             )
         elif matched.get("status") != "not_available":
             lines.append(
@@ -1216,8 +1272,13 @@ def report_markdown(summary: dict[str, Any]) -> str:
         formal = h3_sol.get("formal_n10", {})
         if formal.get("status") not in {None, "not_available"}:
             formal_evidence = formal.get("decision_path") or formal.get("status_path") or formal.get("source_run_dir")
+            formal_boundary = (
+                "Accepted only within the formal matched 5-step Sol-Attn opt-in lane; this is not BF16 fidelity, Turbo/DLO/DMD evidence, release approval, or human-auditory/semantic quality certification."
+                if formal.get("status") == "accepted_formal_n10_same_gpu_sol_attn_speed_candidate"
+                else "Nonterminal/incomplete formal evidence is not a Sol-Attn speedup, BF16 fidelity, release, or quality-equivalence claim."
+            )
             lines.append(
-                f"- R8 formal N>=10 matched-workload gate: `{formal.get('status')}`; evidence `{formal_evidence}`; requested_pairs={formal.get('requested_pairs')}; started_pairs={formal.get('started_pairs')}; completed_pairs={formal.get('completed_pairs')}; supervisor_status={formal.get('supervisor_status')}. Reason: {formal.get('reason')}. Nonterminal/incomplete formal evidence is not a Sol-Attn speedup, BF16 fidelity, release, or quality-equivalence claim."
+                f"- R8 formal N>=10 matched-workload gate: `{formal.get('status')}`; evidence `{formal_evidence}`; requested_pairs={formal.get('requested_pairs')}; started_pairs={formal.get('started_pairs')}; completed_pairs={formal.get('completed_pairs')}; supervisor_status={formal.get('supervisor_status')}. Reason: {formal.get('reason')}. {formal_boundary}"
             )
     lines.extend([
         "",
@@ -1295,7 +1356,12 @@ def default_manifest_paths(repo_root: Path, evidence_root: Path, out_path: Path 
             r8_paths.append(r8_matched_dir / R8_MATCHED_RETEST_INSPECTION_FILE)
     r8_formal_dir = _latest_prefixed_dir(evidence_root / "sol_engine_port", R8_FORMAL_N10_PREFIX)
     if r8_formal_dir is not None:
-        for name in ("formal_n10_supervisor_status.json", "formal_n10_supervisor_stdout.log", R8_FORMAL_N10_DECISION_FILE, R8_FORMAL_N10_REPORT_FILE):
+        for name in (
+            "formal_n10_supervisor_status.json",
+            "formal_n10_supervisor_stdout.log",
+            "FORMAL_N10_RUN_REPORT.md",
+            *R8_FORMAL_N10_TERMINAL_FILES,
+        ):
             candidate = r8_formal_dir / name
             if candidate.is_file():
                 r8_paths.append(candidate)

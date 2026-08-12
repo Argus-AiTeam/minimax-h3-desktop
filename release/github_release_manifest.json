@@ -91,6 +91,24 @@
       "path": "technical_report/evidence/minimax_h3_desktop/delivery/argus_ir04_delivery_summary.json"
     },
     {
+      "path": "technical_report/evidence/minimax_h3_desktop/sol_engine_port/sol_attn_h3_matched_retest_r8_n3_20260812T013544Z/decision.json"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/sol_engine_port/sol_attn_h3_formal_n10_r8_n10_20260812T031757Z/formal_n10_decision.json"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/sol_engine_port/sol_attn_h3_formal_n10_r8_n10_20260812T031757Z/formal_n10_summary.json"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/sol_engine_port/sol_attn_h3_formal_n10_r8_n10_20260812T031757Z/timing_summary.json"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/sol_engine_port/sol_attn_h3_formal_n10_r8_n10_20260812T031757Z/quality_proxy_comparison.json"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/sol_engine_port/sol_attn_h3_formal_n10_r8_n10_20260812T031757Z/resource_summary.json"
+    },
+    {
       "path": "technical_report/evidence/minimax_h3_desktop/dlo_autotune/resident_layer_candidates.json"
     },
     {

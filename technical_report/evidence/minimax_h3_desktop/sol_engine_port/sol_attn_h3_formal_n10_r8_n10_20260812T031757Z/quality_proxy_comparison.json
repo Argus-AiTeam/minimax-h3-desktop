@@ -1,0 +1,58 @@
+{
+  "no_quality_proxy_red_flags": true,
+  "per_pair_structural_av": [
+    {
+      "dense_structural_av_ok": true,
+      "pair": "pair01",
+      "sol_attn_structural_av_ok": true
+    },
+    {
+      "dense_structural_av_ok": true,
+      "pair": "pair02",
+      "sol_attn_structural_av_ok": true
+    },
+    {
+      "dense_structural_av_ok": true,
+      "pair": "pair03",
+      "sol_attn_structural_av_ok": true
+    },
+    {
+      "dense_structural_av_ok": true,
+      "pair": "pair04",
+      "sol_attn_structural_av_ok": true
+    },
+    {
+      "dense_structural_av_ok": true,
+      "pair": "pair05",
+      "sol_attn_structural_av_ok": true
+    },
+    {
+      "dense_structural_av_ok": true,
+      "pair": "pair06",
+      "sol_attn_structural_av_ok": true
+    },
+    {
+      "dense_structural_av_ok": true,
+      "pair": "pair07",
+      "sol_attn_structural_av_ok": true
+    },
+    {
+      "dense_structural_av_ok": true,
+      "pair": "pair08",
+      "sol_attn_structural_av_ok": true
+    },
+    {
+      "dense_structural_av_ok": true,
+      "pair": "pair09",
+      "sol_attn_structural_av_ok": true
+    },
+    {
+      "dense_structural_av_ok": true,
+      "pair": "pair10",
+      "sol_attn_structural_av_ok": true
+    }
+  ],
+  "proxy_scope": "automatic structural AV/timing-sync metadata only; no human auditory or semantic quality certification",
+  "red_flags": [],
+  "schema_version": "minimax_h3_a6000_sol_attn_matched_retest_quality_proxy_v1"
+}
