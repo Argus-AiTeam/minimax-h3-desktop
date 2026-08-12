@@ -1,0 +1,73 @@
+{
+  "schema_version": "minimax-h3-a6000-benchmark-record-v1",
+  "contract_version": "1.0.0",
+  "record_id": "historical-turbo-4step-warm-n10-v1",
+  "record_status": "accepted_historical",
+  "lane_id": "native-short-1344x768-124f-24fps-v1",
+  "workload_fingerprint": "9c3337f65973f5ecdb8e3a1cdc27c66eaa2067872e597dcfff478c62d527bdca",
+  "source_evidence": [
+    {"path": "technical_report/evidence/minimax_h3_desktop/turbo_merged/timing_repeats/gpu3_turbo_paired_n10_20260810T025102Z/timing_summary.json", "scope": "Same-physical-A6000 Turbo 4-step warm N=10 timing."},
+    {"path": "technical_report/evidence/minimax_h3_desktop/turbo_merged/quality_suite_runs/gpu3_turbo_quality_20260810T005611Z/quality_suite_analysis.json", "scope": "Separate 24-case practical suite with a preserved 4-step geometry failure."}
+  ],
+  "workload": {
+    "task": "t2va", "partition": "FL2VA", "width": 1344, "height": 768, "fps": 24,
+    "final_frame_count": 124, "nominal_duration_seconds": 5.166666666666667,
+    "audio_sample_rate_hz": 32000, "audio_channels": 2, "num_inference_steps": 4,
+    "prompt": {"id": "t2va-example-1", "sha256": "98f36b879692095e099ae824c18d9e93e7006a490e082fd474a5f531769dcf06", "source": "NVLabs/Sana d00eef311670a58deb2c323fe072738fcb945600, derived from the official MiniMax-H3 reproducible request"},
+    "seed_plan": {"seeds": [0], "repetitions": 10},
+    "conditioning_assets": []
+  },
+  "production": {"is_long": false, "generation_mode": "native_short_clip", "chunk_count": 1, "assembly_method": "none"},
+  "track": {
+    "id": "practical_disclosed_approx",
+    "mechanisms": ["statically_merged_turbo_lora", "4_step", "dense_attention", "no_cache"],
+    "disclosure": "Few-step Turbo approximation with greater quality risk; one known 4-step geometry failure prevents default promotion."
+  },
+  "deployment": {"scope": "single_a6000", "gpu_model": "NVIDIA RTX A6000", "gpu_count_visible": 1, "gpu_count_used": 1, "physical_gpu_uuids": ["GPU-ff0c8d25-2652-ce58-3ef7-e3a9aeeb3334"]},
+  "timing": {
+    "boundary_id": "local_http_request_to_download_complete",
+    "cold_e2e": {"status": "not_available_historical_evidence", "seconds": null, "n": 0, "reason": "Canonical cold process/load/validation boundary was not measured."},
+    "warm_e2e": {"status": "measured", "seconds": 149.6191865, "n": 10, "mean_seconds": 149.6224431, "sample_std_seconds": 0.0496659094538434, "cv_percent": 0.033194157523981374, "min_seconds": 149.560203, "max_seconds": 149.687671},
+    "components": {
+      "text_conditioning": {"status": "not_available_historical_evidence", "seconds": null, "n": 0, "reason": "Not instrumented.", "timing_basis": "not_available", "additive_to_e2e": true},
+      "denoise": {"status": "not_available_historical_evidence", "seconds": null, "n": 0, "reason": "Not instrumented.", "timing_basis": "not_available", "additive_to_e2e": true},
+      "attention": {"status": "not_available_historical_evidence", "seconds": null, "n": 0, "reason": "Not instrumented.", "timing_basis": "not_available", "additive_to_e2e": false, "parent": "denoise"},
+      "video_vae": {"status": "not_available_historical_evidence", "seconds": null, "n": 0, "reason": "Not instrumented.", "timing_basis": "not_available", "additive_to_e2e": true},
+      "audio_vae": {"status": "not_available_historical_evidence", "seconds": null, "n": 0, "reason": "Not instrumented.", "timing_basis": "not_available", "additive_to_e2e": true},
+      "encoding_mux": {"status": "not_available_historical_evidence", "seconds": null, "n": 0, "reason": "Not instrumented.", "timing_basis": "not_available", "additive_to_e2e": true},
+      "io": {"status": "not_available_historical_evidence", "seconds": null, "n": 0, "reason": "Not instrumented.", "timing_basis": "not_available", "additive_to_e2e": true}
+    },
+    "additive_component_order": ["text_conditioning", "denoise", "video_vae", "audio_vae", "encoding_mux", "io"],
+    "seconds_per_generated_second": {"status": "measured", "seconds": 28.958552225806454, "n": 10}
+  },
+  "resources": {
+    "peak_gpu_memory_mib": {"status": "measured", "value": 26836.0, "unit": "MiB"},
+    "peak_host_memory_gib": {"status": "measured", "value": 195.16017150878906, "unit": "GiB"},
+    "peak_power_w": {"status": "measured", "value": 301.08, "unit": "W"},
+    "failures": {"status": "measured", "value": 0, "unit": "count"}
+  },
+  "output_av": {
+    "status": "complete", "final_accounting_complete": true,
+    "video": {"present": true, "full_decode": true, "width": 1344, "height": 768, "fps": 24, "frames": 124},
+    "audio": {"present": true, "full_decode": true, "sample_rate_hz": 32000, "channels": 2, "decoded_samples_per_channel": 166912, "effective_samples_per_channel": null, "encoder_priming_samples": null, "end_padding_samples": null}
+  },
+  "quality": {
+    "objective": {
+      "subject_identity_consistency": {"status": "not_available_historical_evidence", "value": null, "unit": "score", "reason": "Not reported for timing N=10."},
+      "background_consistency": {"status": "not_available_historical_evidence", "value": null, "unit": "score", "reason": "Not reported for timing N=10."},
+      "camera_consistency": {"status": "not_available_historical_evidence", "value": null, "unit": "score", "reason": "Not reported for timing N=10."},
+      "motion": {"status": "not_available_historical_evidence", "value": null, "unit": "score", "reason": "Separate practical suite only."},
+      "repetition": {"status": "not_available_historical_evidence", "value": null, "unit": "fraction", "reason": "Separate practical suite only."},
+      "freezing": {"status": "pass", "value": true, "unit": "boolean"},
+      "visual_seams": {"status": "not_applicable_single_clip", "value": null, "unit": "ratio", "reason": "One native short clip has no assembly seam."},
+      "loudness": {"status": "not_available_historical_evidence", "value": null, "unit": "LUFS", "reason": "Not measured."},
+      "silence": {"status": "pass", "value": true, "unit": "boolean"},
+      "audio_continuity": {"status": "not_applicable_single_clip", "value": null, "unit": "ratio", "reason": "One native short clip has no assembly seam."},
+      "av_sync_proxy": {"status": "not_available_historical_evidence", "value": null, "unit": "ms", "reason": "No accepted semantic AV-sync proxy."}
+    },
+    "human_gate": {"status": "fail", "scope": "Known 4-step teapot geometry failure is preserved; this schedule is timing-accepted but not the default practical quality route."}
+  },
+  "promotion": {"level": "formal_n_ge_10", "sample_count": 10, "quality_threshold_id": "historical-turbo-practical-suite-v1"},
+  "comparisons": [],
+  "claim_boundary": "Accepted Turbo 4-step warm N=10 median only. Practical approximation with known quality risk, not BF16 fidelity, not native long context, and no new cross-track speedup."
+}

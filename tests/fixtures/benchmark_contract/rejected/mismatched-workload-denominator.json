@@ -1,0 +1,8 @@
+{
+  "schema_version": "minimax-h3-a6000-negative-fixture-v1",
+  "base_record": "benchmark_contract/v1/normalized-records/sol-attn-r8-formal-n10.json",
+  "mutations": [
+    {"op": "set", "path": "comparisons.0.denominator.workload_fingerprint", "value": "0000000000000000000000000000000000000000000000000000000000000000"}
+  ],
+  "expected_error": "mismatched denominator field: workload_fingerprint"
+}

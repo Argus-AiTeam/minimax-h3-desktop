@@ -1,0 +1,444 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Argus-AiTeam/minimax-h3-desktop/schemas/minimax_h3_benchmark_record_v1.schema.json",
+  "title": "MiniMax-H3 A6000 benchmark record v1",
+  "description": "Static shape for canonical benchmark records. Cross-field timing, AV, long-mode, track, and denominator rules are enforced by tools/validate_benchmark_record.py.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "contract_version",
+    "record_id",
+    "record_status",
+    "lane_id",
+    "workload_fingerprint",
+    "source_evidence",
+    "workload",
+    "production",
+    "track",
+    "deployment",
+    "timing",
+    "resources",
+    "output_av",
+    "quality",
+    "promotion",
+    "comparisons",
+    "claim_boundary"
+  ],
+  "properties": {
+    "schema_version": {"const": "minimax-h3-a6000-benchmark-record-v1"},
+    "contract_version": {"const": "1.0.0"},
+    "record_id": {"type": "string", "minLength": 1},
+    "record_status": {"enum": ["accepted_historical", "candidate", "accepted", "failed"]},
+    "lane_id": {
+      "enum": [
+        "native-short-1344x768-124f-24fps-v1",
+        "final-av-30s-1344x768-24fps-v1",
+        "final-av-60s-1344x768-24fps-v1"
+      ]
+    },
+    "workload_fingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "source_evidence": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "scope"],
+        "properties": {
+          "path": {"type": "string", "minLength": 1},
+          "scope": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "workload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "task",
+        "partition",
+        "width",
+        "height",
+        "fps",
+        "final_frame_count",
+        "nominal_duration_seconds",
+        "audio_sample_rate_hz",
+        "audio_channels",
+        "num_inference_steps",
+        "prompt",
+        "seed_plan",
+        "conditioning_assets"
+      ],
+      "properties": {
+        "task": {"enum": ["t2va", "fl2va", "ref2va"]},
+        "partition": {"enum": ["FL2VA", "Ref2VA"]},
+        "width": {"type": "integer", "minimum": 1},
+        "height": {"type": "integer", "minimum": 1},
+        "fps": {"const": 24},
+        "final_frame_count": {"type": "integer", "minimum": 1},
+        "nominal_duration_seconds": {"type": "number", "exclusiveMinimum": 0},
+        "audio_sample_rate_hz": {"const": 32000},
+        "audio_channels": {"const": 2},
+        "num_inference_steps": {"type": "integer", "minimum": 1},
+        "prompt": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "sha256", "source"],
+          "properties": {
+            "id": {"type": "string", "minLength": 1},
+            "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+            "source": {"type": "string", "minLength": 1}
+          }
+        },
+        "seed_plan": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["seeds", "repetitions"],
+          "properties": {
+            "seeds": {"type": "array", "minItems": 1, "items": {"type": "integer"}},
+            "repetitions": {"type": "integer", "minimum": 1}
+          }
+        },
+        "conditioning_assets": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": true,
+            "required": ["kind", "provenance"],
+            "properties": {
+              "kind": {"type": "string", "minLength": 1},
+              "provenance": {"type": "string", "minLength": 1}
+            }
+          }
+        }
+      }
+    },
+    "production": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["is_long", "generation_mode", "chunk_count", "assembly_method"],
+      "properties": {
+        "is_long": {"type": "boolean"},
+        "generation_mode": {
+          "enum": [
+            "native_short_clip",
+            "native_long_context",
+            "chunked_overlap",
+            "extension",
+            "montage_stitching"
+          ]
+        },
+        "chunk_count": {"type": "integer", "minimum": 1},
+        "assembly_method": {"type": "string", "minLength": 1}
+      }
+    },
+    "track": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "mechanisms", "disclosure"],
+      "properties": {
+        "id": {"enum": ["fidelity_bf16_exact", "practical_disclosed_approx"]},
+        "mechanisms": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+        "disclosure": {"type": "string", "minLength": 1}
+      }
+    },
+    "deployment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "scope",
+        "gpu_model",
+        "gpu_count_visible",
+        "gpu_count_used",
+        "physical_gpu_uuids"
+      ],
+      "properties": {
+        "scope": {"enum": ["single_a6000", "multi_gpu_production"]},
+        "gpu_model": {"type": "string", "minLength": 1},
+        "gpu_count_visible": {"type": "integer", "minimum": 1},
+        "gpu_count_used": {"type": "integer", "minimum": 1},
+        "physical_gpu_uuids": {"type": "array", "minItems": 1, "items": {"type": "string"}}
+      }
+    },
+    "timing": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "boundary_id",
+        "cold_e2e",
+        "warm_e2e",
+        "components",
+        "additive_component_order",
+        "seconds_per_generated_second"
+      ],
+      "properties": {
+        "boundary_id": {"type": "string", "minLength": 1},
+        "cold_e2e": {"$ref": "#/$defs/timingMetric"},
+        "warm_e2e": {"$ref": "#/$defs/timingMetric"},
+        "components": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "text_conditioning",
+            "denoise",
+            "attention",
+            "video_vae",
+            "audio_vae",
+            "encoding_mux",
+            "io"
+          ],
+          "properties": {
+            "text_conditioning": {"$ref": "#/$defs/componentTimingMetric"},
+            "denoise": {"$ref": "#/$defs/componentTimingMetric"},
+            "attention": {
+              "allOf": [
+                {"$ref": "#/$defs/componentTimingMetric"},
+                {
+                  "type": "object",
+                  "required": ["parent", "additive_to_e2e"],
+                  "properties": {
+                    "parent": {"const": "denoise"},
+                    "additive_to_e2e": {"const": false}
+                  }
+                }
+              ]
+            },
+            "video_vae": {"$ref": "#/$defs/componentTimingMetric"},
+            "audio_vae": {"$ref": "#/$defs/componentTimingMetric"},
+            "encoding_mux": {"$ref": "#/$defs/componentTimingMetric"},
+            "io": {"$ref": "#/$defs/componentTimingMetric"}
+          }
+        },
+        "additive_component_order": {
+          "const": ["text_conditioning", "denoise", "video_vae", "audio_vae", "encoding_mux", "io"]
+        },
+        "seconds_per_generated_second": {"$ref": "#/$defs/timingMetric"}
+      }
+    },
+    "resources": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["peak_gpu_memory_mib", "peak_host_memory_gib", "peak_power_w", "failures"],
+      "properties": {
+        "peak_gpu_memory_mib": {"$ref": "#/$defs/valueMetric"},
+        "peak_host_memory_gib": {"$ref": "#/$defs/valueMetric"},
+        "peak_power_w": {"$ref": "#/$defs/valueMetric"},
+        "failures": {"$ref": "#/$defs/valueMetric"}
+      }
+    },
+    "output_av": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "final_accounting_complete", "video", "audio"],
+      "properties": {
+        "status": {"enum": ["complete", "incomplete", "failed"]},
+        "final_accounting_complete": {"type": "boolean"},
+        "video": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["present", "full_decode", "width", "height", "fps", "frames"],
+          "properties": {
+            "present": {"type": "boolean"},
+            "full_decode": {"type": "boolean"},
+            "width": {"type": "integer"},
+            "height": {"type": "integer"},
+            "fps": {"type": "integer"},
+            "frames": {"type": "integer"}
+          }
+        },
+        "audio": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "present",
+            "full_decode",
+            "sample_rate_hz",
+            "channels",
+            "decoded_samples_per_channel",
+            "effective_samples_per_channel",
+            "encoder_priming_samples",
+            "end_padding_samples"
+          ],
+          "properties": {
+            "present": {"type": "boolean"},
+            "full_decode": {"type": "boolean"},
+            "sample_rate_hz": {"type": "integer"},
+            "channels": {"type": "integer"},
+            "decoded_samples_per_channel": {"type": "integer", "minimum": 0},
+            "effective_samples_per_channel": {"type": ["integer", "null"], "minimum": 0},
+            "encoder_priming_samples": {"type": ["integer", "null"], "minimum": 0},
+            "end_padding_samples": {"type": ["integer", "null"], "minimum": 0}
+          }
+        }
+      }
+    },
+    "quality": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["objective", "human_gate"],
+      "properties": {
+        "objective": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "subject_identity_consistency",
+            "background_consistency",
+            "camera_consistency",
+            "motion",
+            "repetition",
+            "freezing",
+            "visual_seams",
+            "loudness",
+            "silence",
+            "audio_continuity",
+            "av_sync_proxy"
+          ],
+          "properties": {
+            "subject_identity_consistency": {"$ref": "#/$defs/valueMetric"},
+            "background_consistency": {"$ref": "#/$defs/valueMetric"},
+            "camera_consistency": {"$ref": "#/$defs/valueMetric"},
+            "motion": {"$ref": "#/$defs/valueMetric"},
+            "repetition": {"$ref": "#/$defs/valueMetric"},
+            "freezing": {"$ref": "#/$defs/valueMetric"},
+            "visual_seams": {"$ref": "#/$defs/valueMetric"},
+            "loudness": {"$ref": "#/$defs/valueMetric"},
+            "silence": {"$ref": "#/$defs/valueMetric"},
+            "audio_continuity": {"$ref": "#/$defs/valueMetric"},
+            "av_sync_proxy": {"$ref": "#/$defs/valueMetric"}
+          }
+        },
+        "human_gate": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "scope"],
+          "properties": {
+            "status": {
+              "enum": [
+                "pass",
+                "fail",
+                "not_performed_no_semantic_claim",
+                "not_required_historical_timing_baseline"
+              ]
+            },
+            "scope": {"type": "string", "minLength": 1}
+          }
+        }
+      }
+    },
+    "promotion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["level", "sample_count", "quality_threshold_id"],
+      "properties": {
+        "level": {"enum": ["n1_gate", "n3_gate", "formal_n_ge_10"]},
+        "sample_count": {"type": "integer", "minimum": 1},
+        "quality_threshold_id": {"type": "string", "minLength": 1}
+      }
+    },
+    "comparisons": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/comparison"}
+    },
+    "claim_boundary": {"type": "string", "minLength": 1}
+  },
+  "$defs": {
+    "explicitStatus": {
+      "enum": [
+        "measured",
+        "pass",
+        "fail",
+        "not_available_historical_evidence",
+        "not_applicable_single_clip",
+        "not_applicable_no_detectable_events",
+        "not_run_dry_run"
+      ]
+    },
+    "valueMetric": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "value", "unit"],
+      "properties": {
+        "status": {"$ref": "#/$defs/explicitStatus"},
+        "value": {"type": ["number", "integer", "boolean", "string", "null"]},
+        "unit": {"type": "string"},
+        "reason": {"type": "string"}
+      }
+    },
+    "timingMetric": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["status", "seconds", "n"],
+      "properties": {
+        "status": {"$ref": "#/$defs/explicitStatus"},
+        "seconds": {"type": ["number", "null"]},
+        "n": {"type": "integer", "minimum": 0},
+        "reason": {"type": "string"},
+        "mean_seconds": {"type": "number"},
+        "sample_std_seconds": {"type": "number"},
+        "cv_percent": {"type": "number"},
+        "min_seconds": {"type": "number"},
+        "max_seconds": {"type": "number"}
+      }
+    },
+    "componentTimingMetric": {
+      "allOf": [
+        {"$ref": "#/$defs/timingMetric"},
+        {
+          "type": "object",
+          "required": ["timing_basis", "additive_to_e2e"],
+          "properties": {
+            "timing_basis": {"enum": ["wall_seconds", "cumulative_device_seconds", "not_available"]},
+            "additive_to_e2e": {"type": "boolean"},
+            "parent": {"type": ["string", "null"]}
+          }
+        }
+      ]
+    },
+    "comparisonSide": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "track",
+        "workload_fingerprint",
+        "deployment_scope",
+        "physical_gpu_uuid",
+        "timing_boundary_id",
+        "quality_threshold_id",
+        "generation_mode"
+      ],
+      "properties": {
+        "track": {"enum": ["fidelity_bf16_exact", "practical_disclosed_approx"]},
+        "workload_fingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "deployment_scope": {"enum": ["single_a6000", "multi_gpu_production"]},
+        "physical_gpu_uuid": {"type": ["string", "null"]},
+        "timing_boundary_id": {"type": "string"},
+        "quality_threshold_id": {"type": "string"},
+        "generation_mode": {"type": "string"}
+      }
+    },
+    "comparison": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "comparison_id",
+        "metric",
+        "result_kind",
+        "value",
+        "sample_count",
+        "principal_variable",
+        "candidate",
+        "denominator"
+      ],
+      "properties": {
+        "comparison_id": {"type": "string", "minLength": 1},
+        "metric": {"type": "string", "minLength": 1},
+        "result_kind": {"enum": ["median_speedup_ratio", "median_time_improvement_percent"]},
+        "value": {"type": "number", "exclusiveMinimum": 0},
+        "sample_count": {"type": "integer", "minimum": 10},
+        "principal_variable": {"type": "string", "minLength": 1},
+        "candidate": {"$ref": "#/$defs/comparisonSide"},
+        "denominator": {"$ref": "#/$defs/comparisonSide"}
+      }
+    }
+  }
+}

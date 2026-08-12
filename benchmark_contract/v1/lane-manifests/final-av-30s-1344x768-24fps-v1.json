@@ -1,0 +1,95 @@
+{
+  "schema_version": "minimax-h3-a6000-lane-manifest-v1",
+  "contract_version": "1.0.0",
+  "lane_id": "final-av-30s-1344x768-24fps-v1",
+  "dry_run": true,
+  "measurement_status": "unmeasured",
+  "claim_boundary": "Dry-run workload only. No 30-second generation, quality, resource, or speed result exists.",
+  "workload": {
+    "task": "fl2va",
+    "partition": "FL2VA",
+    "width": 1344,
+    "height": 768,
+    "fps": 24,
+    "final_frame_count": 720,
+    "nominal_duration_seconds": 30.0,
+    "audio_sample_rate_hz": 32000,
+    "audio_channels": 2,
+    "num_inference_steps": 8,
+    "flow_shift": 12.0,
+    "audio_flow_shift": 3.0,
+    "prompt": {
+      "id": "orbital-continuity-long-v1",
+      "sha256": "c85689e3348c9eab59ea7a87f61797823f82e2dc822fc6f1fc8093def3e909bb",
+      "source": "benchmark_contract/v1/prompts/orbital-continuity-long-v1.txt"
+    },
+    "chunk_prompt_rule": "Append: Continuation segment {one_based_index} of 6; cover final-video seconds {start_integer} through {end_integer}; preserve the prior retained terminal frame exactly as the first-frame condition.",
+    "seed_plan": {
+      "seeds": [4200, 4201, 4202, 4203, 4204, 4205],
+      "repetitions": 1
+    },
+    "conditioning_assets": [
+      {
+        "kind": "generated_prior_terminal_rgb_frame",
+        "provenance": "For chunks 2-6, decode the prior chunk's retained terminal frame and record its RGB byte SHA-256 before submission; chunk 1 is text-only."
+      }
+    ]
+  },
+  "production": {
+    "is_long": true,
+    "generation_mode": "extension",
+    "native_context_supported": false,
+    "chunk_count": 6,
+    "source_frames_per_chunk": 124,
+    "assembly_method": "sample_exact_extension_concat",
+    "frame_retention": {
+      "first_chunk_zero_based_half_open": [0, 120],
+      "continuation_chunks_zero_based_half_open": [1, 121],
+      "condition_source": "previous retained terminal frame"
+    },
+    "audio_retention": {
+      "samples_per_chunk_per_channel": 160000,
+      "method": "decode to 32 kHz stereo PCM, retain exactly 160000 samples per chunk, concatenate in chunk order, then encode while recording priming and end padding"
+    }
+  },
+  "execution_profile": {
+    "track": "practical_disclosed_approx",
+    "mechanisms": ["statically_merged_turbo_lora", "8_step", "extension", "no_cache", "dense_attention"],
+    "deployment_scope": "single_a6000"
+  },
+  "final_av_accounting": {
+    "video_frames": 720,
+    "video_duration_seconds": 30.0,
+    "effective_audio_samples_per_channel": 960000,
+    "decoded_audio_samples_per_channel": "must_be_reported_after_encoding",
+    "encoder_priming_samples": "must_be_reported",
+    "end_padding_samples": "must_be_reported"
+  },
+  "required_metrics": [
+    "cold_e2e",
+    "warm_e2e",
+    "denoise",
+    "attention_nested_in_denoise",
+    "video_vae",
+    "audio_vae",
+    "encoding_mux",
+    "io",
+    "seconds_per_generated_second",
+    "peak_gpu_memory",
+    "peak_host_memory",
+    "power",
+    "failures",
+    "subject_identity_consistency",
+    "background_consistency",
+    "camera_consistency",
+    "motion",
+    "repetition",
+    "freezing",
+    "visual_seams",
+    "loudness",
+    "silence",
+    "audio_continuity",
+    "av_sync_proxy",
+    "human_gate_separate"
+  ]
+}

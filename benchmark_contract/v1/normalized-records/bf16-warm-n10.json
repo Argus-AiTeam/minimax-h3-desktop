@@ -1,0 +1,126 @@
+{
+  "schema_version": "minimax-h3-a6000-benchmark-record-v1",
+  "contract_version": "1.0.0",
+  "record_id": "historical-bf16-warm-n10-v1",
+  "record_status": "accepted_historical",
+  "lane_id": "native-short-1344x768-124f-24fps-v1",
+  "workload_fingerprint": "d19b8390cff28f65586a8291c3856bca0938886fb475dcf8beb4b6e0d46833e8",
+  "source_evidence": [
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/baseline_a6000/baseline_certification.json",
+      "scope": "Certified same-physical-A6000 BF16 warm N=10 denominator."
+    }
+  ],
+  "workload": {
+    "task": "t2va",
+    "partition": "FL2VA",
+    "width": 1344,
+    "height": 768,
+    "fps": 24,
+    "final_frame_count": 124,
+    "nominal_duration_seconds": 5.166666666666667,
+    "audio_sample_rate_hz": 32000,
+    "audio_channels": 2,
+    "num_inference_steps": 50,
+    "prompt": {
+      "id": "t2va-example-1",
+      "sha256": "98f36b879692095e099ae824c18d9e93e7006a490e082fd474a5f531769dcf06",
+      "source": "NVLabs/Sana d00eef311670a58deb2c323fe072738fcb945600, derived from the official MiniMax-H3 reproducible request"
+    },
+    "seed_plan": {
+      "seeds": [0],
+      "repetitions": 10
+    },
+    "conditioning_assets": []
+  },
+  "production": {
+    "is_long": false,
+    "generation_mode": "native_short_clip",
+    "chunk_count": 1,
+    "assembly_method": "none"
+  },
+  "track": {
+    "id": "fidelity_bf16_exact",
+    "mechanisms": ["released_bf16_fl2va", "dense_attention", "no_cache", "no_quantization"],
+    "disclosure": "Internal same-device fidelity baseline; not an optimized result or an external reproduction."
+  },
+  "deployment": {
+    "scope": "single_a6000",
+    "gpu_model": "NVIDIA RTX A6000",
+    "gpu_count_visible": 1,
+    "gpu_count_used": 1,
+    "physical_gpu_uuids": ["GPU-ff0c8d25-2652-ce58-3ef7-e3a9aeeb3334"]
+  },
+  "timing": {
+    "boundary_id": "local_http_request_to_download_complete",
+    "cold_e2e": {
+      "status": "not_available_historical_evidence",
+      "seconds": null,
+      "n": 0,
+      "reason": "Session-first requests did not include process start, model load, compile, final validation, and all I/O under the canonical cold boundary."
+    },
+    "warm_e2e": {
+      "status": "measured",
+      "seconds": 1792.2021025,
+      "n": 10,
+      "mean_seconds": 1790.7376617,
+      "sample_std_seconds": 14.99137980160661,
+      "cv_percent": 0.8371622556580874,
+      "min_seconds": 1772.948497,
+      "max_seconds": 1813.755594
+    },
+    "components": {
+      "text_conditioning": {"status": "not_available_historical_evidence", "seconds": null, "n": 0, "reason": "Not instrumented.", "timing_basis": "not_available", "additive_to_e2e": true},
+      "denoise": {"status": "not_available_historical_evidence", "seconds": null, "n": 0, "reason": "Not instrumented.", "timing_basis": "not_available", "additive_to_e2e": true},
+      "attention": {"status": "not_available_historical_evidence", "seconds": null, "n": 0, "reason": "Not instrumented.", "timing_basis": "not_available", "additive_to_e2e": false, "parent": "denoise"},
+      "video_vae": {"status": "not_available_historical_evidence", "seconds": null, "n": 0, "reason": "Not instrumented.", "timing_basis": "not_available", "additive_to_e2e": true},
+      "audio_vae": {"status": "not_available_historical_evidence", "seconds": null, "n": 0, "reason": "Not instrumented.", "timing_basis": "not_available", "additive_to_e2e": true},
+      "encoding_mux": {"status": "not_available_historical_evidence", "seconds": null, "n": 0, "reason": "Not instrumented.", "timing_basis": "not_available", "additive_to_e2e": true},
+      "io": {"status": "not_available_historical_evidence", "seconds": null, "n": 0, "reason": "Not instrumented.", "timing_basis": "not_available", "additive_to_e2e": true}
+    },
+    "additive_component_order": ["text_conditioning", "denoise", "video_vae", "audio_vae", "encoding_mux", "io"],
+    "seconds_per_generated_second": {
+      "status": "measured",
+      "seconds": 346.87782629032256,
+      "n": 10
+    }
+  },
+  "resources": {
+    "peak_gpu_memory_mib": {"status": "measured", "value": 26836.0, "unit": "MiB"},
+    "peak_host_memory_gib": {"status": "measured", "value": 204.83538436889648, "unit": "GiB"},
+    "peak_power_w": {"status": "measured", "value": 302.23, "unit": "W"},
+    "failures": {"status": "measured", "value": 0, "unit": "count"}
+  },
+  "output_av": {
+    "status": "complete",
+    "final_accounting_complete": true,
+    "video": {"present": true, "full_decode": true, "width": 1344, "height": 768, "fps": 24, "frames": 124},
+    "audio": {"present": true, "full_decode": true, "sample_rate_hz": 32000, "channels": 2, "decoded_samples_per_channel": 166912, "effective_samples_per_channel": null, "encoder_priming_samples": null, "end_padding_samples": null}
+  },
+  "quality": {
+    "objective": {
+      "subject_identity_consistency": {"status": "not_available_historical_evidence", "value": null, "unit": "score", "reason": "Not measured."},
+      "background_consistency": {"status": "not_available_historical_evidence", "value": null, "unit": "score", "reason": "Not measured."},
+      "camera_consistency": {"status": "not_available_historical_evidence", "value": null, "unit": "score", "reason": "Not measured."},
+      "motion": {"status": "not_available_historical_evidence", "value": null, "unit": "score", "reason": "Not measured."},
+      "repetition": {"status": "not_available_historical_evidence", "value": null, "unit": "fraction", "reason": "Not measured."},
+      "freezing": {"status": "not_available_historical_evidence", "value": null, "unit": "fraction", "reason": "Not measured."},
+      "visual_seams": {"status": "not_applicable_single_clip", "value": null, "unit": "ratio", "reason": "One native short clip has no assembly seam."},
+      "loudness": {"status": "not_available_historical_evidence", "value": null, "unit": "LUFS", "reason": "Not measured."},
+      "silence": {"status": "not_available_historical_evidence", "value": null, "unit": "fraction", "reason": "Not measured."},
+      "audio_continuity": {"status": "not_applicable_single_clip", "value": null, "unit": "ratio", "reason": "One native short clip has no assembly seam."},
+      "av_sync_proxy": {"status": "not_available_historical_evidence", "value": null, "unit": "ms", "reason": "Not measured."}
+    },
+    "human_gate": {
+      "status": "not_required_historical_timing_baseline",
+      "scope": "No semantic or product-quality claim is created by this timing normalization."
+    }
+  },
+  "promotion": {
+    "level": "formal_n_ge_10",
+    "sample_count": 10,
+    "quality_threshold_id": "historical-short-structural-av-v2"
+  },
+  "comparisons": [],
+  "claim_boundary": "Accepted BF16 warm N=10 same-physical-A6000 timing denominator only; no cold/component or long-video result is inferred."
+}

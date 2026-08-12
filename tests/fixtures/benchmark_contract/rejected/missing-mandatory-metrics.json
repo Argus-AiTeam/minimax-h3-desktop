@@ -1,0 +1,8 @@
+{
+  "schema_version": "minimax-h3-a6000-negative-fixture-v1",
+  "base_record": "benchmark_contract/v1/normalized-records/bf16-warm-n10.json",
+  "mutations": [
+    {"op": "delete", "path": "timing.components.attention"}
+  ],
+  "expected_error": "timing.components.attention must be an object"
+}

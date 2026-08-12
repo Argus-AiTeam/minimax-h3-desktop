@@ -6,6 +6,7 @@
 
 <p align="center">
   <a href="CURRENT_WORK.md"><strong>Current Work / 当前工作</strong></a> ·
+  <a href="benchmark_contract/v1/README.md"><strong>Benchmark Contract v1</strong></a> ·
   <a href="README.md">中文</a> ·
   <a href="#generated-result">Generated result</a> ·
   <a href="#quick-start">Quick start</a> ·
@@ -20,7 +21,7 @@
   <img alt="License Apache 2.0" src="https://img.shields.io/badge/code-Apache--2.0-blue">
 </p>
 
-> **Long-video work:** the current focus is 720p-class 30/60-second audiovisual production on one RTX A6000. See [`CURRENT_WORK.md`](CURRENT_WORK.md) for accepted evidence, negative results, active hypotheses, and the next experiment. Short-clip baselines are not presented as long-video results.
+> **Long-video work:** the current focus is 720p-class 30/60-second audiovisual production on one RTX A6000. See [`CURRENT_WORK.md`](CURRENT_WORK.md) for accepted evidence, negative results, active hypotheses, and the next experiment. Short-clip baselines are not presented as long-video results. The canonical workloads, timing hierarchy, quality gates, and fail-closed claim validator are in [`benchmark_contract/v1/README.md`](benchmark_contract/v1/README.md). The pinned open-source path supports only 4–15-second native output, so both 30/60-second manifests remain unmeasured `extension` lanes.
 
 This project runs the complete MiniMax-H3 FL2VA pipeline on **one real NVIDIA RTX A6000 48 GB (SM86)**. It does not substitute a smaller model and does not report a multi-GPU server as a desktop result. The repository includes a reproducible BF16 baseline, practical Turbo deployment, default-off Sol-Attn work, build/run scripts, tests, and compact evidence.
 

@@ -6,6 +6,7 @@
 
 <p align="center">
   <a href="CURRENT_WORK.md"><strong>当前工作 / Current Work</strong></a> ·
+  <a href="benchmark_contract/v1/README.md"><strong>Benchmark Contract v1</strong></a> ·
   <a href="README_EN.md">English</a> ·
   <a href="#实际生成效果">生成效果</a> ·
   <a href="#5-分钟快速开始">快速开始</a> ·
@@ -20,7 +21,7 @@
   <img alt="License Apache 2.0" src="https://img.shields.io/badge/code-Apache--2.0-blue">
 </p>
 
-> **长视频研发状态：** 当前聚焦单张 RTX A6000 的 720p 级 30/60 秒音视频生产；已验收数据、负结果、待检验假设与下一实验见 [`CURRENT_WORK.md`](CURRENT_WORK.md)。短片基线不会被表述为长视频结果。
+> **长视频研发状态：** 当前聚焦单张 RTX A6000 的 720p 级 30/60 秒音视频生产；已验收数据、负结果、待检验假设与下一实验见 [`CURRENT_WORK.md`](CURRENT_WORK.md)。短片基线不会被表述为长视频结果。规范工作负载、计时层级、质量门槛与 claim-boundary validator 见 [`benchmark_contract/v1/README.md`](benchmark_contract/v1/README.md)；当前 pinned 开源路径只支持 4–15 秒原生输出，30/60 秒 manifest 均明确为尚未实测的 `extension` 路线。
 
 **不需要 A100/H100，也没有把多卡服务器结果冒充桌面结果。** 本项目在一张真实的 **NVIDIA RTX A6000 48GB（SM86）**上跑通完整 MiniMax-H3 FL2VA，并提供可复现的 BF16 baseline、Turbo practical 路线、默认关闭的 Sol-Attn 实验实现、部署脚本、测试和原始证据摘要。
 

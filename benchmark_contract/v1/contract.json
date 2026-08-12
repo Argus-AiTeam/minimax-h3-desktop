@@ -1,0 +1,218 @@
+{
+  "schema_version": "minimax-h3-a6000-benchmark-contract-v1",
+  "contract_version": "1.0.0",
+  "frozen_at_utc": "2026-08-12T15:59:55Z",
+  "title": "MiniMax-H3 FL2VA A6000 short and final-AV long-production benchmark contract",
+  "lane_ids": [
+    "native-short-1344x768-124f-24fps-v1",
+    "final-av-30s-1344x768-24fps-v1",
+    "final-av-60s-1344x768-24fps-v1"
+  ],
+  "supersedes": {
+    "artifact": "technical_report/evidence/minimax_h3_desktop/verifier_contract.md",
+    "status": "superseded_pre_gate_scaffold",
+    "raw_historical_evidence_policy": "Historical evidence remains immutable. Canonical v1 normalized records preserve explicit unavailable fields rather than inventing measurements."
+  },
+  "source_grounding": [
+    {
+      "name": "MiniMax-H3 official model and documentation",
+      "kind": "model_and_documentation",
+      "revision": "6818f6c32d12b210915e44ad56a4228c2608f160",
+      "revision_date_utc": "2026-08-09T10:05:11Z",
+      "observed_at_utc": "2026-08-09T11:32:25Z",
+      "source": "https://huggingface.co/MiniMaxAI/MiniMax-H3/tree/6818f6c32d12b210915e44ad56a4228c2608f160",
+      "license": "MiniMax H3 Community License Agreement, license date 2026-08-02",
+      "grounded_facts": [
+        "Open H3-Base output duration is documented as 4 to 15 seconds at 24 FPS with 32 kHz stereo audio.",
+        "FL2VA supports text-only, first-frame, last-frame, and first-plus-last-frame conditioning.",
+        "Ref2VA supports image, video, and audio references, but the local prepared model tree contains only FL2VA.",
+        "The visual VAE is temporally causal with temporal compression 4x; the transformer patch size is 1x2x2."
+      ]
+    },
+    {
+      "name": "MiniMax-H3 official source repository",
+      "kind": "documentation_source",
+      "revision": "b7227fa6a6206e9fb30562383d39e53cf3866a48",
+      "revision_date_utc": "2026-08-09T10:40:41Z",
+      "observed_at_utc": "2026-08-09T11:32:25Z",
+      "source": "https://github.com/MiniMax-AI/MiniMax-H3/tree/b7227fa6a6206e9fb30562383d39e53cf3866a48",
+      "license": "Repository documentation points to the MiniMax H3 Community License Agreement",
+      "grounded_facts": [
+        "The official reproducible request scripts expose target duration and conditioning modes.",
+        "The canonical short prompt is the official T2VA Context-IR example reused by the pinned Sana workload."
+      ]
+    },
+    {
+      "name": "vLLM-Omni MiniMax-H3 runtime",
+      "kind": "runtime_source",
+      "revision": "8e2e9b6b53e86e6a479ed2c0a53782f655f60e04",
+      "revision_date_utc": "2026-08-09T12:53:17Z",
+      "observed_at_utc": "2026-08-12T15:59:55Z",
+      "source": "https://github.com/vllm-project/vllm-omni/tree/8e2e9b6b53e86e6a479ed2c0a53782f655f60e04",
+      "license": "Apache-2.0",
+      "grounded_facts": [
+        "The pinned pipeline rejects output durations below 4 seconds and above 15 seconds.",
+        "Output FPS is fixed at 24, output audio is 32 kHz stereo, and frame counts align to the 17n+5 boundary.",
+        "FL2VA accepts at most two keyframe images with first/last indices; it does not accept video or audio conditions.",
+        "The runtime tests accept 4 and 15 seconds and reject 15.01 seconds."
+      ]
+    },
+    {
+      "name": "NVLabs Sana Sol-Engine MiniMax-H3 source",
+      "kind": "optimization_source",
+      "revision": "d00eef311670a58deb2c323fe072738fcb945600",
+      "revision_date_utc": "2026-08-09T13:19:44Z",
+      "observed_at_utc": "2026-08-12T15:59:55Z",
+      "source": "https://github.com/NVlabs/Sana/tree/d00eef311670a58deb2c323fe072738fcb945600",
+      "license": "Pinned repository README declares Apache-2.0; bundled FlashAttention-derived notice is BSD-3-Clause",
+      "grounded_facts": [
+        "The pinned MiniMax-H3 benchmark cell is 1344x768, 124 frames, 24 FPS, seed 0, and 50 steps.",
+        "The source prompt is t2va_example_1 and its local text hash is 98f36b879692095e099ae824c18d9e93e7006a490e082fd474a5f531769dcf06.",
+        "The source describes the 124-frame cell only; it does not establish native 30- or 60-second generation."
+      ]
+    }
+  ],
+  "capabilities": {
+    "local_model": {
+      "checkpoint_repo": "MiniMaxAI/MiniMax-H3",
+      "checkpoint_revision": "6818f6c32d12b210915e44ad56a4228c2608f160",
+      "prepared_partition": "FL2VA",
+      "prepared_partition_bytes": 144051182625,
+      "prepared_partitions": ["FL2VA"],
+      "available_tasks": ["t2va", "fl2va"],
+      "unavailable_local_tasks": ["ref2va"]
+    },
+    "native_output_context": {
+      "min_seconds": 4,
+      "max_seconds": 15,
+      "native_30_seconds_supported": false,
+      "native_60_seconds_supported": false,
+      "decision": "The current pinned open-source MiniMax-H3 and vLLM-Omni path does not support native 30- or 60-second output context. Any such final AV must be labeled chunked_overlap, extension, or montage_stitching unless a later versioned source and real validation establish native_long_context."
+    },
+    "conditioning": {
+      "t2va": "text only",
+      "fl2va": "one first frame, one last frame, or both first and last frames",
+      "ref2va": "documented upstream but unavailable in the prepared local model tree",
+      "chosen_long_lane_mechanism": "extension from the prior retained terminal frame using FL2VA"
+    },
+    "available_local_conditioning_assets": [
+      {
+        "path": "examples/a6000-turbo-8step-sci-fi/orbital-shipyard-turbo-8step.mp4",
+        "kind": "generated_public_example_video",
+        "sha256": "454fceb57b1daf60dc5db1ade9aae295cee2ecd16fd90ab2c2f16c7b626db69a",
+        "contract_use": "provenance reference only; not a hidden static conditioner"
+      },
+      {
+        "path": "examples/a6000-turbo-8step-sci-fi/contact-sheet.jpg",
+        "kind": "derived_preview",
+        "sha256": "d340eec35a645fd407f3be2f5527ef840cdad74272e825b948c7b718413ab273",
+        "contract_use": "inspection only; not accepted as a generation conditioner"
+      }
+    ],
+    "conditioning_asset_policy": "The first long chunk is text-only. Each continuation condition is generated inside the same run from the previous chunk's retained terminal RGB frame; its decoded-frame SHA-256 must be recorded before the next request. No untracked remote or private asset may enter the workload."
+  },
+  "tracks": {
+    "fidelity_bf16_exact": {
+      "allowed": ["BF16 released FL2VA weights", "exact or lossless engineering changes"],
+      "forbidden": ["Turbo", "cache approximation", "quantization approximation", "sparse approximation"]
+    },
+    "practical_disclosed_approx": {
+      "allowed_with_disclosure": ["Turbo few-step adapter", "cache", "quantization", "sparse attention"],
+      "quality_requirement": "Multi-prompt and multi-seed objective checks plus a separate human gate are required for a product-quality claim."
+    }
+  },
+  "deployment_scopes": {
+    "single_a6000": "Exactly one NVIDIA RTX A6000 must be visible and used by each model process; physical GPU UUID is mandatory.",
+    "multi_gpu_production": "Must be labeled separately and may not share a speedup denominator with single-A6000 results."
+  },
+  "timing_contract": {
+    "cold_e2e": {
+      "start": "before container or process start with declared runtime caches empty and model service absent",
+      "stop": "after final AV is written, fully decoded, accounted, and validation metadata is durable",
+      "includes": ["startup", "model load", "first compile or autotune", "generation", "VAE", "audio", "assembly", "encoding", "I/O", "validation"]
+    },
+    "warm_e2e": {
+      "start": "immediately before submitting the first production request after one excluded warmup in the same service lifecycle",
+      "stop": "after final AV is written, fully decoded, accounted, and validation metadata is durable",
+      "includes": ["all chunk requests", "generation", "VAE", "audio", "assembly", "encoding", "I/O", "validation"],
+      "excludes": ["service load", "the excluded warmup"]
+    },
+    "hierarchy": {
+      "root_additive_components": ["text_conditioning", "denoise", "video_vae", "audio_vae", "encoding_mux", "io"],
+      "attention": {
+        "parent": "denoise",
+        "additive_to_e2e": false,
+        "rule": "Attention is reported as a nested denoise submetric and is never added to denoise when accounting for E2E."
+      },
+      "component_basis": "Cumulative device seconds for denoise/attention/VAE and wall seconds for encoding/I/O must be labeled; unlike bases are not summed into a fabricated residual."
+    },
+    "seconds_per_generated_second": "warm_e2e median seconds divided by exact final AV duration seconds",
+    "historical_boundary": "Existing accepted short evidence measured local HTTP request-to-download time, not canonical cold E2E. Normalized records preserve that boundary and mark unavailable components explicitly."
+  },
+  "final_av_contract": {
+    "video": "H.264 or lossless review intermediate; final frame count, 24 FPS, 1344x768, and full decode are mandatory.",
+    "audio": "AAC or lossless review intermediate; 32 kHz stereo and full decode are mandatory.",
+    "sample_accounting": "Record decoded samples per channel, encoder priming, end padding, and effective samples. Effective samples must equal 960000 for 30 seconds and 1920000 for 60 seconds.",
+    "incomplete_policy": "A missing stream, decode failure, frame mismatch, unknown effective audio sample count, or duration mismatch fails closed and cannot be reported as a final-AV result."
+  },
+  "quality_contract": {
+    "objective_metrics": [
+      "subject_identity_consistency",
+      "background_consistency",
+      "camera_consistency",
+      "motion",
+      "repetition",
+      "freezing",
+      "visual_seams",
+      "loudness",
+      "silence",
+      "audio_continuity",
+      "av_sync_proxy"
+    ],
+    "automatic_red_flags_v1": {
+      "near_frozen_transition_fraction_max": 0.05,
+      "duplicate_window_fraction_max": 0.05,
+      "near_clip_fraction_max": 0.0001,
+      "near_silence_fraction_max": 0.25,
+      "seam_to_internal_transition_p95_ratio_max": 2.0,
+      "event_av_sync_absolute_offset_ms_max": 250
+    },
+    "long_horizon_noninferiority": {
+      "rule": "Identity, subject, background, camera, and motion metrics require a same-lane frozen baseline. Candidate degradation greater than 5 percent relative to that baseline is a failure; the first baseline is descriptive and cannot claim improvement.",
+      "relative_margin_percent": 5
+    },
+    "human_gate": {
+      "separate": true,
+      "required_for_accepted_long_product_result": true,
+      "rubric": ["identity and subject", "background", "camera", "motion", "repetition or freezing", "visual seams", "loudness and silence", "audio continuity", "perceived AV sync"]
+    }
+  },
+  "promotion_policy": {
+    "n1_gate": "One seed. Require exact final AV, all mandatory metric fields, no automatic red flag, declared long mode, and no speedup claim.",
+    "n3_gate": "Three seeds 0, 1, and 2 or three matched pairs. Require N=1 pass first. Report distributions; still not a formal speedup.",
+    "formal_n_ge_10": "Only after N=3 promotion. Use at least 10 matched samples, preserve all failures, report median, mean, sample standard deviation, CV, min, max, and noise context.",
+    "practical_quality_coverage": "Before a practical product claim, use at least three prompts and three seeds, preserve every case, and pass the separate human gate."
+  },
+  "speedup_denominator_contract": {
+    "required_equal_fields": [
+      "track",
+      "workload_fingerprint",
+      "deployment_scope",
+      "physical_gpu_uuid",
+      "timing_boundary_id",
+      "quality_threshold_id",
+      "generation_mode"
+    ],
+    "principal_variable": "Exactly one named principal variable may differ.",
+    "sample_requirement": "Formal speedup or median improvement requires N>=10 matched samples.",
+    "forbidden": ["cross-track speedup", "cross-GPU denominator", "cross-workload denominator", "cold-versus-warm denominator", "single-versus-multi-GPU denominator", "stitched-as-native claim"]
+  },
+  "accepted_historical_boundaries": {
+    "bf16_warm_n10_median_seconds": 1792.2021025,
+    "turbo_8step_n10_median_seconds": 290.9976015,
+    "turbo_4step_n10_median_seconds": 149.6191865,
+    "sol_attn_r8_formal_n10_median_http_time_improvement_percent": 15.203295894081867,
+    "sol_attn_scope": "Only the formal matched same-GPU 5-step opt-in lane; not BF16 fidelity, not long video, and not semantic or human quality certification.",
+    "normalization_policy": "The canonical fixtures retain accepted medians and claim boundaries. They do not manufacture missing cold/component metrics or create a new cross-track speedup."
+  }
+}

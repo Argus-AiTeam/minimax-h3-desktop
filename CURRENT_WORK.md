@@ -1,6 +1,6 @@
 # Current Work / 当前工作
 
-> **Updated / 更新时间：2026-08-12 15:33 UTC**
+> **Updated / 更新时间：2026-08-12 16:16 UTC**
 >
 > This page reports accepted evidence and active work separately. Status is not a result.
 > 本页严格区分已验收证据与进行中状态；“正在研究”不等于“已有结果”。
@@ -40,14 +40,20 @@ The r8 real-chain profile records **192 Q/K/V materialization events totaling 10
 
 r8 真实链路在每次 5-step 运行中记录了 **192 次 Q/K/V 实体化，共 105,344,139,264 字节**。可证伪假设是：布局感知的 view/packing 路径能够消除其中大部分复制，同时保持 metadata 校验、异常时回退 dense、结构正确性和相同质量阈值。成功必须体现为同一物理 GPU 上的匹配端到端收益；仅有微基准不成立。
 
+## Benchmark contract status / 基准合同状态
+
+The canonical public v1 contract is at [`benchmark_contract/v1/README.md`](benchmark_contract/v1/README.md), with a machine-readable schema, fail-closed validator, normalized historical records, and three dry-run lane manifests. Full private and sanitized-export tests pass, as does the publication audit with the operator terms file. Independent review accepted contract correctness, first-party revision/license grounding, statistical and claim boundaries, final-AV/timing semantics, and public hygiene. The pinned MiniMax-H3/vLLM-Omni path supports native output only from 4 to 15 seconds; therefore the 30/60-second manifests remain explicitly **unmeasured `extension` lanes**, not native-long-context results. Review and publication status are gates, not benchmark results.
+
+规范 v1 已公开于 [`benchmark_contract/v1/README.md`](benchmark_contract/v1/README.md)，包括机器可读 Schema、fail-closed validator、历史证据规范化记录和三个 dry-run lane manifest；完整私有测试、sanitized export 测试以及使用 operator terms 文件的 publication audit 均已通过。独立审阅已验收合同正确性、第一方版本与许可证依据、统计与声明边界、最终音视频与计时语义以及公共树卫生。当前 pinned MiniMax-H3/vLLM-Omni 原生输出仅支持 4–15 秒，因此 30/60 秒 manifest 仍明确标记为**尚未实测的 `extension` 路线**，不是原生长上下文结果。审阅与发布状态是门槛，不是 benchmark 结果。
+
 ## Next experiment / 下一实验
 
-**Not started.** First freeze the versioned short-clip, 30-second, and 60-second benchmark contract. Then run one matched N=1 small gate that changes only Q/K/V materialization, checks dense fallback and output/AV correctness, and measures copy bytes plus comparable end-to-end timing. Promote to N=3 and later N≥10 only if that gate passes. Native long-context, chunked/overlap, extension, and montage/stitching outputs will be labeled separately.
+**Not started.** Contract v1 has cleared independent review and audited publication gates. The next experiment is one matched N=1 small gate that changes only Q/K/V materialization, checks dense fallback and output/AV correctness, and measures copy bytes plus comparable end-to-end timing. Promote to N=3 and later N≥10 only if that gate passes. No GPU or model run was launched for the contract milestone.
 
-**尚未启动。** 下一步先冻结短片、30 秒和 60 秒的版本化 benchmark contract；随后只改变 Q/K/V 实体化这一项，执行匹配 N=1 小门槛，验证 dense 回退与输出/音视频正确性，并同时测量复制字节数和可比端到端耗时。只有通过后才晋级 N=3，最终再考虑 N≥10。原生长上下文、分块/重叠、延展和 montage/stitching 将分别标注。
+**尚未启动。** Contract v1 已通过独立审阅和审计发布门槛。下一实验将只改变 Q/K/V 实体化这一项，执行匹配 N=1 小门槛，验证 dense 回退与输出/音视频正确性，并同时测量复制字节数和可比端到端耗时。只有通过后才晋级 N=3，最终再考虑 N≥10。本次合同里程碑没有启动 GPU 或模型推理。
 
 ## Workflow kickoff and source tracking / 工作流启动与来源跟踪
 
-Workflow A restarted on **2026-08-12** from the accepted real-chain profile above. The first-party source baseline is the pinned Sana Sol-Engine revision `d00eef311670a58deb2c323fe072738fcb945600` and vLLM-Omni revision `8e2e9b6b53e86e6a479ed2c0a53782f655f60e04`. The Sana repository README declares Apache-2.0 for repository code; its Sol-Attn third-party notice retains BSD-3-Clause FlashAttention attribution. MiniMax-H3 model revision `6818f6c32d12b210915e44ad56a4228c2608f160` and Turbo assets remain separately licensed and are not distributed here. See [`NOTICE`](NOTICE) and [`ports/minimax_h3_a6000/UPSTREAM.md`](ports/minimax_h3_a6000/UPSTREAM.md).
+Workflow A restarted on **2026-08-12** from the accepted real-chain profile above. The first-party source baseline is the pinned Sana Sol-Engine revision `d00eef311670a58deb2c323fe072738fcb945600` and vLLM-Omni revision `8e2e9b6b53e86e6a479ed2c0a53782f655f60e04`. The Sana repository README declares Apache-2.0 for repository code; its Sol-Attn third-party notice retains BSD-3-Clause FlashAttention attribution. MiniMax-H3 model revision `6818f6c32d12b210915e44ad56a4228c2608f160` and Turbo assets remain separately licensed and are not distributed here. The v1 source ledger records revision dates and license scope for MiniMax-H3, vLLM-Omni, and Sana/Sol-Engine, and records that only the FL2VA partition is prepared locally. See [`benchmark_contract/v1/contract.json`](benchmark_contract/v1/contract.json), [`NOTICE`](NOTICE), and [`ports/minimax_h3_a6000/UPSTREAM.md`](ports/minimax_h3_a6000/UPSTREAM.md).
 
 工作流 A 于 **2026-08-12** 依据上述真实链路 profile 重新启动。第一方源码基线固定为 Sana Sol-Engine `d00eef311670a58deb2c323fe072738fcb945600` 与 vLLM-Omni `8e2e9b6b53e86e6a479ed2c0a53782f655f60e04`。Sana 仓库 README 声明代码采用 Apache-2.0，Sol-Attn 的第三方通知保留 FlashAttention BSD-3-Clause 归属。MiniMax-H3 模型 revision `6818f6c32d12b210915e44ad56a4228c2608f160` 与 Turbo 资产保持独立许可，本仓库不分发其权重。

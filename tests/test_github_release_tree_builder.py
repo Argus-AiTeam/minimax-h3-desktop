@@ -54,6 +54,13 @@ def test_real_manifest_builds_sanitized_export_to_tmp_path(tmp_path: Path) -> No
     assert (dest / "release" / "export_build_manifest.json").is_file()
     assert (dest / "runtime" / "single_a6000_bf16" / "source_commit.json").is_file()
     assert (dest / "schemas" / "minimax_h3_run.schema.json").is_file()
+    assert (dest / "schemas" / "minimax_h3_benchmark_record_v1.schema.json").is_file()
+    assert (dest / "tools" / "validate_benchmark_record.py").is_file()
+    assert (dest / "benchmark_contract" / "v1" / "contract.json").is_file()
+    assert (dest / "benchmark_contract" / "v1" / "README.md").is_file()
+    assert len(list((dest / "benchmark_contract" / "v1" / "lane-manifests").glob("*.json"))) == 3
+    assert len(list((dest / "benchmark_contract" / "v1" / "normalized-records").glob("*.json"))) == 4
+    assert len(list((dest / "tests" / "fixtures" / "benchmark_contract" / "rejected").glob("*.json"))) == 6
     assert (dest / "tests" / "fixtures" / "minimal_av_case" / "run_record.json").is_file()
     readme = (dest / "README.md").read_text(encoding="utf-8")
     assert "MiniMax-H3 on a Single RTX A6000" in readme

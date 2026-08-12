@@ -5,7 +5,7 @@
     "virtual environments, caches, pycache, PID files, raw logs, non-curated generated media/audio, Docker layers, archives, and credentials",
     "Git remotes, tags, releases, and publication actions"
   ],
-  "file_count": 103,
+  "file_count": 123,
   "files": [
     {
       "path": ".argus_release_tree",
@@ -21,8 +21,8 @@
     },
     {
       "path": "CURRENT_WORK.md",
-      "sha256": "34d893c4b6391ea610d8c87638f8db4051986062277535cc880829ab880c8c19",
-      "size_bytes": 6152,
+      "sha256": "84baa75a4cc55d2111e976df2791eec2227521dfae23ab698376cd2b34f3b243",
+      "size_bytes": 7879,
       "source": "CURRENT_WORK.md"
     },
     {
@@ -45,15 +45,75 @@
     },
     {
       "path": "README.md",
-      "sha256": "575b2696eee7f0c81dd794294e54a407734a729abffd31b43fc5333dfc1b7db7",
-      "size_bytes": 13002,
+      "sha256": "418dd13655f234bdd709b1343eecc79923f582e79218035b74b39d2e5af83ef4",
+      "size_bytes": 13373,
       "source": "README.md"
     },
     {
       "path": "README_EN.md",
-      "sha256": "e482a2284de3a7b0bbc3f53bb4f7332ea1999c78afec1d528362f42674cca52b",
-      "size_bytes": 12440,
+      "sha256": "7a47732c01397f7c0d0572a6981f4f587d6ce5229dc22637a35a0b377bee8787",
+      "size_bytes": 12836,
       "source": "README_EN.md"
+    },
+    {
+      "path": "benchmark_contract/v1/README.md",
+      "sha256": "c9564af77b7a02d621ba76827f18e8553dcf471ca41f5ae7607ddc2b636cc69e",
+      "size_bytes": 8173,
+      "source": "benchmark_contract/v1/README.md"
+    },
+    {
+      "path": "benchmark_contract/v1/contract.json",
+      "sha256": "7795726562ff05776c17829f4c5f9eb79ca12d142cb0eb7da1a3297493af1a19",
+      "size_bytes": 12693,
+      "source": "benchmark_contract/v1/contract.json"
+    },
+    {
+      "path": "benchmark_contract/v1/lane-manifests/final-av-30s-1344x768-24fps-v1.json",
+      "sha256": "fec3efda3a536ca1ed1223f4947b7c76bfc8eec7d88b4ecb9d49f0721c3a3624",
+      "size_bytes": 3233,
+      "source": "benchmark_contract/v1/lane-manifests/final-av-30s-1344x768-24fps-v1.json"
+    },
+    {
+      "path": "benchmark_contract/v1/lane-manifests/final-av-60s-1344x768-24fps-v1.json",
+      "sha256": "bff6452744e4acdf52f205caa6ffedc689fe2b5dcfbf60a6d0014d82be4fb7b5",
+      "size_bytes": 3275,
+      "source": "benchmark_contract/v1/lane-manifests/final-av-60s-1344x768-24fps-v1.json"
+    },
+    {
+      "path": "benchmark_contract/v1/lane-manifests/native-short-1344x768-124f-24fps-v1.json",
+      "sha256": "cacbdf53f3961bcfe57c5a6d2699681ccc39dd2f9ec5c1cbda259fa1e960edcf",
+      "size_bytes": 2354,
+      "source": "benchmark_contract/v1/lane-manifests/native-short-1344x768-124f-24fps-v1.json"
+    },
+    {
+      "path": "benchmark_contract/v1/normalized-records/bf16-warm-n10.json",
+      "sha256": "cf3d2ebe75baf52495ac514eeed59bb398de835db24c3fad1fd3fecac4846520",
+      "size_bytes": 6822,
+      "source": "benchmark_contract/v1/normalized-records/bf16-warm-n10.json"
+    },
+    {
+      "path": "benchmark_contract/v1/normalized-records/sol-attn-r8-formal-n10.json",
+      "sha256": "b010c4aa116b1bec3e2c894097c15a61000f3f2708f62403b5197c9dc66e742b",
+      "size_bytes": 8318,
+      "source": "benchmark_contract/v1/normalized-records/sol-attn-r8-formal-n10.json"
+    },
+    {
+      "path": "benchmark_contract/v1/normalized-records/turbo-4step-warm-n10.json",
+      "sha256": "5f7be4756246ca50626a4e296eede41d2bf7d5adc03cee2cad26e6a3e0a51122",
+      "size_bytes": 6846,
+      "source": "benchmark_contract/v1/normalized-records/turbo-4step-warm-n10.json"
+    },
+    {
+      "path": "benchmark_contract/v1/normalized-records/turbo-8step-warm-n10.json",
+      "sha256": "56f9d726698350d1d8ff743f6d511f68610e05bd08621d1a05a24a4fc4150160",
+      "size_bytes": 6859,
+      "source": "benchmark_contract/v1/normalized-records/turbo-8step-warm-n10.json"
+    },
+    {
+      "path": "benchmark_contract/v1/prompts/orbital-continuity-long-v1.txt",
+      "sha256": "c85689e3348c9eab59ea7a87f61797823f82e2dc822fc6f1fc8093def3e909bb",
+      "size_bytes": 1338,
+      "source": "benchmark_contract/v1/prompts/orbital-continuity-long-v1.txt"
     },
     {
       "path": "code/pytest.py",
@@ -351,8 +411,8 @@
     },
     {
       "path": "release/github_release_manifest.json",
-      "sha256": "5bc2446abbfeaad83bc806b0a3415e7c88478670cf2f5490730eace36f198b37",
-      "size_bytes": 6072,
+      "sha256": "d0a2f82e4785b621e6fe2c0a44735718d7d104a73907f46f6394ab193427f8fe",
+      "size_bytes": 6557,
       "source": "release/github_release_manifest.json"
     },
     {
@@ -384,6 +444,12 @@
       "sha256": "bd89a8b2defd5244a748963be754dcb3a9fa94a0bc7c393c836bae0f9e78733b",
       "size_bytes": 2995,
       "source": "schemas/minimax_h3_a6000_performance_report.schema.json"
+    },
+    {
+      "path": "schemas/minimax_h3_benchmark_record_v1.schema.json",
+      "sha256": "356ca64dd5bfc7221daffae941872894c7747ce4695d17662d50146ef2620d8a",
+      "size_bytes": 15157,
+      "source": "schemas/minimax_h3_benchmark_record_v1.schema.json"
     },
     {
       "path": "schemas/minimax_h3_run.schema.json",
@@ -542,15 +608,57 @@
       "source": "technical_report/progress_update.md"
     },
     {
+      "path": "tests/fixtures/benchmark_contract/rejected/cross-track-speedup.json",
+      "sha256": "6ef51b240bbbd968d8bc69345f836680181c89ca5e54e9e84016bf4cdb53022b",
+      "size_bytes": 326,
+      "source": "tests/fixtures/benchmark_contract/rejected/cross-track-speedup.json"
+    },
+    {
+      "path": "tests/fixtures/benchmark_contract/rejected/incomplete-final-av.json",
+      "sha256": "ad0593b59bbb568441f1a6d7380f41bfd87cd3c34b3675f83e8da1a1e2343e1a",
+      "size_bytes": 467,
+      "source": "tests/fixtures/benchmark_contract/rejected/incomplete-final-av.json"
+    },
+    {
+      "path": "tests/fixtures/benchmark_contract/rejected/mismatched-gpu-denominator.json",
+      "sha256": "e34fbeaf9e2b2fa922e7eff9f85bbdf5885c425b4b2b2702b6b0c72a00cad922",
+      "size_bytes": 360,
+      "source": "tests/fixtures/benchmark_contract/rejected/mismatched-gpu-denominator.json"
+    },
+    {
+      "path": "tests/fixtures/benchmark_contract/rejected/mismatched-workload-denominator.json",
+      "sha256": "7c9432ff37acc1c413967e45b68285f8e8ba550e64f1fda3d1d2bcc3110fd58f",
+      "size_bytes": 401,
+      "source": "tests/fixtures/benchmark_contract/rejected/mismatched-workload-denominator.json"
+    },
+    {
+      "path": "tests/fixtures/benchmark_contract/rejected/missing-mandatory-metrics.json",
+      "sha256": "f5549b24d0d9ccb70d76bd21d60457c4bae28b10cfed13e4f2e3a92fbafd8ca9",
+      "size_bytes": 294,
+      "source": "tests/fixtures/benchmark_contract/rejected/missing-mandatory-metrics.json"
+    },
+    {
+      "path": "tests/fixtures/benchmark_contract/rejected/stitched-as-native.json",
+      "sha256": "d35b55e244586699b8e92aba3a8943121404665c3dda2e6ce64b692709f623e6",
+      "size_bytes": 777,
+      "source": "tests/fixtures/benchmark_contract/rejected/stitched-as-native.json"
+    },
+    {
       "path": "tests/fixtures/minimal_av_case/run_record.json",
       "sha256": "0a8ed10315b62fdd93e801262e4a1417b72bc7cb5ae4165dcf1cdd8a1a336d8e",
       "size_bytes": 4441,
       "source": "tests/fixtures/minimal_av_case/run_record.json"
     },
     {
+      "path": "tests/test_benchmark_contract.py",
+      "sha256": "cd61549644e2e70f2c86e6d54d988729beae53ffddceeb98ed561eb7f44581f6",
+      "size_bytes": 6235,
+      "source": "tests/test_benchmark_contract.py"
+    },
+    {
       "path": "tests/test_github_release_tree_builder.py",
-      "sha256": "9042290974454b936734d60b4115c0ecdce95090707089bcc4e7f74e8c0ad081",
-      "size_bytes": 6277,
+      "sha256": "f81e5f7bf49e8dfed424e9fd0f4264c104cf9a17ec163a379e0dc34e412010e4",
+      "size_bytes": 6891,
       "source": "tests/test_github_release_tree_builder.py"
     },
     {
@@ -602,6 +710,12 @@
       "source": "tools/minimax_h3_a6000_performance_report.py"
     },
     {
+      "path": "tools/minimax_h3_benchmark_contract.py",
+      "sha256": "10b67568a58f0f4a27aee3995a33dac3d1af0232a2c571e3e5dfbeb548d2d685",
+      "size_bytes": 26684,
+      "source": "tools/minimax_h3_benchmark_contract.py"
+    },
+    {
       "path": "tools/publication_audit.py",
       "sha256": "092d99dde85f0a979fbd17f2c3a5f18d307ca093d3450e87f70feb1b04c38f24",
       "size_bytes": 10728,
@@ -618,6 +732,12 @@
       "sha256": "7ad8703407f0f8d9f250ee2c47c0175eab7ce9c1d061b8ed4816febe0d424352",
       "size_bytes": 25646,
       "source": "tools/turbo_lora_peft.py"
+    },
+    {
+      "path": "tools/validate_benchmark_record.py",
+      "sha256": "21df4a61949cb300e490b6e81e0856c3ff467be0a39a5114a8ac48b40bd7cf6b",
+      "size_bytes": 305,
+      "source": "tools/validate_benchmark_record.py"
     },
     {
       "path": "tools/verify_run.py",

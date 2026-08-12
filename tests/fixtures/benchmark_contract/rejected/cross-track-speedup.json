@@ -1,0 +1,8 @@
+{
+  "schema_version": "minimax-h3-a6000-negative-fixture-v1",
+  "base_record": "benchmark_contract/v1/normalized-records/sol-attn-r8-formal-n10.json",
+  "mutations": [
+    {"op": "set", "path": "comparisons.0.denominator.track", "value": "fidelity_bf16_exact"}
+  ],
+  "expected_error": "mismatched denominator field: track"
+}

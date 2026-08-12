@@ -1,0 +1,14 @@
+{
+  "schema_version": "minimax-h3-a6000-negative-fixture-v1",
+  "base_record": "benchmark_contract/v1/normalized-records/bf16-warm-n10.json",
+  "mutations": [
+    {"op": "set", "path": "lane_id", "value": "final-av-30s-1344x768-24fps-v1"},
+    {"op": "set", "path": "workload.final_frame_count", "value": 720},
+    {"op": "set", "path": "workload.nominal_duration_seconds", "value": 30.0},
+    {"op": "set", "path": "production.is_long", "value": true},
+    {"op": "set", "path": "production.generation_mode", "value": "native_long_context"},
+    {"op": "set", "path": "production.chunk_count", "value": 6},
+    {"op": "set", "path": "production.assembly_method", "value": "concat"}
+  ],
+  "expected_error": "stitched/chunked output cannot be claimed as native_long_context"
+}

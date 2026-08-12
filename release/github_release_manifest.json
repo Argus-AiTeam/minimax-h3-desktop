@@ -55,6 +55,12 @@
       "path": "tools/argus_h3_verifier.py"
     },
     {
+      "path": "tools/validate_benchmark_record.py"
+    },
+    {
+      "path": "tools/minimax_h3_benchmark_contract.py"
+    },
+    {
       "path": "tools/minimax_h3_a6000_performance_report.py"
     },
     {
@@ -89,6 +95,9 @@
     },
     {
       "path": "schemas/minimax_h3_a6000_performance_report.schema.json"
+    },
+    {
+      "path": "schemas/minimax_h3_benchmark_record_v1.schema.json"
     },
     {
       "path": "runtime/single_a6000_bf16/container_image.digest"
@@ -178,10 +187,25 @@
       "path": "tests/test_minimax_h3_a6000_performance_report.py"
     },
     {
+      "path": "tests/test_benchmark_contract.py"
+    },
+    {
       "path": "tests/fixtures/minimal_av_case/run_record.json"
     }
   ],
   "trees": [
+    {
+      "path": "benchmark_contract/v1",
+      "include": [
+        "**/*"
+      ]
+    },
+    {
+      "path": "tests/fixtures/benchmark_contract/rejected",
+      "include": [
+        "*.json"
+      ]
+    },
     {
       "path": "ports/minimax_h3_a6000",
       "include": [

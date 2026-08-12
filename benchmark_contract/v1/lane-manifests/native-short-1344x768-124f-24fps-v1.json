@@ -1,0 +1,78 @@
+{
+  "schema_version": "minimax-h3-a6000-lane-manifest-v1",
+  "contract_version": "1.0.0",
+  "lane_id": "native-short-1344x768-124f-24fps-v1",
+  "dry_run": true,
+  "measurement_status": "dry_run_no_new_measurement",
+  "claim_boundary": "This manifest freezes the accepted native short workload without rerunning it. It is not a 30/60-second result.",
+  "workload": {
+    "task": "t2va",
+    "partition": "FL2VA",
+    "width": 1344,
+    "height": 768,
+    "fps": 24,
+    "final_frame_count": 124,
+    "nominal_duration_seconds": 5.166666666666667,
+    "audio_sample_rate_hz": 32000,
+    "audio_channels": 2,
+    "num_inference_steps": 50,
+    "flow_shift": 12.0,
+    "audio_flow_shift": 3.0,
+    "prompt": {
+      "id": "t2va-example-1",
+      "sha256": "98f36b879692095e099ae824c18d9e93e7006a490e082fd474a5f531769dcf06",
+      "source": "https://github.com/NVlabs/Sana/blob/d00eef311670a58deb2c323fe072738fcb945600/models/minimax_h3/prompts/t2va_example_1.json"
+    },
+    "seed_plan": {
+      "seeds": [0],
+      "repetitions": 10
+    },
+    "conditioning_assets": []
+  },
+  "production": {
+    "is_long": false,
+    "generation_mode": "native_short_clip",
+    "native_context_supported": true,
+    "chunk_count": 1,
+    "assembly_method": "none"
+  },
+  "execution_profile": {
+    "track": "fidelity_bf16_exact",
+    "mechanisms": ["released_bf16_fl2va", "dense_attention", "no_cache", "no_quantization"],
+    "deployment_scope": "single_a6000"
+  },
+  "final_av_accounting": {
+    "video_frames": 124,
+    "video_duration_seconds": 5.166666666666667,
+    "decoded_audio_samples_per_channel": 166912,
+    "effective_audio_samples_per_channel": null,
+    "note": "Existing AAC evidence reports 166912 decoded samples per channel; encoder priming/end padding were not separated in the historical run."
+  },
+  "required_metrics": [
+    "cold_e2e",
+    "warm_e2e",
+    "denoise",
+    "attention_nested_in_denoise",
+    "video_vae",
+    "audio_vae",
+    "encoding_mux",
+    "io",
+    "seconds_per_generated_second",
+    "peak_gpu_memory",
+    "peak_host_memory",
+    "power",
+    "failures",
+    "subject_identity_consistency",
+    "background_consistency",
+    "camera_consistency",
+    "motion",
+    "repetition",
+    "freezing",
+    "visual_seams",
+    "loudness",
+    "silence",
+    "audio_continuity",
+    "av_sync_proxy",
+    "human_gate_separate"
+  ]
+}
