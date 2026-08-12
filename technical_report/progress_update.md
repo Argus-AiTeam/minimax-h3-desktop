@@ -1,6 +1,6 @@
 # MiniMax-H3 A6000 验证进度
 
-> 更新时间：2026-08-12T06:56:32+00:00
+> 更新时间：2026-08-12T11:23:37+00:00
 > 仅汇总已落盘证据；实验中或缺失结果明确标记，不估算。
 
 ## 固定工作负载
@@ -51,7 +51,7 @@
 
 - BF16 fidelity lane仅包含baseline；Turbo属于practical_disclosed_approx，不得混入无损结论。
 - Sol-Attn r8 formal N>=10 matched-workload gate已终端接受：仅限formal 5-step Sol-Attn opt-in lane；不是BF16 fidelity、release或人类听感/语义质量认证。
-- Turbo自动结构/音频指标已完成；真实人工听感仍需操作者本人完成，agent不得冒充。
+- Turbo自动结构/音频指标已完成，操作者总体播放/听感验收已记录；8-step保持默认，已知4-step视觉失败继续保留。
 - DMD/DMD2在无合法可复现H3 recipe/checkpoint时保持blocked。
 
 ## 下一步
@@ -59,4 +59,4 @@
 1. formal N>=10已终端接受且独立Reviewer已通过；post-review private main同步已完成，后续不要重复formal run或扩大为BF16/质量/release声明。
 2. CPU/static、fixture、Turbo dry-run、strict aggregation、export和publication audit gate已通过；独立Reviewer已通过且private main非强制同步已完成。
 3. sanitized release tree已在Reviewer通过和fresh audit pass后提交/同步到既有Private GitHub main。
-4. 如果只剩人类主观听感，保留operator listening gate和文件映射。
+4. 操作者总体播放/听感验收已完成；保留8-step默认和已知4-step失败边界。

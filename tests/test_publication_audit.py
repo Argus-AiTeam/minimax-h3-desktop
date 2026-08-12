@@ -25,6 +25,27 @@ def test_publication_audit_passes_minimal_safe_tree(tmp_path: Path) -> None:
     assert issues == []
 
 
+def test_publication_audit_allows_small_curated_media_under_examples(tmp_path: Path) -> None:
+    root = tmp_path / "export"
+    media = root / "examples" / "demo" / "result.mp4"
+    media.parent.mkdir(parents=True)
+    media.write_bytes(b"curated-demo-media")
+
+    issues = audit_tree(root, max_bytes=1024, prohibited_terms=[])
+
+    assert issues == []
+
+
+def test_publication_audit_rejects_media_outside_examples(tmp_path: Path) -> None:
+    root = tmp_path / "export"
+    root.mkdir()
+    (root / "result.mp4").write_bytes(b"unreviewed-media")
+
+    issues = audit_tree(root, max_bytes=1024, prohibited_terms=[])
+
+    assert "forbidden_media_extension" in _kinds(issues)
+
+
 def test_publication_audit_detects_forbidden_model_extension(tmp_path: Path) -> None:
     root = tmp_path / "export"
     root.mkdir()

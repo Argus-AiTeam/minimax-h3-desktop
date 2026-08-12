@@ -35,9 +35,19 @@ def test_real_manifest_builds_sanitized_export_to_tmp_path(tmp_path: Path) -> No
 
     assert summary["status"] == "built"
     assert (dest / "README.md").is_file()
+    assert (dest / "README_EN.md").is_file()
     assert (dest / "LICENSE").is_file()
     assert (dest / "NOTICE").is_file()
+    assert (dest / "Makefile").is_file()
     assert (dest / "scripts" / "a6000_one_command.sh").is_file()
+    assert (dest / "scripts" / "build_runtime.sh").is_file()
+    assert (dest / "scripts" / "prepare_models.sh").is_file()
+    assert (dest / "scripts" / "run_turbo_demo.sh").is_file()
+    assert (dest / "tools" / "turbo_lora_peft.py").is_file()
+    assert (dest / "tools" / "turbo_lora_offline_merge.py").is_file()
+    assert (dest / "examples" / "a6000-turbo-8step-sci-fi" / "orbital-shipyard-turbo-8step.mp4").is_file()
+    assert (dest / "examples" / "a6000-turbo-8step-sci-fi" / "contact-sheet.jpg").is_file()
+    assert (dest / "examples" / "a6000-turbo-8step-sci-fi" / "metadata.json").is_file()
     assert (dest / "tools" / "build_github_release_tree.py").is_file()
     assert (dest / "tools" / "publication_audit.py").is_file()
     assert (dest / "tools" / "verify_run.py").is_file()
@@ -48,18 +58,17 @@ def test_real_manifest_builds_sanitized_export_to_tmp_path(tmp_path: Path) -> No
     assert (dest / "schemas" / "minimax_h3_run.schema.json").is_file()
     assert (dest / "tests" / "fixtures" / "minimal_av_case" / "run_record.json").is_file()
     readme = (dest / "README.md").read_text(encoding="utf-8")
-    assert "中文定位" in readme
-    assert "Architecture and DLO map" in readme
-    assert "1792.2021025 s" in readme
-    assert "290.9976015 s" in readme
-    assert "Sol-Attn r8 opt-in" in readme
-    assert "terminal N=3 route gate" in readme
-    assert "proceed_to_formal_n10_candidate" in readme
+    assert "MiniMax-H3 on a Single RTX A6000" in readme
+    assert "Argus](https://github.com/lbx154/Argus)" in readme
+    assert "orbital-shipyard-turbo-8step.mp4" in readme
+    assert "1792.202" in readme
+    assert "290.998" in readme
+    assert "6.159×" in readme
+    assert "11.978×" in readme
     assert "sparse_candidate_calls=192" in readme
     assert "sparse_calls=192" in readme
-    assert "accepted_formal_n10_same_gpu_sol_attn_speed_candidate" in readme
-    assert "formal N=10 median HTTP-time improvement" in readme
-    assert "not BF16 fidelity, release approval" in readme
+    assert "15.203%" in readme
+    assert "不是 50-step BF16 fidelity speedup" in readme
     assert "git init" not in readme
     assert "gh auth" not in readme
     assert (dest / "ports" / "minimax_h3_a6000" / "src" / "minimax_h3_a6000" / "exact_kernels.py").is_file()
@@ -82,7 +91,7 @@ def test_real_manifest_builds_sanitized_export_to_tmp_path(tmp_path: Path) -> No
     assert script.read_text(encoding="utf-8").startswith("#!/usr/bin/env bash")
     assert not (dest / "technical_report" / "evidence" / "minimax_h3_desktop" / "sol_engine_port" / "sol_attn_gpu2_supervisor").exists()
 
-    issues = audit_tree(dest, max_bytes=1_000_000, prohibited_terms=[])
+    issues = audit_tree(dest, max_bytes=15_000_000, prohibited_terms=[])
     assert issues == []
 
 

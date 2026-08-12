@@ -23,8 +23,10 @@ SCHEMA_VERSION = "argus-github-release-manifest-v1"
 BUILD_MANIFEST_VERSION = "argus-github-release-build-v1"
 DEFAULT_MANIFEST = Path("release/github_release_manifest.json")
 DEFAULT_DESTINATION_PARTS = ("data", "chenxi", "minimax-h3-desktop-github")
-DEFAULT_MAX_BYTES = 1_000_000
+DEFAULT_MAX_BYTES = 15_000_000
 MARKER_FILE = ".argus_release_tree"
+CURATED_MEDIA_ROOT = "examples"
+CURATED_MEDIA_SUFFIXES = (".mp4", ".mov", ".avi", ".webm", ".wav", ".mp3", ".m4a", ".flac")
 
 GLOBAL_EXCLUDE_PARTS = {
     ".cache",
@@ -116,6 +118,9 @@ def _is_excluded(rel: Path) -> bool:
     if parts & GLOBAL_EXCLUDE_PARTS:
         return True
     lower = rel.as_posix().lower()
+    curated_media = bool(rel.parts and rel.parts[0] == CURATED_MEDIA_ROOT and lower.endswith(CURATED_MEDIA_SUFFIXES))
+    if curated_media:
+        return False
     return any(lower.endswith(suffix) for suffix in GLOBAL_EXCLUDE_SUFFIXES)
 
 
@@ -414,6 +419,13 @@ __pycache__/
 *.wav
 *.mp3
 *.flac
+!examples/
+!examples/**/*.mp4
+!examples/**/*.mov
+!examples/**/*.webm
+!examples/**/*.wav
+!examples/**/*.mp3
+!examples/**/*.flac
 *.tar
 *.tar.gz
 *.tgz

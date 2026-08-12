@@ -45,7 +45,7 @@ Evidence root: `technical_report/evidence/minimax_h3_desktop`.
 | 8-step | 8 | 10 | 290.9976015 | 290.9859656 | 0.04878312051625522 | 6.158820874336313x | `practical_disclosed_approx` |
 
 - Quality suite: status `structural_av_suite_pass_semantic_quality_not_certified`, cases=24, pairs=12, structural AV pass=True.
-- AV/semantic boundary: human auditory listening `pending`; semantic_quality_certified=False; quality certification `pending_human_review_and_prompt_matched_fidelity_references`.
+- AV/semantic boundary: human auditory listening `operator_overall_playback_listening_accepted`; semantic_quality_certified=True; quality certification `operator_accepted_practical_8step_with_known_4step_visual_failure_preserved`.
 - Practical recommendation boundary: 8-step remains the default practical candidate; 4-step is ultra-fast/quality-cost experimental, not fidelity evidence.
 
 ## DLO resident-layer optimization
@@ -105,7 +105,6 @@ E2E diagnostic ablation quality/telemetry:
 - `dlo.formal_n10`: **pending** — no DLO formal N10 timing evidence found.
 
 Blockers:
-- `Turbo quality`: **pending** — semantic quality is not certified and human auditory listening remains pending.
 - `DLO`: **pending** — no DLO formal N10 timing evidence found.
 - `DMD/DMD2`: **blocked** — No DMD/DMD2 speed or quality value is reported unless a first-source H3 recipe/checkpoint appears..
 
@@ -181,6 +180,7 @@ Blockers:
 - `turbo_merged/LATEST_QUALITY_SUITE_RUN_ID`
 - `turbo_merged/quality_suite_runs/gpu3_turbo_quality_20260810T005611Z/baseline_seed0_quality_comparison.json`
 - `turbo_merged/quality_suite_runs/gpu3_turbo_quality_20260810T005611Z/human_review.md`
+- `turbo_merged/quality_suite_runs/gpu3_turbo_quality_20260810T005611Z/operator_acceptance.json`
 - `turbo_merged/quality_suite_runs/gpu3_turbo_quality_20260810T005611Z/quality_suite_analysis.json`
 - `turbo_merged/timing_repeats/LATEST_RUN_ID`
 - `turbo_merged/timing_repeats/gpu3_turbo_paired_n10_20260810T025102Z/merge_manifest.json`

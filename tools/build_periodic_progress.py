@@ -227,6 +227,18 @@ def main() -> int:
     timing_id = text(evidence / "turbo_merged/timing_repeats/LATEST_RUN_ID", "")
     timing = load(evidence / "turbo_merged/timing_repeats" / timing_id / "timing_summary.json") if timing_id else {}
     schedules = timing.get("schedules", {})
+    quality_id = text(evidence / "turbo_merged/LATEST_QUALITY_SUITE_RUN_ID", "")
+    operator_acceptance = (
+        load(evidence / "turbo_merged/quality_suite_runs" / quality_id / "operator_acceptance.json")
+        if quality_id
+        else {}
+    )
+    operator_quality_accepted = bool(
+        operator_acceptance.get("status") == "accepted_overall_by_operator"
+        and operator_acceptance.get("scope", {}).get("human_playback_and_listening_review_completed") is True
+        and operator_acceptance.get("scope", {}).get("overall_practical_quality_accepted") is True
+        and operator_acceptance.get("preserved_limits", {}).get("four_step_promoted_to_default") is False
+    )
 
     dlo_state = evidence / "dlo_autotune/detached_continuation"
     dlo_id = text(dlo_state / "candidate50_run_id.txt", "")
@@ -388,7 +400,11 @@ def main() -> int:
             "",
             f"- BF16 fidelity lane仅包含baseline；Turbo属于{Practical}，不得混入无损结论。",
             sol_matched_boundary,
-            "- Turbo自动结构/音频指标已完成；真实人工听感仍需操作者本人完成，agent不得冒充。",
+            (
+                "- Turbo自动结构/音频指标已完成，操作者总体播放/听感验收已记录；8-step保持默认，已知4-step视觉失败继续保留。"
+                if operator_quality_accepted
+                else "- Turbo自动结构/音频指标已完成；真实人工听感仍需操作者本人完成，agent不得冒充。"
+            ),
             "- DMD/DMD2在无合法可复现H3 recipe/checkpoint时保持blocked。",
             "",
             "## 下一步",
@@ -404,7 +420,11 @@ def main() -> int:
                     else "3. 独立Reviewer通过后，才把sanitized release tree提交并push到既有Private GitHub main。"
                 )
             ),
-            "4. 如果只剩人类主观听感，保留operator listening gate和文件映射。",
+            (
+                "4. 操作者总体播放/听感验收已完成；保留8-step默认和已知4-step失败边界。"
+                if operator_quality_accepted
+                else "4. 如果只剩人类主观听感，保留operator listening gate和文件映射。"
+            ),
             "",
         ]
     )

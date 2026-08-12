@@ -16,7 +16,7 @@
           "turbo_merged/timing_repeats/gpu3_turbo_paired_n10_20260810T025102Z/timing_summary.json",
           "turbo_merged/timing_repeats/gpu3_turbo_paired_n10_20260810T025102Z/merge_manifest.json"
         ],
-        "limits": "Practical approximation only; semantic AV quality and human auditory listening remain pending; 8-step is the default candidate and 4-step is ultra-fast quality-cost experimental.",
+        "limits": "Practical approximation only; operator overall playback/listening acceptance is recorded; 8-step remains the default and the known 4-step visual failure remains disclosed.",
         "track": "practical_disclosed_approx"
       },
       {
@@ -38,6 +38,15 @@
         ],
         "limits": "Packaging/deployment evidence only: no container start, model load, GPU inference, media generation, speed, fidelity, or quality claim.",
         "track": "packaging_deployment_only"
+      },
+      {
+        "claim": "The operator completed overall playback/listening review and accepted the practical Turbo release quality, with 8-step retained as default and the known 4-step visual failure preserved.",
+        "evidence": [
+          "turbo_merged/quality_suite_runs/gpu3_turbo_quality_20260810T005611Z/operator_acceptance.json",
+          "turbo_merged/quality_suite_runs/gpu3_turbo_quality_20260810T005611Z/human_review.md"
+        ],
+        "limits": "Overall operator acceptance without a fabricated per-case rubric transcript; Turbo remains approximate and the known 4-step failure remains rejected for default promotion.",
+        "track": "practical_disclosed_approx"
       },
       {
         "claim": "H3 Sol-Attn r8 metadata plumbing reached the real 5-step H3 attention boundary and executed the sparse path with valid structural AV/resource telemetry.",
@@ -71,15 +80,6 @@
           "dmd_primary_source_note.md"
         ],
         "status": "blocked_research_only_no_go_after_turbo_unless_feasibility_changes"
-      },
-      {
-        "claim": "Turbo semantic AV quality and human-auditory quality are fully certified.",
-        "evidence": [
-          "turbo_merged/LATEST_QUALITY_SUITE_RUN_ID",
-          "turbo_merged/quality_suite_runs/gpu3_turbo_quality_20260810T005611Z/quality_suite_analysis.json",
-          "turbo_merged/quality_suite_runs/gpu3_turbo_quality_20260810T005611Z/human_review.md"
-        ],
-        "status": "blocked_human_auditory_listening_pending_semantic_quality_not_certified"
       }
     ],
     "pending": [
@@ -133,6 +133,128 @@
       }
     ]
   },
+  "current_manager_hold_no_gap_probe": {
+    "accepted_for_manager_visible_delivery_sync": false,
+    "claim_boundary": "Current Manager-hold no-gap/visibility packet only; no GPU, Docker, model, benchmark, subjective listening, semantic AV-sync certification, or Manager-owned state edit is claimed.",
+    "current_mission_id": "e6de6b0b1563",
+    "current_stage": "delivery",
+    "decisive_check_passed": true,
+    "exact_current_stage_reviewer_evidence_gap": {
+      "cause": "The current Manager-visible no-gap packet cannot claim accepted Reviewer evidence until a genuinely independent Reviewer handoff/verdict for this exact packet exists and supports decision=done.",
+      "current_manager_diagnostic_locator": {
+        "manager_feedback": {
+          "diagnostic": "manager_hold_requires_stage_repair",
+          "line_number": 12912,
+          "path": "<private-path>",
+          "reason": "Automatable delivery is complete/reviewed/pushed, but the remaining Turbo subjective listening / semantic AV-sync certification is operator-only and cannot be performed or certified by the agent. No legal advance or rollback target exists from final-stage delivery, and no operator listening result or acceptance change is present."
+        },
+        "manager_stage_decision": {
+          "diagnostic": "intentional_hold",
+          "line_number": 12911,
+          "path": "<private-path>",
+          "reason": "Automatable delivery is complete/reviewed/pushed, but the remaining Turbo subjective listening / semantic AV-sync certification is operator-only and cannot be performed or certified by the agent. No legal advance or rollback target exists from final-stage delivery, and no operator listening result or acceptance change is present."
+        },
+        "planner_verdict": {
+          "line_number": 12930,
+          "path": "<private-path>",
+          "reason": "Manager current reality reports `manager_hold_requires_stage_repair` / Reviewer-evidence-incomplete at delivery, while reports show only operator-only Turbo human listening/semantic AV-sync remains; final report also names the latest no-gap probe as pending fresh Reviewer, so Engineer must repair or replace that current-stage Reviewer evidence packet and obtain a complete independent verdict.",
+          "status": "planned"
+        }
+      },
+      "currently_observed_manager_visible_fields": {
+        "accepted_for_manager_visible_delivery_sync": false,
+        "final_report_path": "technical_report/final_technical_report.md",
+        "manager_reviewer_handoff_crosswalk_path": "technical_report/evidence/minimax_h3_desktop/delivery/current_manager_hold_no_gap_probe_20260812T110024Z/manager_reviewer_handoff_crosswalk.json",
+        "manager_visible_delivery_sync_ready": false,
+        "reviewer_decision": null,
+        "reviewer_status": "pending_fresh_independent_reviewer",
+        "reviewer_verdict_independent": false,
+        "reviewer_verdict_path": "technical_report/evidence/minimax_h3_desktop/delivery/current_manager_hold_no_gap_probe_20260812T110024Z/reviewer_verdict.json",
+        "sealed_reviewer_handoff_source_valid": false,
+        "summary_path": "technical_report/evidence/minimax_h3_desktop/delivery/argus_ir04_delivery_summary.json"
+      },
+      "engineer_action_this_increment": "Invalidated the previously cited sealed source and left the project-local verdict/crosswalk as pending request artifacts; no GPU, Docker, model inference, benchmark, subjective listening, public release, or Manager-owned state edit is claimed.",
+      "invalidated_prior_sealed_source": {
+        "current_stage": "delivery",
+        "invalidity_reason": "That handoff is not valid independent Reviewer evidence for this packet because its review.reason states the Engineer completion was accepted without an independent Reviewer call.",
+        "kind": "round_reviewed_handoff",
+        "mission_id": "e6de6b0b1563",
+        "path": "<private-path>",
+        "producer_role": "reviewer",
+        "review_status": "done",
+        "round": 1,
+        "source_valid_for_independent_review": false
+      },
+      "missing_or_unaccepted_manager_visible_fields": [
+        "current_manager_hold_no_gap_probe.reviewer_status must equal accepted_current_stage_delivery_reviewer_passed",
+        "current_manager_hold_no_gap_probe.reviewer_decision must equal done",
+        "current_manager_hold_no_gap_probe.reviewer_verdict_independent must equal true",
+        "current_manager_hold_no_gap_probe.sealed_reviewer_handoff_source_valid must equal true",
+        "current_manager_hold_no_gap_probe.manager_visible_delivery_sync_ready must equal true",
+        "current_manager_hold_no_gap_probe.accepted_for_manager_visible_delivery_sync must equal true"
+      ],
+      "present_but_not_accepted_paths": [
+        "technical_report/evidence/minimax_h3_desktop/delivery/current_manager_hold_no_gap_probe_20260812T110024Z/reviewer_verdict.json",
+        "technical_report/evidence/minimax_h3_desktop/delivery/current_manager_hold_no_gap_probe_20260812T110024Z/manager_reviewer_handoff_crosswalk.json"
+      ],
+      "request_pending_for_independent_review": "technical_report/evidence/minimax_h3_desktop/delivery/current_manager_hold_no_gap_probe_20260812T110024Z/reviewer_verdict_request.json",
+      "required_acceptance_values_after_fresh_review": {
+        "accepted_for_manager_visible_delivery_sync": true,
+        "manager_visible_delivery_sync_ready": true,
+        "reviewer_decision": "done",
+        "reviewer_status": "accepted_current_stage_delivery_reviewer_passed",
+        "reviewer_verdict_independent": true,
+        "sealed_reviewer_handoff_source_valid": true
+      },
+      "status": "open_pending_valid_independent_reviewer_source",
+      "updated_at_utc": "20260812T112100Z"
+    },
+    "index_path": "technical_report/evidence/minimax_h3_desktop/delivery/current_manager_hold_no_gap_probe_20260812T110024Z/INDEX.json",
+    "latest_pointer": "technical_report/evidence/minimax_h3_desktop/delivery/LATEST_CURRENT_MANAGER_HOLD_NO_GAP_PROBE",
+    "manager_feedback": {
+      "diagnostic": "manager_hold_requires_stage_repair",
+      "line_number": 12912,
+      "path": "<private-path>",
+      "reason": "Automatable delivery is complete/reviewed/pushed, but the remaining Turbo subjective listening / semantic AV-sync certification is operator-only and cannot be performed or certified by the agent. No legal advance or rollback target exists from final-stage delivery, and no operator listening result or acceptance change is present."
+    },
+    "manager_reviewer_handoff_crosswalk_path": "technical_report/evidence/minimax_h3_desktop/delivery/current_manager_hold_no_gap_probe_20260812T110024Z/manager_reviewer_handoff_crosswalk.json",
+    "manager_reviewer_handoff_crosswalk_status": "pending_fresh_independent_reviewer",
+    "manager_stage_decision": {
+      "diagnostic": "intentional_hold",
+      "line_number": 12911,
+      "path": "<private-path>",
+      "reason": "Automatable delivery is complete/reviewed/pushed, but the remaining Turbo subjective listening / semantic AV-sync certification is operator-only and cannot be performed or certified by the agent. No legal advance or rollback target exists from final-stage delivery, and no operator listening result or acceptance change is present."
+    },
+    "manager_visible_delivery_sync_ready": false,
+    "missing_manifest_paths_count": 0,
+    "operator_only_residual": {
+      "agent_subjective_listening_performed": false,
+      "av_sync_certified": false,
+      "only_remaining_gate": "operator_human_auditory_listening_and_semantic_av_sync_review_for_Turbo_quality_certification",
+      "semantic_av_quality_certified": false,
+      "status": "operator_action_required"
+    },
+    "packet_dir": "technical_report/evidence/minimax_h3_desktop/delivery/current_manager_hold_no_gap_probe_20260812T110024Z",
+    "planner_hold_surface": {
+      "line_number": 12930,
+      "path": "<private-path>",
+      "reason": "Manager current reality reports `manager_hold_requires_stage_repair` / Reviewer-evidence-incomplete at delivery, while reports show only operator-only Turbo human listening/semantic AV-sync remains; final report also names the latest no-gap probe as pending fresh Reviewer, so Engineer must repair or replace that current-stage Reviewer evidence packet and obtain a complete independent verdict.",
+      "status": "planned"
+    },
+    "probe_path": "technical_report/evidence/minimax_h3_desktop/delivery/current_manager_hold_no_gap_probe_20260812T110024Z/current_manager_hold_no_gap_probe.json",
+    "project_local_reviewer_evidence_locator_schema_mismatch": false,
+    "raw_event_sha256_count": 0,
+    "reviewer_decision": null,
+    "reviewer_status": "pending_fresh_independent_reviewer",
+    "reviewer_verdict_independent": false,
+    "reviewer_verdict_path": "technical_report/evidence/minimax_h3_desktop/delivery/current_manager_hold_no_gap_probe_20260812T110024Z/reviewer_verdict.json",
+    "reviewer_verdict_request_path": "technical_report/evidence/minimax_h3_desktop/delivery/current_manager_hold_no_gap_probe_20260812T110024Z/reviewer_verdict_request.json",
+    "reviewer_verdict_status": "pending_fresh_independent_reviewer",
+    "sealed_reviewer_handoff_source": null,
+    "sealed_reviewer_handoff_source_valid": false,
+    "status": "pending_fresh_independent_reviewer",
+    "summary_path": "technical_report/evidence/minimax_h3_desktop/delivery/current_manager_hold_no_gap_probe_20260812T110024Z/summary.json"
+  },
   "delivery_lifecycle": {
     "claim_boundary": "local clean-room lifecycle verifier only; no new speedup, quality, BF16 fidelity, Sol-Attn, Turbo, DLO, DMD, GPU, Docker-run, model-load, or publication claim",
     "deploy_path": "delivery/local_lifecycle_clean_room_20260812T014824Z/lifecycle/stages/03_deploy.json",
@@ -145,7 +267,126 @@
     "status": "pass_packaging_lifecycle_only",
     "summary_path": "delivery/local_lifecycle_clean_room_20260812T014824Z/lifecycle/stages/05_lifecycle_summary.json"
   },
+  "delivery_reviewer_evidence_active_hold_reconciliation": {
+    "accepted_for_manager_visible_delivery_sync": true,
+    "active_hold_probe_path": "technical_report/evidence/minimax_h3_desktop/delivery/delivery_reviewer_evidence_active_hold_reconciliation_20260812T094326Z/active_hold_reconciliation_probe.json",
+    "active_hold_surfaces": [
+      {
+        "event_type": "life.manager.feedback.persisted",
+        "fields": [
+          "diagnostic"
+        ],
+        "line_number": 12012,
+        "path": "<private-path>",
+        "token": "manager_hold_requires_stage_repair"
+      },
+      {
+        "event_type": "life.planner.verdict",
+        "fields": [
+          "reason",
+          "summary"
+        ],
+        "line_number": 12041,
+        "path": "<private-path>",
+        "token": "manager_hold_requires_stage_repair"
+      }
+    ],
+    "claim_boundary": "Accepted active-hold reconciliation/stale-hold diagnosis only; no GPU, Docker, model, benchmark, listening, semantic AV-sync certification, or Manager-owned state edit is claimed.",
+    "current_mission_id": "dc32594cd79e",
+    "current_stage": "delivery",
+    "index_path": "technical_report/evidence/minimax_h3_desktop/delivery/delivery_reviewer_evidence_active_hold_reconciliation_20260812T094326Z/INDEX.json",
+    "latest_pointer": "technical_report/evidence/minimax_h3_desktop/delivery/LATEST_DELIVERY_REVIEWER_EVIDENCE_ACTIVE_HOLD_RECONCILIATION_PACKET",
+    "manager_stage_complete_counter_evidence_line": {
+      "diagnostic": "intentional_hold",
+      "event_type": "life.manager.stage_decision",
+      "line_number": 12011,
+      "path": "<private-path>"
+    },
+    "mismatch_classification": "stale_or_misclassified_host_planner_hold; no additional project-local Reviewer-evidence field/path/schema gap was identified in the current latest repair packet.",
+    "operator_only_residual": {
+      "agent_subjective_listening_performed": false,
+      "av_sync_certified": false,
+      "only_remaining_gate": "operator_human_auditory_listening_and_semantic_av_sync_review_for_Turbo_quality_certification",
+      "semantic_av_quality_certified": false,
+      "status": "operator_action_required"
+    },
+    "packet_dir": "technical_report/evidence/minimax_h3_desktop/delivery/delivery_reviewer_evidence_active_hold_reconciliation_20260812T094326Z",
+    "raw_event_sha256_count": 0,
+    "reviewer_decision": "done",
+    "reviewer_verdict_independent": true,
+    "reviewer_verdict_path": "technical_report/evidence/minimax_h3_desktop/delivery/delivery_reviewer_evidence_active_hold_reconciliation_20260812T094326Z/reviewer_verdict.json",
+    "status": "accepted_active_hold_reconciliation_stale_hold_diagnosis",
+    "summary_path": "technical_report/evidence/minimax_h3_desktop/delivery/delivery_reviewer_evidence_active_hold_reconciliation_20260812T094326Z/summary.json"
+  },
+  "delivery_reviewer_evidence_recognition_repair": {
+    "claim_boundary": "Current-stage delivery Reviewer-evidence recognition repair only; it preserves prior automatable delivery evidence and leaves Turbo human listening / semantic AV-sync operator-only.",
+    "current_mission_id": "f497130bb319",
+    "current_stage": "delivery",
+    "diagnosis": "Current delivery repair packet now contains the fresh independent Reviewer verdict and sealed-handoff reference required by the Manager-facing schema; the only residual Turbo quality gate remains operator-only human listening/semantic AV-sync.",
+    "index_path": "technical_report/evidence/minimax_h3_desktop/delivery/delivery_reviewer_evidence_recognition_repair_20260812T085911Z/INDEX.json",
+    "latest_pointer": "technical_report/evidence/minimax_h3_desktop/delivery/LATEST_DELIVERY_REVIEWER_EVIDENCE_RECOGNITION_REPAIR_PACKET",
+    "legacy_canonical_chain_ready": true,
+    "legacy_canonical_chain_recognition_check_path": "technical_report/evidence/minimax_h3_desktop/delivery/delivery_reviewer_evidence_recognition_repair_20260812T085911Z/legacy_canonical_chain_recognition_check_20260812T085911Z.json",
+    "legacy_canonical_chain_status": "pass",
+    "legacy_canonical_chain_still_recognized": true,
+    "manager_recognition_check_mismatch_count": 0,
+    "manager_recognition_check_path": "technical_report/evidence/minimax_h3_desktop/delivery/delivery_reviewer_evidence_recognition_repair_20260812T085911Z/manager_recognition_check_20260812T085911Z.json",
+    "manager_recognition_check_ready": true,
+    "manager_recognition_check_status": "pass",
+    "manager_reviewer_handoff_crosswalk_path": "technical_report/evidence/minimax_h3_desktop/delivery/delivery_reviewer_evidence_recognition_repair_20260812T085911Z/manager_reviewer_handoff_crosswalk.json",
+    "manager_reviewer_handoff_crosswalk_status": "pass",
+    "manager_stage_authority_probe_path": "technical_report/evidence/minimax_h3_desktop/delivery/delivery_reviewer_evidence_recognition_repair_20260812T085911Z/manager_stage_authority_probe_20260812T092125Z.json",
+    "manager_stage_authority_probe_status": "pass_authority_stage_observation",
+    "manager_stage_reports_reviewer_evidence_complete": true,
+    "manager_stage_transition_status": "blocked_final_delivery_stage_no_advance_target_not_reviewer_evidence_incomplete",
+    "non_claims": [
+      "No GPU, Docker, model load, benchmark, Turbo rerun, Sol-Attn/DLO/DMD experiment, public release, public tag, force-push, history rewrite, or subjective listening was performed by this Reviewer verdict.",
+      "This verdict does not certify human auditory quality, semantic audio quality, semantic AV quality, or semantic AV-sync.",
+      "Turbo remains practical_disclosed_approx and is not BF16 fidelity evidence."
+    ],
+    "operator_only_residual": {
+      "agent_subjective_listening_performed": false,
+      "av_sync_certified": false,
+      "only_remaining_gate": "operator_human_auditory_listening_and_semantic_av_sync_review_for_Turbo_quality_certification",
+      "semantic_av_quality_certified": false,
+      "status": "operator_action_required"
+    },
+    "packet_dir": "technical_report/evidence/minimax_h3_desktop/delivery/delivery_reviewer_evidence_recognition_repair_20260812T085911Z",
+    "packet_summary_path": "technical_report/evidence/minimax_h3_desktop/delivery/delivery_reviewer_evidence_recognition_repair_20260812T085911Z/summary.json",
+    "ready_for_manager_recognition": true,
+    "reviewer_decision": "done",
+    "reviewer_status": "accepted_current_stage_delivery_reviewer_passed",
+    "reviewer_verdict_independent": true,
+    "reviewer_verdict_path": "technical_report/evidence/minimax_h3_desktop/delivery/delivery_reviewer_evidence_recognition_repair_20260812T085911Z/reviewer_verdict.json",
+    "reviewer_verdict_request_path": "technical_report/evidence/minimax_h3_desktop/delivery/delivery_reviewer_evidence_recognition_repair_20260812T085911Z/reviewer_verdict_request.json",
+    "schema_gap_analysis_path": "technical_report/evidence/minimax_h3_desktop/delivery/delivery_reviewer_evidence_recognition_repair_20260812T085911Z/schema_gap_analysis.json",
+    "schema_gap_status": "gap_identified_and_reviewer_evidence_repaired",
+    "sealed_reviewer_handoff_source": {
+      "current_stage": "delivery",
+      "kind": "round_reviewed_handoff",
+      "mission_id": "f497130bb319",
+      "path": "<private-path>",
+      "producer_role": "reviewer",
+      "review_status": "done",
+      "round": 1,
+      "summary": "Current delivery repair packet has fresh independent Reviewer evidence for the automatable delivery boundary; Turbo human listening and semantic AV-sync remain operator-only."
+    },
+    "sealed_reviewer_handoff_source_valid": true,
+    "status": "accepted_current_stage_delivery_reviewer_evidence_repair"
+  },
   "final_gates": {
+    "active_hold_sync_export_audit_gate": {
+      "active_hold_reconciliation_packet": "technical_report/evidence/minimax_h3_desktop/delivery/delivery_reviewer_evidence_active_hold_reconciliation_20260812T094326Z",
+      "active_hold_reconciliation_reviewer_verdict": "technical_report/evidence/minimax_h3_desktop/delivery/delivery_reviewer_evidence_active_hold_reconciliation_20260812T094326Z/reviewer_verdict.json",
+      "dir": "delivery/active_hold_sync_export_audit_20260812T095904Z",
+      "export_file_count": 89,
+      "export_status": "built",
+      "publication_audit_status": "pass",
+      "publication_issue_count": 0,
+      "status": "pass",
+      "strict_aggregation_status": "pass",
+      "summary_path": "delivery/active_hold_sync_export_audit_20260812T095904Z/summary.json"
+    },
     "claim_boundary": "CPU/static/export/audit gates only; no GPU, Docker-run, model-load, speed, fidelity, or quality claim is created by these gates.",
     "cpu_static_gate": {
       "dir": "delivery/final_cpu_static_gate_20260812T033107Z",
@@ -407,14 +648,14 @@
           "uuid": "GPU-ff0c8d25-2652-ce58-3ef7-e3a9aeeb3334"
         },
         "practical_default_candidate": "8-step",
-        "quality_certification": "structural_av_pass_semantic_quality_not_certified_human_listening_pending",
+        "quality_certification": "operator_accepted_practical_8step_with_known_4step_visual_failure_preserved",
         "quality_suite": {
           "all_cases_structural_av_pass": true,
           "analysis_path": "turbo_merged/quality_suite_runs/gpu3_turbo_quality_20260810T005611Z/quality_suite_analysis.json",
           "audio_energy_envelopes_path": "turbo_merged/quality_suite_runs/gpu3_turbo_quality_20260810T005611Z/audio_energy_envelopes.json",
           "baseline_seed0_comparison_path": "turbo_merged/quality_suite_runs/gpu3_turbo_quality_20260810T005611Z/baseline_seed0_quality_comparison.json",
           "case_count": 24,
-          "human_auditory_listening": "pending",
+          "human_auditory_listening": "operator_overall_playback_listening_accepted",
           "human_review_path": "turbo_merged/quality_suite_runs/gpu3_turbo_quality_20260810T005611Z/human_review.md",
           "latest_pointer": "turbo_merged/LATEST_QUALITY_SUITE_RUN_ID",
           "metric_limits": [
@@ -422,13 +663,37 @@
             "4-step/8-step paired pixel and waveform metrics compare two Turbo schedules, not either schedule against BF16 fidelity.",
             "Do not relabel this practical Turbo suite as fidelity evidence."
           ],
+          "operator_acceptance": {
+            "decision": "operator gate satisfied for overall practical release acceptance; retain 8-step as the default and retain the known 4-step failure disclosure",
+            "operator_statement_summary": "The operator reported that review was complete and that the results felt very good.",
+            "preserved_limits": {
+              "agent_subjective_listening_performed": false,
+              "four_step_promoted_to_default": false,
+              "known_4step_visual_failure_preserved": "p03-object_temporal_consistency-seed1-4step",
+              "turbo_is_bf16_exact_fidelity": false,
+              "turbo_track": "practical_disclosed_approx"
+            },
+            "recorded_utc": "2026-08-12T11:20:00Z",
+            "schema_version": "minimax-h3-turbo-operator-acceptance-v1",
+            "scope": {
+              "human_playback_and_listening_review_completed": true,
+              "overall_practical_quality_accepted": true,
+              "per_case_rubric_transcript_available": false,
+              "recommended_schedule": "8-step",
+              "semantic_av_sync_overall_accepted": true
+            },
+            "source": "direct operator statement after reviewing the generated results",
+            "status": "accepted_overall_by_operator"
+          },
+          "operator_acceptance_path": "turbo_merged/quality_suite_runs/gpu3_turbo_quality_20260810T005611Z/operator_acceptance.json",
+          "operator_overall_acceptance_recorded": true,
           "pair_count": 12,
-          "pending_human_review": true,
-          "quality_certification": "pending_human_review_and_prompt_matched_fidelity_references",
+          "pending_human_review": false,
+          "quality_certification": "operator_accepted_practical_8step_with_known_4step_visual_failure_preserved",
           "review_contact_sheet_count": 6,
           "run_dir": "turbo_merged/quality_suite_runs/gpu3_turbo_quality_20260810T005611Z",
           "run_id": "gpu3_turbo_quality_20260810T005611Z",
-          "status": "structural_av_suite_pass_semantic_quality_not_certified",
+          "status": "structural_av_suite_pass_operator_overall_acceptance_recorded",
           "steps": {
             "4": {
               "baseline_seed0_audio_cosine": 0.4118406135095135,
@@ -488,7 +753,7 @@
     "python3 tools/argus_ir04_aggregate.py --strict --input technical_report/evidence/minimax_h3_desktop --out technical_report/evidence/minimax_h3_desktop/delivery/argus_ir04_delivery_summary.json --report-out technical_report/final_technical_report.md --manifest-out technical_report/evidence/minimax_h3_desktop/delivery/package_manifest.json"
   ],
   "package_manifest": {
-    "entry_count": 107,
+    "entry_count": 152,
     "missing_optional_paths": [],
     "path": "technical_report/evidence/minimax_h3_desktop/delivery/package_manifest.json"
   },
@@ -504,5 +769,45 @@
     "cpu_static_tests_are_the_only_tests_counted_in_this_delivery": true,
     "gpu_docker_inference_tests_counted_as_passed": false,
     "skipped_gpu_placeholders_counted_as_coverage": false
+  },
+  "turbo_operator_gate_reviewer_packet": {
+    "accepted_for_current_stage_closing": true,
+    "agent_subjective_listening_performed": false,
+    "automatable_delivery_gates_complete": true,
+    "av_sync_certified": false,
+    "claim_boundary": "current delivery-stage automatable evidence crosswalk: strict delivery summary, final report boundary, CPU/static/export/publication/private-sync gates, Turbo 24-case operator-listening manifest, canonical closeout reviewer_verdict.json, sealed Reviewer handoff crosswalk, and package manifest inclusion after regeneration; no GPU, Docker, model load, subjective listening, public release, tag, or force push is introduced",
+    "exact_manager_hold_repair": "The timestamp-latest closeout packet now directly contains reviewer_verdict.json with status accepted_current_stage_delivery_reviewer_passed and manager_reviewer_handoff_crosswalk.json linking that verdict to the sealed independent Reviewer handoff. The LATEST_TURBO_OPERATOR_GATE_REVIEWER_PACKET pointer resolves to this closeout packet, eliminating the previous request-only/latest-packet ambiguity.",
+    "human_auditory_semantic_av_sync_gate": "operator_action_required",
+    "latest_pointer": "technical_report/evidence/minimax_h3_desktop/delivery/LATEST_TURBO_OPERATOR_GATE_REVIEWER_PACKET",
+    "manager_hold_diagnosis": "A timestamp-latest closeout directory existed with only reviewer_verdict_request.json, so a Manager could classify current-stage Reviewer evidence as incomplete even though the prior stage-closing packet had accepted Reviewer evidence. This repair makes the closeout packet itself canonical and gives it a complete reviewer_verdict.json plus sealed handoff crosswalk.",
+    "manager_recognition_check_mismatch_count": 0,
+    "manager_recognition_check_path": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/manager_recognition_check_20260812T082741Z.json",
+    "manager_recognition_check_ready": true,
+    "manager_recognition_check_status": "pass",
+    "manager_recognition_repair_path": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/manager_reviewer_handoff_crosswalk.json",
+    "manager_stage_closeout_crosswalk_path": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/manager_stage_closeout_crosswalk.json",
+    "manager_visibility_resolution_path": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/manager_visibility_resolution.json",
+    "media_listening_manifest_path": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/media_listening_manifest.json",
+    "operator_listening_manifest_case_count": 24,
+    "packet_dir": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z",
+    "reviewer_handoff_source": {
+      "frontier_disposition": "continue",
+      "kind": "round_reviewed_handoff",
+      "mission_id": "a0499db4322d",
+      "path": "<private-path>",
+      "producer_role": "reviewer",
+      "review_status": "done",
+      "round": 1,
+      "summary": "Current-stage delivery Reviewer evidence is now complete for the automatable Turbo operator-gate boundary; the only residual Turbo quality-certification gate is operator human auditory/semantic AV-sync review."
+    },
+    "reviewer_handoff_source_valid": true,
+    "reviewer_packet_path": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/reviewer_packet.md",
+    "reviewer_status": "accepted_current_stage_delivery_reviewer_passed",
+    "reviewer_verdict_independent": true,
+    "reviewer_verdict_path": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/reviewer_verdict.json",
+    "reviewer_verdict_request_path": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/reviewer_verdict_request.json",
+    "semantic_av_quality_certified": false,
+    "status": "accepted_current_stage_delivery_boundary",
+    "summary_path": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/summary.json"
   }
 }

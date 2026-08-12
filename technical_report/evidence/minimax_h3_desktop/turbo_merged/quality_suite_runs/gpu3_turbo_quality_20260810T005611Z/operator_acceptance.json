@@ -1,0 +1,22 @@
+{
+  "schema_version": "minimax-h3-turbo-operator-acceptance-v1",
+  "recorded_utc": "2026-08-12T11:20:00Z",
+  "status": "accepted_overall_by_operator",
+  "source": "direct operator statement after reviewing the generated results",
+  "operator_statement_summary": "The operator reported that review was complete and that the results felt very good.",
+  "scope": {
+    "human_playback_and_listening_review_completed": true,
+    "overall_practical_quality_accepted": true,
+    "recommended_schedule": "8-step",
+    "semantic_av_sync_overall_accepted": true,
+    "per_case_rubric_transcript_available": false
+  },
+  "preserved_limits": {
+    "turbo_track": "practical_disclosed_approx",
+    "turbo_is_bf16_exact_fidelity": false,
+    "known_4step_visual_failure_preserved": "p03-object_temporal_consistency-seed1-4step",
+    "four_step_promoted_to_default": false,
+    "agent_subjective_listening_performed": false
+  },
+  "decision": "operator gate satisfied for overall practical release acceptance; retain 8-step as the default and retain the known 4-step failure disclosure"
+}

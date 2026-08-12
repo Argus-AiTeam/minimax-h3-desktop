@@ -17,7 +17,8 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Iterable, Sequence
 
-DEFAULT_MAX_BYTES = 1_000_000
+DEFAULT_MAX_BYTES = 15_000_000
+CURATED_MEDIA_ROOT = "examples"
 
 FORBIDDEN_MODEL_EXTENSIONS = {
     ".safetensors",
@@ -172,8 +173,16 @@ def audit_tree(root: Path, *, max_bytes: int = DEFAULT_MAX_BYTES, prohibited_ter
             issues.append(AuditIssue("forbidden_model_extension", rel, "model/checkpoint-like file extension is forbidden", model_ext))
 
         media_ext = _has_forbidden_suffix(path, FORBIDDEN_MEDIA_EXTENSIONS)
-        if media_ext:
-            issues.append(AuditIssue("forbidden_media_extension", rel, "generated media/audio outputs are forbidden", media_ext))
+        curated_media = bool(path.relative_to(root).parts and path.relative_to(root).parts[0] == CURATED_MEDIA_ROOT)
+        if media_ext and not curated_media:
+            issues.append(
+                AuditIssue(
+                    "forbidden_media_extension",
+                    rel,
+                    "media/audio outputs are allowed only under the curated examples/ tree",
+                    media_ext,
+                )
+            )
 
         archive_ext = _has_forbidden_suffix(path, FORBIDDEN_ARCHIVE_SUFFIXES)
         if archive_ext:

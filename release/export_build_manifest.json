@@ -2,10 +2,10 @@
   "excluded_by_design": [
     "models and all checkpoint/adapter/weight files",
     "vendored upstream and runtime source trees",
-    "virtual environments, caches, pycache, PID files, raw logs, generated media/audio, Docker layers, archives, and credentials",
+    "virtual environments, caches, pycache, PID files, raw logs, non-curated generated media/audio, Docker layers, archives, and credentials",
     "Git remotes, tags, releases, and publication actions"
   ],
-  "file_count": 88,
+  "file_count": 102,
   "files": [
     {
       "path": ".argus_release_tree",
@@ -15,33 +15,69 @@
     },
     {
       "path": ".gitignore",
-      "sha256": "fafeff66712d77b6b37364a69d32d166d72a7e092dd9bcf8e81bf14a280ce06b",
-      "size_bytes": 269,
+      "sha256": "374ac95d8779e04195ca73bbe8dfcd0431b5a092916aa6516e2bf0790d008efc",
+      "size_bytes": 396,
       "source": "generated:gitignore"
     },
     {
       "path": "LICENSE",
-      "sha256": "8fdfe4ca37338420b26d07bc4faea15b8587dac59b321feda8110e949684a3d5",
-      "size_bytes": 460,
-      "source": "generated:license"
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "size_bytes": 11358,
+      "source": "LICENSE"
+    },
+    {
+      "path": "Makefile",
+      "sha256": "a0bf5d35a0accc2f24d81783cd24c4cc2699fae7ed89dbe82ac41f905fa02860",
+      "size_bytes": 1305,
+      "source": "Makefile"
     },
     {
       "path": "NOTICE",
-      "sha256": "42939e7a7bfac84625d3473ef74dd2701c31fa4e7fa70a0de9520e7f2499e77d",
-      "size_bytes": 733,
-      "source": "generated:notice"
+      "sha256": "3247da8eeb7bf53165a3638696504af02d749a7526c14b96bed97c8473adb71f",
+      "size_bytes": 972,
+      "source": "NOTICE"
     },
     {
       "path": "README.md",
-      "sha256": "7bb0a4141897152a38d529a4d082184545815a3037cc8604a3b60fec91869ffb",
-      "size_bytes": 12774,
-      "source": "generated:readme"
+      "sha256": "cf3f37ed3ce3aa0e58ad68ebab7f2e5cb04e8390972ed64ed69a553308efe58a",
+      "size_bytes": 13349,
+      "source": "README.md"
+    },
+    {
+      "path": "README_EN.md",
+      "sha256": "dd1442289da3518cde5c95f2f813af7b064ab94715cae4c49bb5fa43faeeebfb",
+      "size_bytes": 12692,
+      "source": "README_EN.md"
     },
     {
       "path": "code/pytest.py",
       "sha256": "a1d8ed8814b7d007fd3e9261516181673f4dc74a3ab3b2ba5e05e6f36a936778",
       "size_bytes": 16030,
       "source": "code/pytest.py"
+    },
+    {
+      "path": "examples/a6000-turbo-8step-sci-fi/contact-sheet.jpg",
+      "sha256": "d340eec35a645fd407f3be2f5527ef840cdad74272e825b948c7b718413ab273",
+      "size_bytes": 236670,
+      "source": "examples/a6000-turbo-8step-sci-fi/contact-sheet.jpg"
+    },
+    {
+      "path": "examples/a6000-turbo-8step-sci-fi/metadata.json",
+      "sha256": "17d29060699d6116b686ef9b4085e2987b11a3287b4c0abaf080dbfa7edf4d41",
+      "size_bytes": 2105,
+      "source": "examples/a6000-turbo-8step-sci-fi/metadata.json"
+    },
+    {
+      "path": "examples/a6000-turbo-8step-sci-fi/orbital-shipyard-turbo-8step.mp4",
+      "sha256": "454fceb57b1daf60dc5db1ade9aae295cee2ecd16fd90ab2c2f16c7b626db69a",
+      "size_bytes": 11252694,
+      "source": "examples/a6000-turbo-8step-sci-fi/orbital-shipyard-turbo-8step.mp4"
+    },
+    {
+      "path": "examples/a6000-turbo-8step-sci-fi/prompt.txt",
+      "sha256": "037b355e2328c45d3f42d796a23becaa111e752074efcd40bb7a7663bc370adf",
+      "size_bytes": 747,
+      "source": "examples/a6000-turbo-8step-sci-fi/prompt.txt"
     },
     {
       "path": "ports/minimax_h3_a6000/NOTICE",
@@ -51,8 +87,8 @@
     },
     {
       "path": "ports/minimax_h3_a6000/README.md",
-      "sha256": "8d3da0d2f267c1980dfa765c9e94801845c392ef83dbf05f8d45c95a03b08584",
-      "size_bytes": 15193,
+      "sha256": "6211cd4d100dd91ad730c79d79746dcd3b58724d0e19331f4eeb68e32541f08f",
+      "size_bytes": 16394,
       "source": "ports/minimax_h3_a6000/README.md"
     },
     {
@@ -309,8 +345,8 @@
     },
     {
       "path": "release/github_release_manifest.json",
-      "sha256": "43f698e577877591be38dc18da159c00c952731698f1c55ba2fcad44f1098d6d",
-      "size_bytes": 5000,
+      "sha256": "f1a7bf692f0c9eace09780279aba7c8f0c5f739cebb905f00246f13d4dc7bbc0",
+      "size_bytes": 6027,
       "source": "release/github_release_manifest.json"
     },
     {
@@ -356,6 +392,24 @@
       "source": "scripts/a6000_one_command.sh"
     },
     {
+      "path": "scripts/build_runtime.sh",
+      "sha256": "6fb791f36f67b52a8aae86639553f1bdf2a582f97c9147dac4048c1cf742be1f",
+      "size_bytes": 2333,
+      "source": "scripts/build_runtime.sh"
+    },
+    {
+      "path": "scripts/prepare_models.sh",
+      "sha256": "74a3476253d4286fbe8545738d16309c7dadb6b54b93b05dbf0fbe1e63ef6a83",
+      "size_bytes": 5450,
+      "source": "scripts/prepare_models.sh"
+    },
+    {
+      "path": "scripts/run_turbo_demo.sh",
+      "sha256": "4008af5c350d0787803059d5621bad44c09ee58b2dd528781056994fd70034b3",
+      "size_bytes": 13560,
+      "source": "scripts/run_turbo_demo.sh"
+    },
+    {
       "path": "technical_report/evidence/minimax_h3_desktop/baseline_a6000/baseline_certification.json",
       "sha256": "387a0a5fcac5af92b9a05fc2e23717deff3760afbad0ce10abfd21815e832fd7",
       "size_bytes": 11043,
@@ -369,8 +423,8 @@
     },
     {
       "path": "technical_report/evidence/minimax_h3_desktop/delivery/argus_ir04_delivery_summary.json",
-      "sha256": "f94242a2f9d6121cbe4ffedceee1f850a93bdaab5635a819ec4d999eec938d87",
-      "size_bytes": 27137,
+      "sha256": "9953432f85b3aa36f8953a75d24d432db4f0cd248f2154e5a46615d78dfc09ef",
+      "size_bytes": 51339,
       "source": "technical_report/evidence/minimax_h3_desktop/delivery/argus_ir04_delivery_summary.json"
     },
     {
@@ -452,21 +506,33 @@
       "source": "technical_report/evidence/minimax_h3_desktop/sol_engine_port/sol_attn_h3_matched_retest_r8_n3_20260812T013544Z/decision.json"
     },
     {
+      "path": "technical_report/evidence/minimax_h3_desktop/turbo_merged/quality_suite_runs/gpu3_turbo_quality_20260810T005611Z/operator_acceptance.json",
+      "sha256": "2cabc8b9083643e57ab8371c656061343c2a575ebac062ab9a5ebb6c2af0f089",
+      "size_bytes": 1075,
+      "source": "technical_report/evidence/minimax_h3_desktop/turbo_merged/quality_suite_runs/gpu3_turbo_quality_20260810T005611Z/operator_acceptance.json"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/turbo_merged/quality_suite_runs/gpu3_turbo_quality_20260810T005611Z/quality_suite_analysis.json",
+      "sha256": "7fcd0f18cc3c73842faca2c431feb31883a15e4e067320be545c599c954cee52",
+      "size_bytes": 38141,
+      "source": "technical_report/evidence/minimax_h3_desktop/turbo_merged/quality_suite_runs/gpu3_turbo_quality_20260810T005611Z/quality_suite_analysis.json"
+    },
+    {
       "path": "technical_report/final_technical_report.md",
-      "sha256": "a963b55a49a0df871b61bb0ad9f13edcdd73e528e4293426effbbaf962609ffc",
-      "size_bytes": 15498,
+      "sha256": "0442abe5c8653f937c9a32ac555403eecf498da1949a47b9635eef2ac3dd7165",
+      "size_bytes": 26271,
       "source": "technical_report/final_technical_report.md"
     },
     {
       "path": "technical_report/minimax_h3_a6000_performance.md",
-      "sha256": "d63e5714511e6b9d9203e279a742ad82ec90e392f653093839d0aab452714880",
-      "size_bytes": 19366,
+      "sha256": "035f4d8ff896dda6c92b1815f82a847c2415ba95f110e687b5a047edf6fc1ed0",
+      "size_bytes": 19400,
       "source": "technical_report/minimax_h3_a6000_performance.md"
     },
     {
       "path": "technical_report/progress_update.md",
-      "sha256": "0ecd09fd70610ade9bd0a3661cd0a6bc8c695d7f9dd56955a0a4409b2df70c2c",
-      "size_bytes": 4997,
+      "sha256": "54e2d6f6fb39b3ffb31bc8e42a59e005b44b25da8428d92e795d4e40702fc00f",
+      "size_bytes": 5049,
       "source": "technical_report/progress_update.md"
     },
     {
@@ -477,8 +543,8 @@
     },
     {
       "path": "tests/test_github_release_tree_builder.py",
-      "sha256": "e1da975970e8c3fe5ff2e62b190b941d79b76ac64fa37aad5ed22d4e8bba6f0a",
-      "size_bytes": 5763,
+      "sha256": "1f03736089f35e17483f1b16499a2f04df9acab4e7b08f12114542f822d0c76d",
+      "size_bytes": 6342,
       "source": "tests/test_github_release_tree_builder.py"
     },
     {
@@ -488,9 +554,15 @@
       "source": "tests/test_minimax_h3_a6000_performance_report.py"
     },
     {
+      "path": "tests/test_public_quickstart.py",
+      "sha256": "960a4879fdb9f777ea63a2681d34cbf62d20fedf2702a9be33affc4ccabd2c84",
+      "size_bytes": 2954,
+      "source": "tests/test_public_quickstart.py"
+    },
+    {
       "path": "tests/test_publication_audit.py",
-      "sha256": "2a13415c1ad7eedeb1ffec26405e6f97b5deb12e679c78b854103086ce93215f",
-      "size_bytes": 2887,
+      "sha256": "253d425783ca4f224e0d430655351c825159ed2896f37f992faabe9cfc7135d5",
+      "size_bytes": 3561,
       "source": "tests/test_publication_audit.py"
     },
     {
@@ -501,33 +573,45 @@
     },
     {
       "path": "tools/argus_ir04_aggregate.py",
-      "sha256": "45cb8235a44caa32e83d8f87e6c9fdcaa89c2d5a5f28895f669d153cc5100314",
-      "size_bytes": 92943,
+      "sha256": "ea22b8979ec54e2d72cd08a08d5f2719412e3550ad904ff507488568f8075b05",
+      "size_bytes": 158218,
       "source": "tools/argus_ir04_aggregate.py"
     },
     {
       "path": "tools/build_github_release_tree.py",
-      "sha256": "1491a8d3f16b2b64af139dff357d4ccfc61b4c96c822c0e9d2c895c87e944356",
-      "size_bytes": 29017,
+      "sha256": "7205b8e9f84f6a66a8a53780d4572f9b91b5caa4e10f61d0b842e255c5551309",
+      "size_bytes": 29430,
       "source": "tools/build_github_release_tree.py"
     },
     {
       "path": "tools/build_periodic_progress.py",
-      "sha256": "5239b223ab67f01d7536d257f02430c4fce2d6f9be9eadbbdf79915f4cf4aa2c",
-      "size_bytes": 24854,
+      "sha256": "b88caeb64fe452cc62e5994de091499f572357e72c12c6c52d0bc3296a78672b",
+      "size_bytes": 25992,
       "source": "tools/build_periodic_progress.py"
     },
     {
       "path": "tools/minimax_h3_a6000_performance_report.py",
-      "sha256": "1c91d3aedae25fe6fc5e3437a9f8c46921cca1c6f25bab00e2a9a85d07f25c68",
-      "size_bytes": 102387,
+      "sha256": "01f152d525265839266c9d6c1c6e07263bfeb5d80ae7326ec552c8d156e966d9",
+      "size_bytes": 103477,
       "source": "tools/minimax_h3_a6000_performance_report.py"
     },
     {
       "path": "tools/publication_audit.py",
-      "sha256": "70b17dfb97076f96d3c46911274f542e72ce66300609c133b66889bdeebc12e2",
-      "size_bytes": 8949,
+      "sha256": "e5acb7498e6e59169f41bdfd148ad8ff7c779152ae046df2616f9dfbe7f0fc01",
+      "size_bytes": 9276,
       "source": "tools/publication_audit.py"
+    },
+    {
+      "path": "tools/turbo_lora_offline_merge.py",
+      "sha256": "33d5193a850b8904ecb6759dc06bd32028e63f7bd07fb0bf2faa4148b75375e8",
+      "size_bytes": 39228,
+      "source": "tools/turbo_lora_offline_merge.py"
+    },
+    {
+      "path": "tools/turbo_lora_peft.py",
+      "sha256": "7ad8703407f0f8d9f250ee2c47c0175eab7ce9c1d061b8ed4816febe0d424352",
+      "size_bytes": 25646,
+      "source": "tools/turbo_lora_peft.py"
     },
     {
       "path": "tools/verify_run.py",

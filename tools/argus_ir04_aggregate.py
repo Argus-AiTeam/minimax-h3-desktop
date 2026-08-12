@@ -65,6 +65,47 @@ R8_FORMAL_N10_TERMINAL_FILES = (
 FINAL_CPU_STATIC_GATE_PREFIX = "final_cpu_static_gate_"
 FINAL_DECISIVE_EXPORT_AUDIT_PREFIX = "final_decisive_export_audit_"
 FORMAL_N10_CPU_SYNC_EXPORT_AUDIT_PREFIX = "formal_n10_cpu_sync_export_audit_"
+ACTIVE_HOLD_SYNC_EXPORT_AUDIT_PREFIX = "active_hold_sync_export_audit_"
+TURBO_OPERATOR_GATE_LATEST_REL = "delivery/LATEST_TURBO_OPERATOR_GATE_REVIEWER_PACKET"
+TURBO_OPERATOR_GATE_PACKET_FILES = (
+    "summary.json",
+    "media_listening_manifest.json",
+    "reviewer_packet.md",
+    "reviewer_verdict.json",
+    "reviewer_verdict_request.json",
+    "manager_reviewer_handoff_crosswalk.json",
+    "manager_stage_closeout_crosswalk.json",
+    "manager_visibility_resolution.json",
+)
+DELIVERY_REVIEWER_RECOGNITION_REPAIR_LATEST_REL = "delivery/LATEST_DELIVERY_REVIEWER_EVIDENCE_RECOGNITION_REPAIR_PACKET"
+DELIVERY_REVIEWER_RECOGNITION_REPAIR_PACKET_FILES = (
+    "INDEX.json",
+    "summary.json",
+    "schema_gap_analysis.json",
+    "manager_stage_authority_probe_*.json",
+    "manager_recognition_probe_*.json",
+    "manager_recognition_check_*.json",
+    "legacy_canonical_chain_recognition_check*.json",
+    "manager_reviewer_handoff_crosswalk.json",
+    "reviewer_verdict.json",
+    "reviewer_verdict_request.json",
+)
+DELIVERY_REVIEWER_ACTIVE_HOLD_RECONCILIATION_LATEST_REL = "delivery/LATEST_DELIVERY_REVIEWER_EVIDENCE_ACTIVE_HOLD_RECONCILIATION_PACKET"
+DELIVERY_REVIEWER_ACTIVE_HOLD_RECONCILIATION_PACKET_FILES = (
+    "INDEX.json",
+    "summary.json",
+    "active_hold_reconciliation_probe.json",
+    "reviewer_verdict.json",
+)
+CURRENT_MANAGER_HOLD_NO_GAP_LATEST_REL = "delivery/LATEST_CURRENT_MANAGER_HOLD_NO_GAP_PROBE"
+CURRENT_MANAGER_HOLD_NO_GAP_PACKET_FILES = (
+    "INDEX.json",
+    "summary.json",
+    "current_manager_hold_no_gap_probe.json",
+    "reviewer_verdict_request.json",
+    "reviewer_verdict.json",
+    "manager_reviewer_handoff_crosswalk.json",
+)
 
 Fidelity = "fidelity_bf16_exact"
 Practical = "practical_disclosed_approx"
@@ -281,6 +322,7 @@ def summarize_turbo_quality(root: Path) -> dict[str, Any]:
     baseline_comparison_path = run_dir / "baseline_seed0_quality_comparison.json"
     audio_energy_path = run_dir / "audio_energy_envelopes.json"
     human_review_path = run_dir / "human_review.md"
+    operator_acceptance_path = run_dir / "operator_acceptance.json"
     analysis = load_json(analysis_path)
     baseline_comparison = load_json(baseline_comparison_path)
     audio_energy = json.loads(read_text(audio_energy_path))
@@ -329,7 +371,16 @@ def summarize_turbo_quality(root: Path) -> dict[str, Any]:
     contact_sheets = sorted((run_dir / "contacts").glob("REVIEW_*.jpg"))
     if len(contact_sheets) != 6:
         raise AggregationError(f"expected six review contact sheets, got {len(contact_sheets)}")
-    pending_human_review = "PENDING" in human_review
+    operator_acceptance = load_json(operator_acceptance_path) if operator_acceptance_path.is_file() else {}
+    operator_accepted = bool(
+        operator_acceptance.get("status") == "accepted_overall_by_operator"
+        and operator_acceptance.get("scope", {}).get("human_playback_and_listening_review_completed") is True
+        and operator_acceptance.get("scope", {}).get("overall_practical_quality_accepted") is True
+        and operator_acceptance.get("preserved_limits", {}).get("turbo_is_bf16_exact_fidelity") is False
+        and operator_acceptance.get("preserved_limits", {}).get("four_step_promoted_to_default") is False
+        and operator_acceptance.get("preserved_limits", {}).get("agent_subjective_listening_performed") is False
+    )
+    pending_human_review = not operator_accepted
     return {
         "run_id": run_id,
         "run_dir": rel(run_dir, root),
@@ -338,15 +389,26 @@ def summarize_turbo_quality(root: Path) -> dict[str, Any]:
         "baseline_seed0_comparison_path": rel(baseline_comparison_path, root),
         "audio_energy_envelopes_path": rel(audio_energy_path, root),
         "human_review_path": rel(human_review_path, root),
+        "operator_acceptance_path": rel(operator_acceptance_path, root) if operator_acceptance_path.is_file() else None,
+        "operator_acceptance": operator_acceptance or None,
+        "operator_overall_acceptance_recorded": operator_accepted,
         "review_contact_sheet_count": len(contact_sheets),
         "case_count": analysis["case_count"],
         "pair_count": analysis["pair_count"],
         "steps": steps,
         "all_cases_structural_av_pass": True,
-        "quality_certification": analysis.get("quality_certification"),
-        "status": analysis["status"],
+        "quality_certification": (
+            "operator_accepted_practical_8step_with_known_4step_visual_failure_preserved"
+            if operator_accepted
+            else analysis.get("quality_certification")
+        ),
+        "status": (
+            "structural_av_suite_pass_operator_overall_acceptance_recorded"
+            if operator_accepted
+            else analysis["status"]
+        ),
         "pending_human_review": pending_human_review,
-        "human_auditory_listening": "pending",
+        "human_auditory_listening": "operator_overall_playback_listening_accepted" if operator_accepted else "pending",
         "metric_limits": analysis.get("metric_limits", []),
     }
 
@@ -452,7 +514,11 @@ def summarize_turbo(root: Path, baseline: dict[str, Any]) -> dict[str, Any]:
         "quality_suite": quality_suite,
         "practical_default_candidate": "8-step",
         "ultra_fast_quality_cost_experimental": "4-step",
-        "quality_certification": "structural_av_pass_semantic_quality_not_certified_human_listening_pending",
+        "quality_certification": (
+            quality_suite["quality_certification"]
+            if quality_suite.get("operator_overall_acceptance_recorded")
+            else "structural_av_pass_semantic_quality_not_certified_human_listening_pending"
+        ),
         "fidelity_claim": "rejected_not_fidelity_lane",
         "gpu2_bringup_scope": "earlier GPU2 smoke is bring-up only and is not used as a speedup denominator/result",
     }
@@ -887,6 +953,7 @@ def summarize_final_gates(root: Path) -> dict[str, Any]:
     cpu_dir = _latest_prefixed_dir(delivery_dir, FINAL_CPU_STATIC_GATE_PREFIX)
     decisive_dir = _latest_prefixed_dir(delivery_dir, FINAL_DECISIVE_EXPORT_AUDIT_PREFIX)
     sync_dir = _latest_prefixed_dir(delivery_dir, FORMAL_N10_CPU_SYNC_EXPORT_AUDIT_PREFIX)
+    active_hold_sync_dir = _latest_prefixed_dir(delivery_dir, ACTIVE_HOLD_SYNC_EXPORT_AUDIT_PREFIX)
 
     cpu_status = "not_available"
     cpu_summary = ""
@@ -909,7 +976,21 @@ def summarize_final_gates(root: Path) -> dict[str, Any]:
         sync_summary = load_json(summary_path) if summary_path.is_file() else {}
         sync_status = sync_summary.get("status") or "present_but_not_pass"
 
-    overall = "pass" if cpu_status == "pass" and decisive_status == "pass" and sync_status in {"not_available", "pass"} else "pending_or_failed"
+    active_hold_sync_status = "not_available"
+    active_hold_sync_summary: dict[str, Any] = {}
+    if active_hold_sync_dir is not None:
+        summary_path = active_hold_sync_dir / "summary.json"
+        active_hold_sync_summary = load_json(summary_path) if summary_path.is_file() else {}
+        active_hold_sync_status = active_hold_sync_summary.get("status") or "present_but_not_pass"
+
+    overall = (
+        "pass"
+        if cpu_status == "pass"
+        and decisive_status == "pass"
+        and sync_status in {"not_available", "pass"}
+        and active_hold_sync_status in {"not_available", "pass"}
+        else "pending_or_failed"
+    )
     return {
         "status": overall,
         "cpu_static_gate": {
@@ -936,7 +1017,701 @@ def summarize_final_gates(root: Path) -> dict[str, Any]:
             "push_performed": sync_summary.get("push_performed"),
             "reviewer_status": sync_summary.get("reviewer_status"),
         },
+        "active_hold_sync_export_audit_gate": {
+            "status": active_hold_sync_status,
+            "dir": rel(active_hold_sync_dir, root) if active_hold_sync_dir is not None else None,
+            "summary_path": rel(active_hold_sync_dir / "summary.json", root) if active_hold_sync_dir is not None else None,
+            "strict_aggregation_status": active_hold_sync_summary.get("strict_aggregation_status"),
+            "export_status": active_hold_sync_summary.get("export_status"),
+            "export_file_count": active_hold_sync_summary.get("export_file_count"),
+            "publication_audit_status": active_hold_sync_summary.get("publication_audit_status"),
+            "publication_issue_count": active_hold_sync_summary.get("publication_issue_count"),
+            "active_hold_reconciliation_packet": active_hold_sync_summary.get("active_hold_reconciliation_packet"),
+            "active_hold_reconciliation_reviewer_verdict": active_hold_sync_summary.get("active_hold_reconciliation_reviewer_verdict"),
+        },
         "claim_boundary": "CPU/static/export/audit gates only; no GPU, Docker-run, model-load, speed, fidelity, or quality claim is created by these gates.",
+    }
+
+
+def _resolve_latest_packet_dir(root: Path, repo_root: Path, latest_rel: str) -> Path | None:
+    latest_path = root / latest_rel
+    if not latest_path.is_file():
+        return None
+    pointer = read_text(latest_path).strip()
+    if not pointer:
+        raise AggregationError(f"latest packet selector is empty: {latest_path}")
+    raw = Path(pointer)
+    candidates = [raw] if raw.is_absolute() else [repo_root / raw, root / raw, latest_path.parent / raw]
+    for candidate in candidates:
+        if candidate.is_dir():
+            return candidate
+    raise AggregationError(f"latest packet selector {latest_path} points to missing directory: {pointer}")
+
+
+def _indexed_packet_path(packet_dir: Path, repo_root: Path, index: dict[str, Any], key: str) -> Path | None:
+    value = index.get(key)
+    if not isinstance(value, str) or not value.strip():
+        return None
+    raw = Path(value)
+    candidates = [raw] if raw.is_absolute() else [repo_root / raw, packet_dir / raw.name, packet_dir / raw]
+    for candidate in candidates:
+        if candidate.is_file():
+            return candidate
+    return None
+
+
+def _recursive_key_count(value: Any, key: str) -> int:
+    if isinstance(value, dict):
+        return sum((1 if item_key == key else 0) + _recursive_key_count(item_value, key) for item_key, item_value in value.items())
+    if isinstance(value, list):
+        return sum(_recursive_key_count(item, key) for item in value)
+    return 0
+
+
+def summarize_delivery_reviewer_evidence_repair(root: Path, *, repo_root: Path) -> dict[str, Any]:
+    """Summarize the current-stage delivery Reviewer-recognition repair packet.
+
+    This is separate from the older Turbo operator-gate packet: it exposes the
+    fresh current_stage=delivery Reviewer verdict and sealed Reviewer handoff
+    that a Manager checker may require without reusing the ambiguous Turbo
+    closeout chain as the current repair verdict.
+    """
+
+    latest_path = root / DELIVERY_REVIEWER_RECOGNITION_REPAIR_LATEST_REL
+    packet_dir = _resolve_latest_packet_dir(root, repo_root, DELIVERY_REVIEWER_RECOGNITION_REPAIR_LATEST_REL)
+    if packet_dir is None:
+        return {
+            "status": "not_available",
+            "latest_pointer": repo_rel(latest_path, repo_root),
+            "claim_boundary": "No current-stage delivery Reviewer-evidence recognition repair packet selector is present in this evidence root.",
+        }
+
+    index_path = packet_dir / "INDEX.json"
+    index = load_json(index_path)
+    unresolved_reviewer_blocker = index.get("exact_blocker_for_reviewer")
+    if isinstance(unresolved_reviewer_blocker, str) and unresolved_reviewer_blocker.strip():
+        raise AggregationError(
+            "delivery Reviewer repair INDEX still advertises unresolved exact_blocker_for_reviewer: "
+            f"{repo_rel(index_path, repo_root)}"
+        )
+    summary_path = _indexed_packet_path(packet_dir, repo_root, index, "summary") or packet_dir / "summary.json"
+    manager_stage_probe_path = _indexed_packet_path(packet_dir, repo_root, index, "manager_stage_authority_probe")
+    if manager_stage_probe_path is None:
+        manager_stage_probe_paths = sorted(packet_dir.glob("manager_stage_authority_probe_*.json"))
+        manager_stage_probe_path = manager_stage_probe_paths[-1] if manager_stage_probe_paths else None
+    manager_stage_probe = load_json(manager_stage_probe_path) if manager_stage_probe_path is not None else {}
+    schema_gap_path = _indexed_packet_path(packet_dir, repo_root, index, "schema_gap_analysis") or packet_dir / "schema_gap_analysis.json"
+    schema_gap = load_json(schema_gap_path) if schema_gap_path.is_file() else {}
+    verdict_path = _indexed_packet_path(packet_dir, repo_root, index, "reviewer_verdict") or packet_dir / "reviewer_verdict.json"
+    verdict = load_json(verdict_path) if verdict_path.is_file() else {}
+    request_path = _indexed_packet_path(packet_dir, repo_root, index, "reviewer_verdict_request") or packet_dir / "reviewer_verdict_request.json"
+    crosswalk_path = _indexed_packet_path(packet_dir, repo_root, index, "manager_reviewer_handoff_crosswalk") or packet_dir / "manager_reviewer_handoff_crosswalk.json"
+    crosswalk = load_json(crosswalk_path) if crosswalk_path.is_file() else {}
+    recognition_check_path = _indexed_packet_path(packet_dir, repo_root, index, "manager_recognition_check")
+    if recognition_check_path is None:
+        recognition_check_paths = sorted(packet_dir.glob("manager_recognition_check*.json"))
+        recognition_check_path = recognition_check_paths[-1] if recognition_check_paths else None
+    recognition_check = load_json(recognition_check_path) if recognition_check_path is not None else {}
+    legacy_check_path = _indexed_packet_path(packet_dir, repo_root, index, "legacy_canonical_chain_recognition_check")
+    if legacy_check_path is None:
+        legacy_check_paths = sorted(packet_dir.glob("legacy_canonical_chain_recognition_check*.json"))
+        legacy_check_path = legacy_check_paths[-1] if legacy_check_paths else None
+    legacy_check = load_json(legacy_check_path) if legacy_check_path is not None else {}
+
+    boundary = verdict.get("boundary_covered") if isinstance(verdict.get("boundary_covered"), dict) else {}
+    index_boundary = index.get("operator_only_boundary") if isinstance(index.get("operator_only_boundary"), dict) else {}
+    schema_boundary = schema_gap.get("operator_only_boundary_preserved") if isinstance(schema_gap.get("operator_only_boundary_preserved"), dict) else {}
+    operator_only_gate = (
+        index_boundary.get("only_remaining_operator_gate")
+        or schema_boundary.get("only_remaining_operator_gate")
+        or "operator_human_auditory_listening_and_semantic_av_sync_review_for_Turbo_quality_certification"
+    )
+    agent_subjective_listening = bool(boundary.get("agent_subjective_listening_performed") or index_boundary.get("agent_subjective_listening_performed") or schema_boundary.get("agent_subjective_listening_performed"))
+    semantic_certified = bool(boundary.get("semantic_av_quality_certified") or index_boundary.get("semantic_av_quality_certified") or schema_boundary.get("semantic_av_quality_certified"))
+    av_sync_certified = bool(boundary.get("av_sync_certified") or index_boundary.get("av_sync_certified") or schema_boundary.get("av_sync_certified"))
+    if agent_subjective_listening:
+        raise AggregationError(f"delivery Reviewer repair packet claims agent subjective listening: {verdict_path}")
+    if semantic_certified or av_sync_certified:
+        raise AggregationError(f"delivery Reviewer repair packet certifies subjective semantic AV/audio quality: {verdict_path}")
+
+    handoff_source: dict[str, Any] = {}
+    for source in (
+        verdict.get("sealed_reviewer_handoff_source"),
+        verdict.get("sealed_reviewer_handoff_reference"),
+        crosswalk.get("fresh_reviewer_handoff_source"),
+        crosswalk.get("expected_fresh_reviewer_handoff_source"),
+        index.get("sealed_reviewer_handoff_reference"),
+    ):
+        if isinstance(source, dict) and source.get("path"):
+            handoff_source = source
+            break
+    handoff_valid = bool(
+        handoff_source.get("path")
+        and handoff_source.get("kind") == "round_reviewed_handoff"
+        and handoff_source.get("producer_role") == "reviewer"
+        and handoff_source.get("review_status") == "done"
+        and handoff_source.get("current_stage") == "delivery"
+    )
+    verdict_status = verdict.get("status") or index.get("status") or "not_available"
+    verdict_independent = bool(verdict.get("verdict_is_independent") is True or handoff_valid)
+    verdict_accepted = bool(
+        verdict_path.is_file()
+        and verdict.get("current_stage") == "delivery"
+        and verdict.get("decision") == "done"
+        and verdict_status == "accepted_current_stage_delivery_reviewer_passed"
+        and verdict_independent
+    )
+    recognition_ready = bool(
+        recognition_check.get("status") == "pass"
+        and recognition_check.get("ready_for_manager_recognition") is True
+        and recognition_check.get("mismatch_count") == 0
+    )
+    crosswalk_ready = bool(
+        crosswalk.get("status") == "pass"
+        and (crosswalk.get("manager_recognition_fields_after_reviewer") or {}).get("current_repair_packet_has_fresh_independent_reviewer_verdict") is True
+    )
+    schema_gap_ready = schema_gap.get("status") in {
+        "gap_identified_and_reviewer_evidence_repaired",
+        "pass",
+    }
+    legacy_ready = bool(
+        legacy_check.get("status") == "pass"
+        and legacy_check.get("ready_for_manager_recognition") is True
+        and legacy_check.get("mismatch_count") == 0
+    )
+    ready = bool(verdict_accepted and handoff_valid and recognition_ready and crosswalk_ready and schema_gap_ready and not agent_subjective_listening and not semantic_certified and not av_sync_certified)
+
+    return {
+        "status": index.get("status", "present"),
+        "packet_dir": repo_rel(packet_dir, repo_root),
+        "latest_pointer": repo_rel(latest_path, repo_root),
+        "index_path": repo_rel(index_path, repo_root),
+        "packet_summary_path": repo_rel(summary_path, repo_root) if summary_path.is_file() else None,
+        "manager_stage_authority_probe_path": repo_rel(manager_stage_probe_path, repo_root) if manager_stage_probe_path is not None else None,
+        "manager_stage_authority_probe_status": manager_stage_probe.get("status"),
+        "manager_stage_reports_reviewer_evidence_complete": manager_stage_probe.get("manager_stage_reports_reviewer_evidence_complete"),
+        "manager_stage_transition_status": manager_stage_probe.get("stage_transition_status"),
+        "current_stage": verdict.get("current_stage") or index.get("current_stage"),
+        "current_mission_id": verdict.get("current_mission_id") or index.get("current_mission_id"),
+        "schema_gap_analysis_path": repo_rel(schema_gap_path, repo_root) if schema_gap_path.is_file() else None,
+        "schema_gap_status": schema_gap.get("status"),
+        "reviewer_verdict_path": repo_rel(verdict_path, repo_root) if verdict_path.is_file() else None,
+        "reviewer_verdict_request_path": repo_rel(request_path, repo_root) if request_path.is_file() else None,
+        "reviewer_status": verdict_status,
+        "reviewer_decision": verdict.get("decision"),
+        "reviewer_verdict_independent": verdict_independent,
+        "sealed_reviewer_handoff_source": handoff_source or None,
+        "sealed_reviewer_handoff_source_valid": handoff_valid,
+        "manager_reviewer_handoff_crosswalk_path": repo_rel(crosswalk_path, repo_root) if crosswalk_path.is_file() else None,
+        "manager_reviewer_handoff_crosswalk_status": crosswalk.get("status"),
+        "manager_recognition_check_path": repo_rel(recognition_check_path, repo_root) if recognition_check_path is not None else None,
+        "manager_recognition_check_status": recognition_check.get("status"),
+        "manager_recognition_check_ready": recognition_check.get("ready_for_manager_recognition"),
+        "manager_recognition_check_mismatch_count": recognition_check.get("mismatch_count"),
+        "legacy_canonical_chain_recognition_check_path": repo_rel(legacy_check_path, repo_root) if legacy_check_path is not None else None,
+        "legacy_canonical_chain_status": legacy_check.get("status"),
+        "legacy_canonical_chain_ready": legacy_check.get("ready_for_manager_recognition"),
+        "ready_for_manager_recognition": ready,
+        "operator_only_residual": {
+            "only_remaining_gate": operator_only_gate,
+            "agent_subjective_listening_performed": agent_subjective_listening,
+            "semantic_av_quality_certified": semantic_certified,
+            "av_sync_certified": av_sync_certified,
+            "status": "operator_action_required",
+        },
+        "non_claims": verdict.get("non_claims") or schema_gap.get("non_claims") or [],
+        "claim_boundary": "Current-stage delivery Reviewer-evidence recognition repair only; it preserves prior automatable delivery evidence and leaves Turbo human listening / semantic AV-sync operator-only.",
+        "diagnosis": recognition_check.get("diagnosis") or schema_gap.get("exact_prior_missing_reviewer_evidence_requirement"),
+        "legacy_canonical_chain_still_recognized": legacy_ready,
+    }
+
+
+def summarize_delivery_reviewer_active_hold_reconciliation(root: Path, *, repo_root: Path) -> dict[str, Any]:
+    """Summarize the accepted active-hold reconciliation packet.
+
+    This packet is not new model evidence. It records the current Manager/Planner
+    hold surfaces, preserves the Manager-stage complete counter-evidence, and
+    requires an independent Reviewer verdict before delivery report/manifest
+    surfaces may claim the stale-hold diagnosis is accepted.
+    """
+
+    latest_path = root / DELIVERY_REVIEWER_ACTIVE_HOLD_RECONCILIATION_LATEST_REL
+    packet_dir = _resolve_latest_packet_dir(root, repo_root, DELIVERY_REVIEWER_ACTIVE_HOLD_RECONCILIATION_LATEST_REL)
+    if packet_dir is None:
+        return {
+            "status": "not_available",
+            "latest_pointer": repo_rel(latest_path, repo_root),
+            "claim_boundary": "No delivery Reviewer active-hold reconciliation packet selector is present in this evidence root.",
+        }
+
+    index_path = packet_dir / "INDEX.json"
+    index = load_json(index_path)
+    summary_path = _indexed_packet_path(packet_dir, repo_root, index, "summary") or packet_dir / "summary.json"
+    probe_path = _indexed_packet_path(packet_dir, repo_root, index, "active_hold_reconciliation_probe") or packet_dir / "active_hold_reconciliation_probe.json"
+    verdict_path = _indexed_packet_path(packet_dir, repo_root, index, "reviewer_verdict") or packet_dir / "reviewer_verdict.json"
+    summary = load_json(summary_path)
+    probe = load_json(probe_path)
+    verdict = load_json(verdict_path)
+
+    pending = summary.get("decision_pending") or index.get("decision_pending") or probe.get("decision_pending")
+    if isinstance(pending, str) and pending.strip():
+        raise AggregationError(
+            "active-hold reconciliation packet still advertises pending Reviewer verdict: "
+            f"{repo_rel(packet_dir, repo_root)}"
+        )
+    raw_event_sha256_count = sum(_recursive_key_count(item, "raw_event_sha256") for item in (index, summary, probe, verdict))
+    if raw_event_sha256_count:
+        raise AggregationError(
+            "active-hold reconciliation packet still exposes opaque raw_event_sha256 fields: "
+            f"count={raw_event_sha256_count} packet={repo_rel(packet_dir, repo_root)}"
+        )
+
+    boundary = verdict.get("boundary_covered") if isinstance(verdict.get("boundary_covered"), dict) else {}
+    summary_boundary = summary.get("operator_only_boundary_preserved") if isinstance(summary.get("operator_only_boundary_preserved"), dict) else {}
+    index_boundary = index.get("operator_only_boundary") if isinstance(index.get("operator_only_boundary"), dict) else {}
+    agent_subjective_listening = bool(
+        boundary.get("agent_subjective_listening_performed")
+        or summary_boundary.get("agent_subjective_listening_performed")
+        or index_boundary.get("agent_subjective_listening_performed")
+    )
+    semantic_certified = bool(
+        boundary.get("semantic_av_quality_certified")
+        or summary_boundary.get("semantic_av_quality_certified")
+        or index_boundary.get("semantic_av_quality_certified")
+    )
+    av_sync_certified = bool(
+        boundary.get("av_sync_certified")
+        or summary_boundary.get("av_sync_certified")
+        or index_boundary.get("av_sync_certified")
+    )
+    if agent_subjective_listening:
+        raise AggregationError(f"active-hold reconciliation claims agent subjective listening: {repo_rel(verdict_path, repo_root)}")
+    if semantic_certified or av_sync_certified:
+        raise AggregationError(f"active-hold reconciliation certifies semantic AV/audio quality or AV-sync: {repo_rel(verdict_path, repo_root)}")
+
+    verdict_status = verdict.get("status") or index.get("status") or "not_available"
+    verdict_independent = bool(verdict.get("verdict_is_independent") is True or index.get("reviewer_verdict_independent") is True)
+    verdict_accepted = bool(
+        verdict_path.is_file()
+        and verdict.get("current_stage") == "delivery"
+        and verdict.get("decision") == "done"
+        and verdict_status == "accepted_active_hold_reconciliation_stale_hold_diagnosis"
+        and verdict_independent
+    )
+    if not verdict_accepted:
+        raise AggregationError(f"active-hold reconciliation Reviewer verdict is not accepted/done: {repo_rel(verdict_path, repo_root)}")
+
+    surfaces = summary.get("exact_active_hold_surfaces")
+    if not isinstance(surfaces, list):
+        surfaces = probe.get("exact_consumed_active_hold_surfaces_identified_this_turn")
+    surfaces = surfaces if isinstance(surfaces, list) else []
+    manager_feedback_surface_present = any(
+        isinstance(item, dict)
+        and item.get("line_number") == 12012
+        and item.get("event_type") == "life.manager.feedback.persisted"
+        and item.get("field") == "diagnostic"
+        for item in surfaces
+    )
+    planner_surface_present = any(
+        isinstance(item, dict)
+        and item.get("line_number") == 12041
+        and item.get("event_type") == "life.planner.verdict"
+        and "reason" in (item.get("fields") or [])
+        and "summary" in (item.get("fields") or [])
+        for item in surfaces
+    )
+    manager_stage_complete = summary.get("manager_stage_complete_line") if isinstance(summary.get("manager_stage_complete_line"), dict) else {}
+    if not manager_stage_complete:
+        manager_stage_complete = probe.get("manager_stage_complete_observation") if isinstance(probe.get("manager_stage_complete_observation"), dict) else {}
+    manager_stage_complete_present = bool(
+        manager_stage_complete.get("line_number") == 12011
+        and manager_stage_complete.get("event_type") == "life.manager.stage_decision"
+    )
+    if not (manager_feedback_surface_present and planner_surface_present and manager_stage_complete_present):
+        raise AggregationError(
+            "active-hold reconciliation packet is missing required Manager/Planner hold surfaces or Manager-stage counter-evidence"
+        )
+
+    active_hold_lines = []
+    for item in surfaces:
+        if isinstance(item, dict) and item.get("line_number") in {12012, 12041}:
+            fields = item.get("fields") if isinstance(item.get("fields"), list) else [item.get("field")]
+            active_hold_lines.append(
+                {
+                    "path": item.get("path"),
+                    "line_number": item.get("line_number"),
+                    "event_type": item.get("event_type"),
+                    "fields": [field for field in fields if field],
+                    "token": item.get("token"),
+                }
+            )
+
+    return {
+        "status": verdict_status,
+        "packet_dir": repo_rel(packet_dir, repo_root),
+        "latest_pointer": repo_rel(latest_path, repo_root),
+        "index_path": repo_rel(index_path, repo_root),
+        "summary_path": repo_rel(summary_path, repo_root),
+        "active_hold_probe_path": repo_rel(probe_path, repo_root),
+        "reviewer_verdict_path": repo_rel(verdict_path, repo_root),
+        "reviewer_decision": verdict.get("decision"),
+        "reviewer_verdict_independent": verdict_independent,
+        "accepted_for_manager_visible_delivery_sync": True,
+        "current_stage": verdict.get("current_stage") or index.get("current_stage"),
+        "current_mission_id": verdict.get("current_mission_id") or index.get("current_mission_id"),
+        "mismatch_classification": (probe.get("mismatch_classification") or {}).get("conclusion") if isinstance(probe.get("mismatch_classification"), dict) else None,
+        "manager_stage_complete_counter_evidence_line": {
+            "path": manager_stage_complete.get("source_path"),
+            "line_number": manager_stage_complete.get("line_number"),
+            "event_type": manager_stage_complete.get("event_type"),
+            "diagnostic": manager_stage_complete.get("diagnostic"),
+        },
+        "active_hold_surfaces": active_hold_lines,
+        "raw_event_sha256_count": raw_event_sha256_count,
+        "operator_only_residual": {
+            "only_remaining_gate": summary_boundary.get("only_remaining_operator_gate") or index_boundary.get("only_remaining_operator_gate") or "operator_human_auditory_listening_and_semantic_av_sync_review_for_Turbo_quality_certification",
+            "agent_subjective_listening_performed": agent_subjective_listening,
+            "semantic_av_quality_certified": semantic_certified,
+            "av_sync_certified": av_sync_certified,
+            "status": "operator_action_required",
+        },
+        "claim_boundary": "Accepted active-hold reconciliation/stale-hold diagnosis only; no GPU, Docker, model, benchmark, listening, semantic AV-sync certification, or Manager-owned state edit is claimed.",
+    }
+
+
+def summarize_current_manager_hold_no_gap_probe(root: Path, *, repo_root: Path) -> dict[str, Any]:
+    """Summarize the latest live Manager-hold no-gap/repair probe.
+
+    This packet is a Manager-visible bridge for the recurring generic
+    `manager_hold_requires_stage_repair` token. It may be pending Reviewer
+    acceptance; strict aggregation should still surface it so the Reviewer can
+    inspect the exact current event lines and delivery-summary/package surfaces.
+    """
+
+    latest_path = root / CURRENT_MANAGER_HOLD_NO_GAP_LATEST_REL
+    packet_dir = _resolve_latest_packet_dir(root, repo_root, CURRENT_MANAGER_HOLD_NO_GAP_LATEST_REL)
+    if packet_dir is None:
+        return {
+            "status": "not_available",
+            "latest_pointer": repo_rel(latest_path, repo_root),
+            "claim_boundary": "No current Manager-hold no-gap packet selector is present in this evidence root.",
+        }
+
+    index_path = packet_dir / "INDEX.json"
+    index = load_json(index_path)
+    summary_path = _indexed_packet_path(packet_dir, repo_root, index, "summary") or packet_dir / "summary.json"
+    probe_path = _indexed_packet_path(packet_dir, repo_root, index, "current_manager_hold_no_gap_probe") or packet_dir / "current_manager_hold_no_gap_probe.json"
+    request_path = _indexed_packet_path(packet_dir, repo_root, index, "reviewer_verdict_request") or packet_dir / "reviewer_verdict_request.json"
+    verdict_path = _indexed_packet_path(packet_dir, repo_root, index, "reviewer_verdict") or packet_dir / "reviewer_verdict.json"
+    summary = load_json(summary_path)
+    probe = load_json(probe_path)
+    request = load_json(request_path) if request_path.is_file() else {}
+    verdict = load_json(verdict_path) if verdict_path.is_file() else {}
+    crosswalk_path = _indexed_packet_path(packet_dir, repo_root, index, "manager_reviewer_handoff_crosswalk") or packet_dir / "manager_reviewer_handoff_crosswalk.json"
+    crosswalk = load_json(crosswalk_path) if crosswalk_path.is_file() else {}
+
+    raw_event_sha256_count = sum(_recursive_key_count(item, "raw_event_sha256") for item in (index, summary, probe, request, verdict, crosswalk))
+    if raw_event_sha256_count:
+        raise AggregationError(
+            "current Manager-hold no-gap packet exposes opaque raw_event_sha256 fields: "
+            f"count={raw_event_sha256_count} packet={repo_rel(packet_dir, repo_root)}"
+        )
+
+    boundary_sources = [
+        item
+        for item in (
+            index.get("operator_only_residual"),
+            summary.get("operator_only_residual"),
+            probe.get("operator_only_residual"),
+            verdict.get("boundary_covered"),
+        )
+        if isinstance(item, dict)
+    ]
+    if any(bool(item.get("agent_subjective_listening_performed")) for item in boundary_sources):
+        raise AggregationError(f"current Manager-hold no-gap packet claims agent subjective listening: {repo_rel(packet_dir, repo_root)}")
+    if any(bool(item.get("semantic_av_quality_certified") or item.get("av_sync_certified")) for item in boundary_sources):
+        raise AggregationError(f"current Manager-hold no-gap packet certifies semantic AV/audio quality or AV-sync: {repo_rel(packet_dir, repo_root)}")
+
+    live = probe.get("live_authority_observation") if isinstance(probe.get("live_authority_observation"), dict) else {}
+    manager_stage = live.get("manager_stage_decision") if isinstance(live.get("manager_stage_decision"), dict) else {}
+    manager_feedback = live.get("manager_feedback") if isinstance(live.get("manager_feedback"), dict) else {}
+    planner_surface = live.get("lower_authority_planner_hold_surface") if isinstance(live.get("lower_authority_planner_hold_surface"), dict) else {}
+    if not (
+        manager_stage.get("event_type") == "life.manager.stage_decision"
+        and manager_stage.get("diagnostic") == "intentional_hold"
+        and manager_feedback.get("event_type") == "life.manager.feedback.persisted"
+        and manager_feedback.get("diagnostic") == "manager_hold_requires_stage_repair"
+    ):
+        raise AggregationError(f"current Manager-hold no-gap packet lacks current Manager stage/feedback surfaces: {repo_rel(packet_dir, repo_root)}")
+
+    classification = probe.get("classification") if isinstance(probe.get("classification"), dict) else {}
+    mismatch = bool(
+        summary.get("project_local_reviewer_evidence_locator_schema_mismatch")
+        or classification.get("project_local_reviewer_evidence_locator_schema_mismatch") is True
+    )
+    decisive_passed = bool(summary.get("decisive_check_passed") is True or probe.get("decisive_check_passed") is True)
+    delivery_surfaces = probe.get("project_local_delivery_surfaces_checked") if isinstance(probe.get("project_local_delivery_surfaces_checked"), dict) else {}
+    missing_manifest_paths = delivery_surfaces.get("required_manifest_paths_missing")
+    missing_manifest_paths = missing_manifest_paths if isinstance(missing_manifest_paths, list) else []
+
+    handoff_source: dict[str, Any] = {}
+    for source in (
+        verdict.get("sealed_reviewer_handoff_source"),
+        verdict.get("sealed_reviewer_handoff_reference"),
+        crosswalk.get("fresh_reviewer_handoff_source"),
+        crosswalk.get("expected_fresh_reviewer_handoff_source"),
+        index.get("sealed_reviewer_handoff_reference"),
+    ):
+        if isinstance(source, dict) and source.get("path"):
+            handoff_source = source
+            break
+    handoff_valid = bool(
+        handoff_source.get("path")
+        and handoff_source.get("kind") == "round_reviewed_handoff"
+        and handoff_source.get("producer_role") == "reviewer"
+        and handoff_source.get("review_status") == "done"
+        and handoff_source.get("current_stage") == "delivery"
+    )
+    crosswalk_ready = bool(
+        crosswalk.get("status") == "pass"
+        and (
+            (crosswalk.get("manager_recognition_fields_after_reviewer") or {}).get("current_no_gap_packet_has_fresh_independent_reviewer_verdict") is True
+            or (crosswalk.get("manager_recognition_fields_after_reviewer") or {}).get("current_manager_hold_no_gap_packet_has_fresh_independent_reviewer_verdict") is True
+            or bool(handoff_source.get("path"))
+        )
+    )
+    verdict_status = verdict.get("status") if verdict else None
+    reviewer_decision = verdict.get("decision") if verdict else None
+    reviewer_independent = bool(verdict.get("verdict_is_independent") is True or handoff_valid) if verdict else False
+    explicit_gap = (
+        summary.get("exact_current_stage_reviewer_evidence_gap")
+        or probe.get("exact_current_stage_reviewer_evidence_gap")
+        or request.get("exact_current_stage_reviewer_evidence_gap")
+    )
+    if not isinstance(explicit_gap, dict):
+        missing_paths = []
+        missing_or_unaccepted_fields = []
+        if not verdict_path.is_file():
+            missing_paths.append(repo_rel(verdict_path, repo_root))
+            missing_or_unaccepted_fields.extend([
+                "reviewer_verdict_path",
+                "reviewer_status",
+                "reviewer_decision",
+                "reviewer_verdict_independent",
+            ])
+        if not crosswalk_path.is_file():
+            missing_paths.append(repo_rel(crosswalk_path, repo_root))
+            missing_or_unaccepted_fields.append("manager_reviewer_handoff_crosswalk_path")
+        if not handoff_valid:
+            missing_or_unaccepted_fields.append("sealed_reviewer_handoff_source_valid")
+        if missing_paths or missing_or_unaccepted_fields:
+            explicit_gap = {
+                "status": "open_until_fresh_reviewer_verdict_and_crosswalk_are_present_and_accepted",
+                "missing_paths": missing_paths,
+                "missing_or_unaccepted_manager_visible_fields": sorted(set(missing_or_unaccepted_fields)),
+            }
+        else:
+            explicit_gap = {}
+    accepted_statuses = {
+        "accepted_current_stage_delivery_reviewer_passed",
+        "accepted_current_manager_hold_no_gap_reviewer_evidence_completion",
+        "accepted_current_manager_hold_no_gap_blocker",
+        "accepted_current_manager_hold_no_gap_probe",
+    }
+    reviewer_accepted = bool(
+        verdict
+        and verdict.get("current_stage") == "delivery"
+        and reviewer_decision == "done"
+        and reviewer_independent
+        and handoff_valid
+        and crosswalk_ready
+        and verdict_status in accepted_statuses
+        and not mismatch
+        and decisive_passed
+        and not missing_manifest_paths
+    )
+    reviewer_status = (
+        "accepted_current_stage_delivery_reviewer_passed"
+        if reviewer_accepted
+        else (verdict_status or summary.get("reviewer_status") or index.get("reviewer_status") or "pending_fresh_independent_reviewer")
+    )
+
+    residual = summary.get("operator_only_residual") if isinstance(summary.get("operator_only_residual"), dict) else {}
+    if not residual:
+        residual = probe.get("operator_only_residual") if isinstance(probe.get("operator_only_residual"), dict) else {}
+
+    return {
+        "status": verdict_status or summary.get("status") or index.get("status") or "present",
+        "packet_dir": repo_rel(packet_dir, repo_root),
+        "latest_pointer": repo_rel(latest_path, repo_root),
+        "index_path": repo_rel(index_path, repo_root),
+        "summary_path": repo_rel(summary_path, repo_root),
+        "probe_path": repo_rel(probe_path, repo_root),
+        "reviewer_verdict_request_path": repo_rel(request_path, repo_root) if request_path.is_file() else None,
+        "reviewer_verdict_path": repo_rel(verdict_path, repo_root) if verdict_path.is_file() else None,
+        "reviewer_status": reviewer_status,
+        "reviewer_verdict_status": verdict_status,
+        "reviewer_decision": reviewer_decision,
+        "reviewer_verdict_independent": reviewer_independent,
+        "sealed_reviewer_handoff_source": handoff_source or None,
+        "sealed_reviewer_handoff_source_valid": handoff_valid,
+        "manager_reviewer_handoff_crosswalk_path": repo_rel(crosswalk_path, repo_root) if crosswalk_path.is_file() else None,
+        "manager_reviewer_handoff_crosswalk_status": crosswalk.get("status"),
+        "accepted_for_manager_visible_delivery_sync": reviewer_accepted,
+        "manager_visible_delivery_sync_ready": reviewer_accepted,
+        "exact_current_stage_reviewer_evidence_gap": {} if reviewer_accepted else explicit_gap,
+        "current_stage": summary.get("current_stage") or index.get("current_stage"),
+        "current_mission_id": summary.get("current_mission_id") or index.get("current_mission_id"),
+        "decisive_check_passed": decisive_passed,
+        "project_local_reviewer_evidence_locator_schema_mismatch": mismatch,
+        "missing_manifest_paths_count": len(missing_manifest_paths),
+        "manager_stage_decision": {
+            "path": manager_stage.get("path"),
+            "line_number": manager_stage.get("line_number"),
+            "reason": manager_stage.get("reason"),
+            "diagnostic": manager_stage.get("diagnostic"),
+        },
+        "manager_feedback": {
+            "path": manager_feedback.get("path"),
+            "line_number": manager_feedback.get("line_number"),
+            "reason": manager_feedback.get("reason"),
+            "diagnostic": manager_feedback.get("diagnostic"),
+        },
+        "planner_hold_surface": {
+            "path": planner_surface.get("path"),
+            "line_number": planner_surface.get("line_number"),
+            "reason": planner_surface.get("reason"),
+            "status": planner_surface.get("status"),
+        },
+        "operator_only_residual": {
+            "only_remaining_gate": residual.get("only_remaining_gate") or "operator_human_auditory_listening_and_semantic_av_sync_review_for_Turbo_quality_certification",
+            "agent_subjective_listening_performed": bool(residual.get("agent_subjective_listening_performed")),
+            "semantic_av_quality_certified": bool(residual.get("semantic_av_quality_certified")),
+            "av_sync_certified": bool(residual.get("av_sync_certified")),
+            "status": residual.get("status") or "operator_action_required",
+        },
+        "raw_event_sha256_count": raw_event_sha256_count,
+        "claim_boundary": "Current Manager-hold no-gap/visibility packet only; no GPU, Docker, model, benchmark, subjective listening, semantic AV-sync certification, or Manager-owned state edit is claimed.",
+    }
+
+
+def summarize_turbo_operator_gate_packet(root: Path, *, repo_root: Path) -> dict[str, Any]:
+    latest_path = root / TURBO_OPERATOR_GATE_LATEST_REL
+    packet_dir = _resolve_latest_packet_dir(root, repo_root, TURBO_OPERATOR_GATE_LATEST_REL)
+    if packet_dir is None:
+        return {
+            "status": "not_available",
+            "latest_pointer": rel(latest_path, root),
+            "claim_boundary": "No Turbo operator-gate Reviewer packet selector is present in this evidence root.",
+        }
+
+    summary_path = packet_dir / "summary.json"
+    summary = load_json(summary_path)
+    manifest_path = packet_dir / "media_listening_manifest.json"
+    manifest = load_json(manifest_path) if manifest_path.is_file() else {}
+    verdict_path = packet_dir / "reviewer_verdict.json"
+    verdict = load_json(verdict_path) if verdict_path.is_file() else {}
+    crosswalk_path = packet_dir / "manager_reviewer_handoff_crosswalk.json"
+    crosswalk = load_json(crosswalk_path) if crosswalk_path.is_file() else {}
+    stage_closeout_crosswalk_path = packet_dir / "manager_stage_closeout_crosswalk.json"
+    manager_visibility_path = packet_dir / "manager_visibility_resolution.json"
+    reviewer_request_path = packet_dir / "reviewer_verdict_request.json"
+    recognition_check_paths = sorted(packet_dir.glob("*recognition_check*.json"))
+    recognition_check_path = recognition_check_paths[-1] if recognition_check_paths else None
+    recognition_check = load_json(recognition_check_path) if recognition_check_path is not None else {}
+
+    if summary.get("agent_subjective_listening_performed") is True:
+        raise AggregationError(f"Turbo operator-gate packet claims agent subjective listening: {summary_path}")
+    if summary.get("semantic_av_quality_certified") is True or summary.get("audio_semantics_certified") is True or summary.get("av_sync_certified") is True:
+        raise AggregationError(f"Turbo operator-gate packet certifies subjective semantic AV/audio quality: {summary_path}")
+
+    reviewer_status = (
+        summary.get("reviewer_status")
+        or verdict.get("status")
+        or verdict.get("mapped_reviewer_status_for_this_packet")
+        or summary.get("independent_reviewer_verdict", {}).get("mapped_status")
+        or "not_available"
+    )
+    reviewer_accepted = reviewer_status in {
+        "accepted_independent_reviewer_passed",
+        "accepted_current_stage_delivery_boundary",
+        "accepted_current_stage_delivery_reviewer_passed",
+    }
+    manager_repair = summary.get("manager_recognition_repair") if isinstance(summary.get("manager_recognition_repair"), dict) else {}
+    reviewer_handoff_source = {}
+    for source in (
+        verdict.get("sealed_reviewer_handoff_source"),
+        verdict.get("reviewer_handoff_source"),
+        manager_repair.get("sealed_reviewer_handoff_source"),
+        crosswalk.get("reviewer_handoff_source"),
+    ):
+        if isinstance(source, dict) and source.get("path"):
+            reviewer_handoff_source = source
+            break
+    reviewer_handoff_source_valid = bool(
+        reviewer_handoff_source.get("path")
+        and reviewer_handoff_source.get("kind") == "round_reviewed_handoff"
+        and reviewer_handoff_source.get("producer_role") == "reviewer"
+        and reviewer_handoff_source.get("review_status") == "done"
+    )
+    verdict_independent = (
+        reviewer_handoff_source_valid
+        or verdict.get("source_producer_role") == "reviewer"
+        or summary.get("independent_reviewer_verdict", {}).get("source_producer_role") == "reviewer"
+        or verdict.get("verdict_is_independent") is True
+    )
+    current_stage_reviewer_requires_handoff_source = reviewer_status in {
+        "accepted_current_stage_delivery_boundary",
+        "accepted_current_stage_delivery_reviewer_passed",
+    } or summary.get("status") == "accepted_current_stage_delivery_boundary"
+    automatable_complete = summary.get("automatable_delivery_gates_complete") is True
+    human_gate = summary.get("human_auditory_or_semantic_gate") or summary.get("remaining_gate") or "operator_action_required"
+    semantic_certified = bool(summary.get("semantic_av_quality_certified") or summary.get("audio_semantics_certified"))
+    av_sync_certified = bool(summary.get("av_sync_certified"))
+    media_case_count = manifest.get("case_count") or summary.get("turbo_quality_automatable_evidence", {}).get("case_count")
+
+    return {
+        "status": summary.get("status", "present"),
+        "packet_dir": repo_rel(packet_dir, repo_root),
+        "latest_pointer": repo_rel(latest_path, repo_root),
+        "summary_path": repo_rel(summary_path, repo_root),
+        "media_listening_manifest_path": repo_rel(manifest_path, repo_root) if manifest_path.is_file() else None,
+        "reviewer_packet_path": repo_rel(packet_dir / "reviewer_packet.md", repo_root) if (packet_dir / "reviewer_packet.md").is_file() else None,
+        "reviewer_verdict_path": repo_rel(verdict_path, repo_root) if verdict_path.is_file() else None,
+        "reviewer_verdict_request_path": repo_rel(reviewer_request_path, repo_root) if reviewer_request_path.is_file() else None,
+        "automatable_delivery_gates_complete": automatable_complete,
+        "operator_listening_manifest_case_count": media_case_count,
+        "agent_subjective_listening_performed": summary.get("agent_subjective_listening_performed", False),
+        "human_auditory_semantic_av_sync_gate": human_gate,
+        "semantic_av_quality_certified": semantic_certified,
+        "av_sync_certified": av_sync_certified,
+        "reviewer_status": reviewer_status,
+        "reviewer_verdict_independent": verdict_independent,
+        "accepted_for_current_stage_closing": bool(
+            reviewer_accepted
+            and verdict_independent
+            and (reviewer_handoff_source_valid or not current_stage_reviewer_requires_handoff_source)
+            and automatable_complete
+            and human_gate == "operator_action_required"
+            and not semantic_certified
+            and not av_sync_certified
+            and summary.get("agent_subjective_listening_performed") is False
+        ),
+        "manager_recognition_repair_path": repo_rel(crosswalk_path, repo_root) if crosswalk_path.is_file() else None,
+        "manager_stage_closeout_crosswalk_path": repo_rel(stage_closeout_crosswalk_path, repo_root) if stage_closeout_crosswalk_path.is_file() else None,
+        "manager_visibility_resolution_path": repo_rel(manager_visibility_path, repo_root) if manager_visibility_path.is_file() else None,
+        "manager_recognition_check_path": repo_rel(recognition_check_path, repo_root) if recognition_check_path is not None else None,
+        "manager_recognition_check_status": recognition_check.get("status"),
+        "manager_recognition_check_ready": recognition_check.get("ready_for_manager_recognition"),
+        "manager_recognition_check_mismatch_count": recognition_check.get("mismatch_count"),
+        "manager_hold_diagnosis": crosswalk.get("manager_hold_diagnosis") or manager_repair.get("diagnosis"),
+        "reviewer_handoff_source": reviewer_handoff_source or None,
+        "reviewer_handoff_source_valid": reviewer_handoff_source_valid,
+        "exact_manager_hold_repair": summary.get("exact_manager_hold_repair"),
+        "claim_boundary": summary.get(
+            "automatable_delivery_gates_scope",
+            "Turbo operator-gate packet only; human auditory listening and semantic AV-sync remain operator-only.",
+        ),
     }
 
 
@@ -980,6 +1755,10 @@ def aggregate_evidence(root: Path, *, repo_root: Path | None = None) -> dict[str
     sol = summarize_sol(root, baseline)
     lifecycle = summarize_local_lifecycle(root)
     final_gates = summarize_final_gates(root)
+    operator_gate = summarize_turbo_operator_gate_packet(root, repo_root=repo_root)
+    delivery_reviewer_repair = summarize_delivery_reviewer_evidence_repair(root, repo_root=repo_root)
+    active_hold_reconciliation = summarize_delivery_reviewer_active_hold_reconciliation(root, repo_root=repo_root)
+    current_manager_hold_no_gap = summarize_current_manager_hold_no_gap_probe(root, repo_root=repo_root)
     quality_config_path = root / QUALITY_CONFIG_REL
     quality_dry_run_dir = root / QUALITY_DRY_RUN_REL
 
@@ -1012,7 +1791,11 @@ def aggregate_evidence(root: Path, *, repo_root: Path | None = None) -> dict[str
                     "claim": "The latest GPU3 paired Turbo timing run is accepted as the only practical speed result: two excluded warmups, paired N=10 per schedule, strict structural AV pass, and baseline-v2 warm N=10 denominator.",
                     "track": Practical,
                     "evidence": [TURBO_TIMING_LATEST_REL, f"{TURBO_TIMING_REPEATS_REL}/{turbo['run_id']}/timing_summary.json", f"{TURBO_TIMING_REPEATS_REL}/{turbo['run_id']}/merge_manifest.json"],
-                    "limits": "Practical approximation only; semantic AV quality and human auditory listening remain pending; 8-step is the default candidate and 4-step is ultra-fast quality-cost experimental.",
+                    "limits": (
+                        "Practical approximation only; operator overall playback/listening acceptance is recorded; 8-step remains the default and the known 4-step visual failure remains disclosed."
+                        if turbo["quality_suite"].get("operator_overall_acceptance_recorded")
+                        else "Practical approximation only; semantic AV quality and human auditory listening remain pending; 8-step is the default candidate and 4-step is ultra-fast quality-cost experimental."
+                    ),
                 },
                 {
                     "claim": "AdaLN is an N=1 exact-output candidate only; the original harness-tail failure is preserved and the single-run benefit is below baseline warm-run noise.",
@@ -1061,7 +1844,7 @@ def aggregate_evidence(root: Path, *, repo_root: Path | None = None) -> dict[str
                     "evidence": [DMD_REL],
                 },
                 {
-                    "claim": "Turbo semantic AV quality and human-auditory quality are fully certified.",
+                    "claim": "Turbo human-auditory quality, semantic AV quality, and semantic AV-sync remain operator-only and uncertified.",
                     "status": "blocked_human_auditory_listening_pending_semantic_quality_not_certified",
                     "evidence": [TURBO_QUALITY_LATEST_REL, f"{TURBO_QUALITY_RUNS_REL}/{turbo['quality_suite']['run_id']}/quality_suite_analysis.json", f"{TURBO_QUALITY_RUNS_REL}/{turbo['quality_suite']['run_id']}/human_review.md"],
                 },
@@ -1076,6 +1859,10 @@ def aggregate_evidence(root: Path, *, repo_root: Path | None = None) -> dict[str
         },
         "delivery_lifecycle": lifecycle,
         "final_gates": final_gates,
+        "turbo_operator_gate_reviewer_packet": operator_gate,
+        "delivery_reviewer_evidence_recognition_repair": delivery_reviewer_repair,
+        "delivery_reviewer_evidence_active_hold_reconciliation": active_hold_reconciliation,
+        "current_manager_hold_no_gap_probe": current_manager_hold_no_gap,
         "quality_suite_runner": {
             "config_path": rel(quality_config_path, root) if quality_config_path.exists() else None,
             "dry_run_plan_dir": rel(quality_dry_run_dir, root) if quality_dry_run_dir.exists() else None,
@@ -1094,6 +1881,24 @@ def aggregate_evidence(root: Path, *, repo_root: Path | None = None) -> dict[str
             f"python3 tools/argus_ir04_aggregate.py --strict --input {repo_rel(root, repo_root)} --out technical_report/evidence/minimax_h3_desktop/delivery/argus_ir04_delivery_summary.json --report-out technical_report/final_technical_report.md --manifest-out technical_report/evidence/minimax_h3_desktop/delivery/package_manifest.json",
         ],
     }
+
+    if turbo["quality_suite"].get("operator_overall_acceptance_recorded"):
+        summary["claims"]["blocked"] = [
+            item
+            for item in summary["claims"]["blocked"]
+            if not str(item.get("claim", "")).startswith("Turbo human-auditory quality")
+        ]
+        summary["claims"]["accepted"].append(
+            {
+                "claim": "The operator completed overall playback/listening review and accepted the practical Turbo release quality, with 8-step retained as default and the known 4-step visual failure preserved.",
+                "track": Practical,
+                "evidence": [
+                    f"{TURBO_QUALITY_RUNS_REL}/{turbo['quality_suite']['run_id']}/operator_acceptance.json",
+                    f"{TURBO_QUALITY_RUNS_REL}/{turbo['quality_suite']['run_id']}/human_review.md",
+                ],
+                "limits": "Overall operator acceptance without a fabricated per-case rubric transcript; Turbo remains approximate and the known 4-step failure remains rejected for default promotion.",
+            }
+        )
 
     h3_sol = sol.get("h3_sol_attn_r8", {})
     if h3_sol.get("status") == "sparse_runtime_valid_5step_diagnostic":
@@ -1178,10 +1983,19 @@ def report_markdown(summary: dict[str, Any]) -> str:
     dmd = summary["lanes"][Practical]["dmd"]
     lifecycle = summary["delivery_lifecycle"]
     final_gates = summary.get("final_gates", {})
+    operator_gate = summary.get("turbo_operator_gate_reviewer_packet", {})
+    delivery_reviewer_repair = summary.get("delivery_reviewer_evidence_recognition_repair", {})
+    active_hold_reconciliation = summary.get("delivery_reviewer_evidence_active_hold_reconciliation", {})
+    current_manager_hold_no_gap = summary.get("current_manager_hold_no_gap_probe", {})
+    operator_quality_accepted = bool(turbo.get("quality_suite", {}).get("operator_overall_acceptance_recorded"))
     lines = [
         "# ARGUS-IR-04 Final Technical Report",
         "",
-        "Status: **final evidence integration, not quality-complete**. This report is evidence-grounded and CPU/static-generated; it does not add measurements, run inference, or publish results.",
+        (
+            "Status: **final evidence integration; operator overall practical-quality gate accepted**. This report is evidence-grounded and CPU/static-generated; it does not add measurements, run inference, or publish results."
+            if operator_quality_accepted
+            else "Status: **final evidence integration, not quality-complete**. This report is evidence-grounded and CPU/static-generated; it does not add measurements, run inference, or publish results."
+        ),
         "",
         "## Scope and lane separation",
         "",
@@ -1210,9 +2024,96 @@ def report_markdown(summary: dict[str, Any]) -> str:
         "- The 8-step schedule is the practical default candidate. The 4-step schedule is ultra-fast/quality-cost experimental because the visual suite exposed a teapot-geometry failure and lower audio fidelity.",
         f"- Quality-suite evidence: `{turbo['quality_suite']['latest_pointer']}` -> `{turbo['quality_suite']['analysis_path']}`; baseline seed0 comparison `{turbo['quality_suite']['baseline_seed0_comparison_path']}`; audio envelopes `{turbo['quality_suite']['audio_energy_envelopes_path']}`; human review `{turbo['quality_suite']['human_review_path']}`; review contact sheets={turbo['quality_suite']['review_contact_sheet_count']}.",
         f"- Quality-suite coverage: {turbo['quality_suite']['case_count']} outputs (3 prompts x 4 seeds x 4/8 steps), N={turbo['quality_suite']['steps']['4']['n']} per schedule; structural AV pass={turbo['quality_suite']['all_cases_structural_av_pass']}.",
-        "- Human auditory listening remains pending; semantic AV quality is not certified.",
+        (
+            f"- Operator overall playback/listening acceptance is recorded at `{turbo['quality_suite'].get('operator_acceptance_path')}`; 8-step remains the practical default and the known 4-step visual failure remains preserved."
+            if operator_quality_accepted
+            else "- Human auditory listening remains pending; semantic AV quality is not certified."
+        ),
         f"- GPU2 smoke scope: {turbo['gpu2_bringup_scope']}.",
+        (
+            "- The delivery hold/Reviewer packets below are preserved as historical pre-acceptance evidence. Their operator-action-required fields were superseded by the later operator acceptance record; they are not the current release gate."
+            if operator_quality_accepted
+            else ""
+        ),
         "",
+    ]
+    if operator_gate.get("status") != "not_available":
+        lines.extend(
+            [
+                "## Turbo operator-only listening gate packet" + (" (historical pre-acceptance packet)" if operator_quality_accepted else ""),
+                "",
+                f"- Latest packet: `{operator_gate.get('packet_dir')}`; packet_status=`{operator_gate.get('status')}`; reviewer_status=`{operator_gate.get('reviewer_status')}`; accepted_for_current_stage_closing={operator_gate.get('accepted_for_current_stage_closing')}",
+                f"- Automatable delivery gates complete={operator_gate.get('automatable_delivery_gates_complete')}; operator listening manifest cases={operator_gate.get('operator_listening_manifest_case_count')}; manifest `{operator_gate.get('media_listening_manifest_path')}`.",
+                f"- Operator-only residual: human auditory listening / semantic AV-sync gate=`{operator_gate.get('human_auditory_semantic_av_sync_gate')}`; agent_subjective_listening_performed={operator_gate.get('agent_subjective_listening_performed')}; semantic_av_quality_certified={operator_gate.get('semantic_av_quality_certified')}; av_sync_certified={operator_gate.get('av_sync_certified')}.",
+                f"- Reviewer handoff source: `{(operator_gate.get('reviewer_handoff_source') or {}).get('path')}`; source_valid={operator_gate.get('reviewer_handoff_source_valid')}; manager_recognition_repair=`{operator_gate.get('manager_recognition_repair_path')}`; manager_stage_closeout_crosswalk=`{operator_gate.get('manager_stage_closeout_crosswalk_path')}`; manager_visibility_resolution=`{operator_gate.get('manager_visibility_resolution_path')}`.",
+                f"- Manager recognition check: `{operator_gate.get('manager_recognition_check_path')}`; status=`{operator_gate.get('manager_recognition_check_status')}`; ready={operator_gate.get('manager_recognition_check_ready')}; mismatch_count={operator_gate.get('manager_recognition_check_mismatch_count')}.",
+                f"- Boundary: {operator_gate.get('claim_boundary')}.",
+                "",
+            ]
+        )
+    if delivery_reviewer_repair.get("status") != "not_available":
+        handoff_source = delivery_reviewer_repair.get("sealed_reviewer_handoff_source") or {}
+        residual = delivery_reviewer_repair.get("operator_only_residual") or {}
+        lines.extend(
+            [
+                "## Current-stage delivery Reviewer evidence recognition repair",
+                "",
+                f"- Repair packet: `{delivery_reviewer_repair.get('packet_dir')}`; status=`{delivery_reviewer_repair.get('status')}`; ready_for_manager_recognition={delivery_reviewer_repair.get('ready_for_manager_recognition')}; current_stage=`{delivery_reviewer_repair.get('current_stage')}`; current_mission_id=`{delivery_reviewer_repair.get('current_mission_id')}`.",
+                f"- Fresh Reviewer verdict: `{delivery_reviewer_repair.get('reviewer_verdict_path')}`; reviewer_status=`{delivery_reviewer_repair.get('reviewer_status')}`; decision=`{delivery_reviewer_repair.get('reviewer_decision')}`; independent={delivery_reviewer_repair.get('reviewer_verdict_independent')}; sealed_handoff=`{handoff_source.get('path')}`; sealed_handoff_valid={delivery_reviewer_repair.get('sealed_reviewer_handoff_source_valid')}.",
+                f"- Manager recognition check: `{delivery_reviewer_repair.get('manager_recognition_check_path')}`; status=`{delivery_reviewer_repair.get('manager_recognition_check_status')}`; ready={delivery_reviewer_repair.get('manager_recognition_check_ready')}; mismatch_count={delivery_reviewer_repair.get('manager_recognition_check_mismatch_count')}.",
+                f"- Manager-stage authority probe: `{delivery_reviewer_repair.get('manager_stage_authority_probe_path')}`; status=`{delivery_reviewer_repair.get('manager_stage_authority_probe_status')}`; reviewer_evidence_complete={delivery_reviewer_repair.get('manager_stage_reports_reviewer_evidence_complete')}; transition_status=`{delivery_reviewer_repair.get('manager_stage_transition_status')}`.",
+                f"- Schema/crosswalk evidence: schema_gap=`{delivery_reviewer_repair.get('schema_gap_analysis_path')}` status=`{delivery_reviewer_repair.get('schema_gap_status')}`; handoff_crosswalk=`{delivery_reviewer_repair.get('manager_reviewer_handoff_crosswalk_path')}` status=`{delivery_reviewer_repair.get('manager_reviewer_handoff_crosswalk_status')}`; legacy_chain_ready={delivery_reviewer_repair.get('legacy_canonical_chain_still_recognized')}.",
+                f"- Operator-only residual preserved: gate=`{residual.get('only_remaining_gate')}`; agent_subjective_listening_performed={residual.get('agent_subjective_listening_performed')}; semantic_av_quality_certified={residual.get('semantic_av_quality_certified')}; av_sync_certified={residual.get('av_sync_certified')}.",
+                f"- Boundary: {delivery_reviewer_repair.get('claim_boundary')}",
+                "",
+            ]
+        )
+    if active_hold_reconciliation.get("status") != "not_available":
+        residual = active_hold_reconciliation.get("operator_only_residual") or {}
+        manager_line = active_hold_reconciliation.get("manager_stage_complete_counter_evidence_line") or {}
+        surface_bits = []
+        for surface in active_hold_reconciliation.get("active_hold_surfaces") or []:
+            surface_bits.append(
+                f"{surface.get('path')}:{surface.get('line_number')} {surface.get('event_type')} fields={surface.get('fields')} token={surface.get('token')}"
+            )
+        lines.extend(
+            [
+                "## Delivery Reviewer active-hold reconciliation",
+                "",
+                f"- Active packet: `{active_hold_reconciliation.get('packet_dir')}`; status=`{active_hold_reconciliation.get('status')}`; accepted_for_manager_visible_delivery_sync={active_hold_reconciliation.get('accepted_for_manager_visible_delivery_sync')}; current_stage=`{active_hold_reconciliation.get('current_stage')}`; current_mission_id=`{active_hold_reconciliation.get('current_mission_id')}`.",
+                f"- Active Reviewer verdict: `{active_hold_reconciliation.get('reviewer_verdict_path')}`; decision=`{active_hold_reconciliation.get('reviewer_decision')}`; independent={active_hold_reconciliation.get('reviewer_verdict_independent')}; active_hold_probe=`{active_hold_reconciliation.get('active_hold_probe_path')}`; INDEX=`{active_hold_reconciliation.get('index_path')}`.",
+                f"- Active hold surfaces captured: {surface_bits}.",
+                f"- Manager-stage complete counter-evidence: `{manager_line.get('path')}`:{manager_line.get('line_number')} `{manager_line.get('event_type')}` diagnostic=`{manager_line.get('diagnostic')}`; classification=`{active_hold_reconciliation.get('mismatch_classification')}`; raw_event_sha256_count={active_hold_reconciliation.get('raw_event_sha256_count')}.",
+                f"- Operator-only residual preserved: gate=`{residual.get('only_remaining_gate')}`; agent_subjective_listening_performed={residual.get('agent_subjective_listening_performed')}; semantic_av_quality_certified={residual.get('semantic_av_quality_certified')}; av_sync_certified={residual.get('av_sync_certified')}.",
+                f"- Boundary: {active_hold_reconciliation.get('claim_boundary')}",
+                "",
+            ]
+        )
+    if current_manager_hold_no_gap.get("status") != "not_available":
+        residual = current_manager_hold_no_gap.get("operator_only_residual") or {}
+        manager_stage = current_manager_hold_no_gap.get("manager_stage_decision") or {}
+        manager_feedback = current_manager_hold_no_gap.get("manager_feedback") or {}
+        planner_surface = current_manager_hold_no_gap.get("planner_hold_surface") or {}
+        exact_gap = current_manager_hold_no_gap.get("exact_current_stage_reviewer_evidence_gap") or {}
+        exact_gap_status = exact_gap.get("status") if isinstance(exact_gap, dict) else None
+        exact_gap_paths = exact_gap.get("missing_paths") if isinstance(exact_gap, dict) else None
+        exact_gap_fields = exact_gap.get("missing_or_unaccepted_manager_visible_fields") if isinstance(exact_gap, dict) else None
+        lines.extend(
+            [
+                "## Current Manager-hold no-gap probe",
+                "",
+                f"- Packet: `{current_manager_hold_no_gap.get('packet_dir')}`; status=`{current_manager_hold_no_gap.get('status')}`; decisive_check_passed={current_manager_hold_no_gap.get('decisive_check_passed')}; project_local_reviewer_evidence_locator_schema_mismatch={current_manager_hold_no_gap.get('project_local_reviewer_evidence_locator_schema_mismatch')}; current_stage=`{current_manager_hold_no_gap.get('current_stage')}`; current_mission_id=`{current_manager_hold_no_gap.get('current_mission_id')}`.",
+                f"- Reviewer boundary: reviewer_status=`{current_manager_hold_no_gap.get('reviewer_status')}`; decision=`{current_manager_hold_no_gap.get('reviewer_decision')}`; independent={current_manager_hold_no_gap.get('reviewer_verdict_independent')}; sealed_handoff_valid={current_manager_hold_no_gap.get('sealed_reviewer_handoff_source_valid')}; manager_visible_delivery_sync_ready={current_manager_hold_no_gap.get('manager_visible_delivery_sync_ready')}; verdict=`{current_manager_hold_no_gap.get('reviewer_verdict_path')}`; request=`{current_manager_hold_no_gap.get('reviewer_verdict_request_path')}`; crosswalk=`{current_manager_hold_no_gap.get('manager_reviewer_handoff_crosswalk_path')}`.",
+                f"- Exact current-stage Reviewer-evidence gap: status=`{exact_gap_status}`; missing_paths={exact_gap_paths}; missing_or_unaccepted_fields={exact_gap_fields}.",
+                f"- Live Manager stage: `{manager_stage.get('path')}`:{manager_stage.get('line_number')} diagnostic=`{manager_stage.get('diagnostic')}`; reason=`{manager_stage.get('reason')}`.",
+                f"- Persisted hold token: `{manager_feedback.get('path')}`:{manager_feedback.get('line_number')} diagnostic=`{manager_feedback.get('diagnostic')}`; reason=`{manager_feedback.get('reason')}`.",
+                f"- Lower-authority planner surface: `{planner_surface.get('path')}`:{planner_surface.get('line_number')} status=`{planner_surface.get('status')}`; reason=`{planner_surface.get('reason')}`.",
+                f"- Operator-only residual preserved: gate=`{residual.get('only_remaining_gate')}`; agent_subjective_listening_performed={residual.get('agent_subjective_listening_performed')}; semantic_av_quality_certified={residual.get('semantic_av_quality_certified')}; av_sync_certified={residual.get('av_sync_certified')}. Manifests still missing {current_manager_hold_no_gap.get('missing_manifest_paths_count')} required current-hold paths.",
+                f"- Boundary: {current_manager_hold_no_gap.get('claim_boundary')}",
+                "",
+            ]
+        )
+    lines.extend([
         "## Clean-room one-command local lifecycle",
         "",
         f"- Evidence: `{lifecycle['run_dir']}`.",
@@ -1226,6 +2127,7 @@ def report_markdown(summary: dict[str, Any]) -> str:
         f"- CPU/static gate: `{final_gates.get('cpu_static_gate', {}).get('status', 'not_available')}`; evidence `{final_gates.get('cpu_static_gate', {}).get('summary_path')}`; summary tail={final_gates.get('cpu_static_gate', {}).get('summary_tail', [])}.",
         f"- Strict aggregation/export/publication audit gate: `{final_gates.get('decisive_export_audit_gate', {}).get('status', 'not_available')}`; evidence `{final_gates.get('decisive_export_audit_gate', {}).get('summary_path')}`; export_file_count={final_gates.get('decisive_export_audit_gate', {}).get('export_file_count')}; publication_audit={final_gates.get('decisive_export_audit_gate', {}).get('publication_audit_status')}; issues={final_gates.get('decisive_export_audit_gate', {}).get('publication_issue_count')}.",
         f"- Formal-N10 report-sync export/publication audit gate: `{final_gates.get('formal_n10_cpu_sync_export_audit_gate', {}).get('status', 'not_available')}`; evidence `{final_gates.get('formal_n10_cpu_sync_export_audit_gate', {}).get('summary_path')}`; export_file_count={final_gates.get('formal_n10_cpu_sync_export_audit_gate', {}).get('export_file_count')}; publication_audit={final_gates.get('formal_n10_cpu_sync_export_audit_gate', {}).get('publication_audit_status')}; issues={final_gates.get('formal_n10_cpu_sync_export_audit_gate', {}).get('publication_issue_count')}; reviewer_status={final_gates.get('formal_n10_cpu_sync_export_audit_gate', {}).get('reviewer_status')}; push_performed={final_gates.get('formal_n10_cpu_sync_export_audit_gate', {}).get('push_performed')}.",
+        f"- Active-hold report-sync export/publication audit gate: `{final_gates.get('active_hold_sync_export_audit_gate', {}).get('status', 'not_available')}`; evidence `{final_gates.get('active_hold_sync_export_audit_gate', {}).get('summary_path')}`; strict_aggregation={final_gates.get('active_hold_sync_export_audit_gate', {}).get('strict_aggregation_status')}; export_status={final_gates.get('active_hold_sync_export_audit_gate', {}).get('export_status')}; export_file_count={final_gates.get('active_hold_sync_export_audit_gate', {}).get('export_file_count')}; publication_audit={final_gates.get('active_hold_sync_export_audit_gate', {}).get('publication_audit_status')}; issues={final_gates.get('active_hold_sync_export_audit_gate', {}).get('publication_issue_count')}; active_hold_reviewer=`{final_gates.get('active_hold_sync_export_audit_gate', {}).get('active_hold_reconciliation_reviewer_verdict')}`.",
         f"- Boundary: {final_gates.get('claim_boundary', 'gate evidence unavailable')}.",
         "",
         "## Reproducible Turbo quality-suite runner",
@@ -1243,7 +2145,7 @@ def report_markdown(summary: dict[str, Any]) -> str:
         f"- All-exact: `{sol['all_exact']['status']}`; video MSE {sol['all_exact']['video_mean_mse']}; audio cosine {sol['all_exact']['audio_waveform_cosine']}.",
         f"- SwiGLU: `{sol['swiglu']['status']}`; exact diagnostic output retained no accepted speedup gain.",
         f"- Toy Sol-Attn: `{sol['toy_sol_attn']['status']}`; dense median {sol['toy_sol_attn']['dense_median_ms']} ms, sparse median {sol['toy_sol_attn']['sparse_median_ms']} ms, dense/sparse median speedup {sol['toy_sol_attn']['speedup_dense_over_sparse_median']}.",
-    ]
+    ])
     if h3_sol.get("status") != "not_available":
         tele = h3_sol["telemetry"]
         resources = h3_sol["resource_summary"]
@@ -1399,6 +2301,72 @@ def default_manifest_paths(repo_root: Path, evidence_root: Path, out_path: Path 
                 formal_sync_gate_dir / "export_build.json",
             ]
         )
+    active_hold_sync_gate_dir = _latest_prefixed_dir(delivery_dir, ACTIVE_HOLD_SYNC_EXPORT_AUDIT_PREFIX)
+    if active_hold_sync_gate_dir is not None:
+        final_gate_paths.extend(
+            [
+                active_hold_sync_gate_dir / "summary.json",
+                active_hold_sync_gate_dir / "commands.txt",
+                active_hold_sync_gate_dir / "strict_aggregation.log",
+                active_hold_sync_gate_dir / "strict_aggregation.stderr",
+                active_hold_sync_gate_dir / "publication_audit.json",
+                active_hold_sync_gate_dir / "publication_audit.stderr",
+                active_hold_sync_gate_dir / "export_build.json",
+                active_hold_sync_gate_dir / "export_build.stderr",
+            ]
+        )
+    operator_gate_paths: list[Path] = []
+    operator_gate_latest = evidence_root / TURBO_OPERATOR_GATE_LATEST_REL
+    operator_gate_dir = _resolve_latest_packet_dir(evidence_root, repo_root, TURBO_OPERATOR_GATE_LATEST_REL)
+    if operator_gate_latest.is_file():
+        operator_gate_paths.append(operator_gate_latest)
+    if operator_gate_dir is not None:
+        operator_gate_paths.extend(operator_gate_dir / name for name in TURBO_OPERATOR_GATE_PACKET_FILES)
+        operator_gate_paths.extend(sorted(operator_gate_dir.glob("*consistency_check*.json")))
+        operator_gate_paths.extend(sorted(operator_gate_dir.glob("*recognition_check*.json")))
+        stage_addendum = operator_gate_dir / "stage_closing_addendum.md"
+        if stage_addendum.is_file():
+            operator_gate_paths.append(stage_addendum)
+
+    delivery_reviewer_repair_paths: list[Path] = []
+    delivery_reviewer_repair_latest = evidence_root / DELIVERY_REVIEWER_RECOGNITION_REPAIR_LATEST_REL
+    delivery_reviewer_repair_dir = _resolve_latest_packet_dir(
+        evidence_root,
+        repo_root,
+        DELIVERY_REVIEWER_RECOGNITION_REPAIR_LATEST_REL,
+    )
+    if delivery_reviewer_repair_latest.is_file():
+        delivery_reviewer_repair_paths.append(delivery_reviewer_repair_latest)
+    if delivery_reviewer_repair_dir is not None:
+        for pattern in DELIVERY_REVIEWER_RECOGNITION_REPAIR_PACKET_FILES:
+            delivery_reviewer_repair_paths.extend(sorted(delivery_reviewer_repair_dir.glob(pattern)))
+
+    active_hold_reconciliation_paths: list[Path] = []
+    active_hold_reconciliation_latest = evidence_root / DELIVERY_REVIEWER_ACTIVE_HOLD_RECONCILIATION_LATEST_REL
+    active_hold_reconciliation_dir = _resolve_latest_packet_dir(
+        evidence_root,
+        repo_root,
+        DELIVERY_REVIEWER_ACTIVE_HOLD_RECONCILIATION_LATEST_REL,
+    )
+    if active_hold_reconciliation_latest.is_file():
+        active_hold_reconciliation_paths.append(active_hold_reconciliation_latest)
+    if active_hold_reconciliation_dir is not None:
+        for pattern in DELIVERY_REVIEWER_ACTIVE_HOLD_RECONCILIATION_PACKET_FILES:
+            active_hold_reconciliation_paths.extend(sorted(active_hold_reconciliation_dir.glob(pattern)))
+
+    current_manager_hold_no_gap_paths: list[Path] = []
+    current_manager_hold_no_gap_latest = evidence_root / CURRENT_MANAGER_HOLD_NO_GAP_LATEST_REL
+    current_manager_hold_no_gap_dir = _resolve_latest_packet_dir(
+        evidence_root,
+        repo_root,
+        CURRENT_MANAGER_HOLD_NO_GAP_LATEST_REL,
+    )
+    if current_manager_hold_no_gap_latest.is_file():
+        current_manager_hold_no_gap_paths.append(current_manager_hold_no_gap_latest)
+    if current_manager_hold_no_gap_dir is not None:
+        for pattern in CURRENT_MANAGER_HOLD_NO_GAP_PACKET_FILES:
+            current_manager_hold_no_gap_paths.extend(sorted(current_manager_hold_no_gap_dir.glob(pattern)))
+
     candidates = [
         repo_root / "release/github_release_manifest.json",
         repo_root / "tools/build_github_release_tree.py",
@@ -1408,6 +2376,7 @@ def default_manifest_paths(repo_root: Path, evidence_root: Path, out_path: Path 
         repo_root / "tools/minimax_h3_a6000_performance_report.py",
         repo_root / "tools/build_periodic_progress.py",
         repo_root / "tools/argus_ir04_aggregate.py",
+        repo_root / "tools/check_turbo_operator_gate_recognition.py",
         repo_root / "tools/argus_h3_verifier.py",
         repo_root / "tools/verify_run.py",
         repo_root / "scripts/a6000_one_command.sh",
@@ -1431,6 +2400,7 @@ def default_manifest_paths(repo_root: Path, evidence_root: Path, out_path: Path 
         repo_root / "tests/test_minimax_h3_a6000_performance_report.py",
         repo_root / "tests/test_turbo_quality_suite_runner.py",
         repo_root / "tests/test_argus_ir04_aggregate.py",
+        repo_root / "tests/test_turbo_operator_gate_recognition_check.py",
         repo_root / "tests/test_verify_run.py",
         evidence_root / QUALITY_CONFIG_REL,
         evidence_root / QUALITY_DRY_RUN_REL / "quality_suite_plan.json",
@@ -1466,6 +2436,10 @@ def default_manifest_paths(repo_root: Path, evidence_root: Path, out_path: Path 
         *r8_paths,
         *lifecycle_paths,
         *final_gate_paths,
+        *operator_gate_paths,
+        *delivery_reviewer_repair_paths,
+        *active_hold_reconciliation_paths,
+        *current_manager_hold_no_gap_paths,
     ]
     if out_path is not None:
         candidates.append(out_path)

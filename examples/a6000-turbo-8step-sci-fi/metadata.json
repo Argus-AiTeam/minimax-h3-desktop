@@ -1,0 +1,54 @@
+{
+  "schema_version": "minimax-h3-a6000-public-example-v1",
+  "title": "Orbital shipyard launch",
+  "track": "practical_disclosed_approx",
+  "model_path": "MiniMax-H3 FL2VA with statically merged Turbo LoRA",
+  "platform": "single NVIDIA RTX A6000 48GB (SM86)",
+  "workload": {
+    "width": 1344,
+    "height": 768,
+    "decoded_video_frames": 124,
+    "fps": 24,
+    "duration_seconds": 5.166667,
+    "audio_sample_rate_hz": 32000,
+    "audio_channels": 2,
+    "num_inference_steps": 8,
+    "seed": 42,
+    "flow_shift": 12,
+    "audio_flow_shift": 3.0
+  },
+  "measurement": {
+    "http_time_total_seconds": 291.626602,
+    "peak_gpu_memory_mib_for_two_candidate_session": 26664.0,
+    "peak_power_w_for_two-candidate_session": 301.09,
+    "peak_temperature_c_for_two-candidate_session": 83.0
+  },
+  "validation": {
+    "structural_av_contract_pass": true,
+    "decoded_video_frames": 124,
+    "decoded_audio_frames": 163,
+    "decoded_audio_samples_per_channel": 166912,
+    "frozen_transition_count_below_0_05": 0,
+    "adjacent_frame_absdiff_mean": 6.090210040410359,
+    "audio_rms": 0.12329931557178497,
+    "audio_peak_abs": 0.6060507297515869,
+    "audio_nonzero_fraction": 0.998933569785276,
+    "six_frame_visual_review": "pass: stable central spacecraft and docking-ring composition, coherent launch progression, no visible text or watermark"
+  },
+  "files": {
+    "video": {
+      "path": "orbital-shipyard-turbo-8step.mp4",
+      "bytes": 11252694,
+      "sha256": "454fceb57b1daf60dc5db1ade9aae295cee2ecd16fd90ab2c2f16c7b626db69a"
+    },
+    "contact_sheet": {
+      "path": "contact-sheet.jpg",
+      "sha256": "d340eec35a645fd407f3be2f5527ef840cdad74272e825b948c7b718413ab273"
+    },
+    "prompt": {
+      "path": "prompt.txt",
+      "sha256": "037b355e2328c45d3f42d796a23becaa111e752074efcd40bb7a7663bc370adf"
+    }
+  },
+  "claim_boundary": "This is a measured public Turbo 8-step practical example. Turbo is a disclosed approximation and is not BF16-exact fidelity evidence. Automated audio checks verify a valid active stereo stream but do not replace subjective semantic listening."
+}

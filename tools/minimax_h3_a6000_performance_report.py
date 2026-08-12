@@ -467,6 +467,10 @@ def collect_turbo_quality(evidence_root: Path) -> JsonDict:
     human_text, human_err = _read_text(human_path)
     if human_err is None:
         evidence.append(_evidence_rel(human_path, evidence_root))
+    operator_acceptance_path = run_dir / "operator_acceptance.json"
+    operator_acceptance, operator_acceptance_err = _load_json(operator_acceptance_path)
+    if operator_acceptance_err is None:
+        evidence.append(_evidence_rel(operator_acceptance_path, evidence_root))
     steps: JsonDict = {}
     for step, stats in sorted((analysis.get("latency_by_step") or {}).items(), key=lambda item: str(item[0])):
         if not isinstance(stats, dict):
@@ -481,7 +485,15 @@ def collect_turbo_quality(evidence_root: Path) -> JsonDict:
                 }
             )
         steps[str(step)] = step_row
-    pending_human = True if human_text is None else ("PENDING" in human_text.upper())
+    operator_accepted = bool(
+        isinstance(operator_acceptance, dict)
+        and operator_acceptance.get("status") == "accepted_overall_by_operator"
+        and operator_acceptance.get("scope", {}).get("human_playback_and_listening_review_completed") is True
+        and operator_acceptance.get("scope", {}).get("overall_practical_quality_accepted") is True
+        and operator_acceptance.get("preserved_limits", {}).get("turbo_is_bf16_exact_fidelity") is False
+        and operator_acceptance.get("preserved_limits", {}).get("four_step_promoted_to_default") is False
+    )
+    pending_human = not operator_accepted
     data = {
         "run_id": run_id,
         "status": analysis.get("status"),
@@ -490,10 +502,15 @@ def collect_turbo_quality(evidence_root: Path) -> JsonDict:
         "pair_count": analysis.get("pair_count"),
         "steps": steps,
         "all_cases_structural_av_pass": analysis.get("all_cases_structural_av_pass"),
-        "quality_certification": analysis.get("quality_certification"),
+        "quality_certification": (
+            "operator_accepted_practical_8step_with_known_4step_visual_failure_preserved"
+            if operator_accepted
+            else analysis.get("quality_certification")
+        ),
         "pending_human_review": pending_human,
-        "human_auditory_listening": "pending" if pending_human else "review_text_present",
-        "semantic_quality_certified": False,
+        "human_auditory_listening": "operator_overall_playback_listening_accepted" if operator_accepted else "pending",
+        "semantic_quality_certified": operator_accepted,
+        "operator_acceptance": operator_acceptance if operator_accepted else None,
         "metric_limits": analysis.get("metric_limits") if isinstance(analysis.get("metric_limits"), list) else [],
     }
     return _section("present", evidence=evidence, data=data)

@@ -21,6 +21,13 @@ __pycache__/
 *.wav
 *.mp3
 *.flac
+!examples/
+!examples/**/*.mp4
+!examples/**/*.mov
+!examples/**/*.webm
+!examples/**/*.wav
+!examples/**/*.mp3
+!examples/**/*.flac
 *.tar
 *.tar.gz
 *.tgz
