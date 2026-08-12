@@ -1,6 +1,6 @@
 # MiniMax-H3 A6000 验证进度
 
-> 更新时间：2026-08-12T03:04:58+00:00
+> 更新时间：2026-08-12T05:35:47+00:00
 > 仅汇总已落盘证据；实验中或缺失结果明确标记，不估算。
 
 ## 固定工作负载
@@ -38,7 +38,7 @@
 
 ## Final delivery gates
 
-- CPU/static gate：pass；evidence=delivery/final_cpu_static_gate_20260812T020013Z。
+- CPU/static gate：pass；evidence=delivery/final_cpu_static_gate_20260812T033107Z。
 - strict aggregation/export/publication audit：pass；export_file_count=82；publication_issue_count=0；evidence=delivery/final_decisive_export_audit_20260812T025605Z。
 - 边界：这些是CPU/static/export/audit gate，不产生GPU、Docker-run、model-load、速度、保真或质量新声明。
 
@@ -52,6 +52,6 @@
 ## 下一步
 
 1. 如获授权，下一步是formal N>=10 matched-workload gate；不得把N=3 route gate写成正式speedup、BF16 fidelity或质量等价。
-2. CPU/static、fixture、Turbo dry-run、strict aggregation、export和publication audit gate已通过；独立Reviewer也已通过当前r8边界。
-3. 本轮仅执行sanitized release tree到既有Private GitHub main的非强制同步/推送；该动作不新增speedup、BF16 fidelity、release或质量等价声明。
+2. CPU/static、fixture、Turbo dry-run、strict aggregation、export和publication audit gate已通过；下一步是独立Reviewer，而不是自行push。
+3. 独立Reviewer通过后，才把sanitized release tree提交并push到既有Private GitHub main。
 4. 如果只剩人类主观听感，保留operator listening gate和文件映射。

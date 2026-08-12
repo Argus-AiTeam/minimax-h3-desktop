@@ -40,6 +40,9 @@ SOL_ATTN_SUPERVISOR_REL = Path("sol_engine_port/sol_attn_gpu2_supervisor")
 R8_MATCHED_RETEST_TERMINAL_GLOB = "sol_attn_h3_matched_retest_r8_n3_*"
 R8_MATCHED_RETEST_TERMINAL_RECHECK_GLOB = "r8_matched_retest_terminal_recheck_*"
 R8_MATCHED_RETEST_NONTERMINAL_GLOBS = ("r8_matched_retest_inspection_*", "r8_matched_retest_nonterminal_inspection_*")
+R8_FORMAL_N10_GLOB = "sol_attn_h3_formal_n10_r8_n*_*"
+R8_FORMAL_N10_DECISION_FILE = "formal_n10_decision.json"
+R8_FORMAL_N10_REPORT_FILE = "RUN_REPORT.md"
 
 JsonDict = dict[str, Any]
 
@@ -103,6 +106,17 @@ def _read_text(path: Path) -> tuple[str | None, str | None]:
     if not path.is_file():
         return None, f"missing evidence: {path.as_posix()}"
     return path.read_text(encoding="utf-8"), None
+
+
+def _formal_pair_completed(pair_dir: Path) -> bool:
+    """Return True when a formal-N pair has terminal per-pair success evidence."""
+    if (pair_dir / "decision.json").is_file():
+        return True
+    exit_path = pair_dir.parent / f"{pair_dir.name}.exit_code"
+    try:
+        return exit_path.read_text(encoding="utf-8").strip() == "0"
+    except FileNotFoundError:
+        return False
 
 
 def _read_pointer(path: Path) -> tuple[str | None, str | None]:
@@ -1172,12 +1186,99 @@ def _collect_r8_matched_retest(evidence_root: Path, evidence: list[str], notes: 
     }
 
 
+def _collect_r8_formal_n10(evidence_root: Path, evidence: list[str], notes: list[str]) -> JsonDict:
+    sol_root = evidence_root / "sol_engine_port"
+    formal_dir = _latest_glob_dir(sol_root, R8_FORMAL_N10_GLOB)
+    if formal_dir is None:
+        return {"status": "not_available", "reason": "no r8 formal N>=10 Sol-Attn run directory found"}
+
+    status_path = formal_dir / "formal_n10_supervisor_status.json"
+    stdout_path = formal_dir / "formal_n10_supervisor_stdout.log"
+    decision_path = formal_dir / R8_FORMAL_N10_DECISION_FILE
+    report_path = formal_dir / R8_FORMAL_N10_REPORT_FILE
+    terminal_artifacts = {
+        R8_FORMAL_N10_DECISION_FILE: decision_path.is_file(),
+        R8_FORMAL_N10_REPORT_FILE: report_path.is_file(),
+    }
+    pair_dirs = sorted(path for path in formal_dir.glob("pair[0-9][0-9]") if path.is_dir())
+    completed_pair_dirs = [path for path in pair_dirs if _formal_pair_completed(path)]
+    for path in (status_path, stdout_path, decision_path, report_path):
+        if path.is_file():
+            evidence.append(_evidence_rel(path, evidence_root))
+
+    supervisor, status_err = _load_json(status_path)
+    if status_err:
+        notes.append(status_err)
+        supervisor = {}
+    requested_pairs = supervisor.get("n_pairs") or supervisor.get("requested_pairs") or 10
+
+    if decision_path.is_file():
+        decision, err = _load_json(decision_path)
+        if err or decision is None:
+            notes.append(err or "invalid formal N10 decision")
+            return {
+                "status": "invalid_formal_n10_decision",
+                "source_run_dir": _evidence_rel(formal_dir, evidence_root),
+                "reason": err or "invalid formal N10 decision",
+                "terminal_artifacts_present": terminal_artifacts,
+            }
+        gates = decision.get("gates") if isinstance(decision.get("gates"), dict) else {}
+        return {
+            "status": decision.get("formal_classification"),
+            "source_run_dir": _evidence_rel(formal_dir, evidence_root),
+            "decision_path": _evidence_rel(decision_path, evidence_root),
+            "report_path": _evidence_rel(report_path, evidence_root) if report_path.is_file() else None,
+            "reason": decision.get("reason"),
+            "requested_pairs": gates.get("requested_pairs", requested_pairs),
+            "completed_pairs": gates.get("completed_pairs", decision.get("completed_pairs")),
+            "started_pairs": len(pair_dirs),
+            "supervisor_status": supervisor.get("status"),
+            "supervisor_return_code": supervisor.get("return_code"),
+            "same_expected_gpu": decision.get("same_expected_gpu"),
+            "raw_matched_classification": decision.get("raw_matched_classification"),
+            "median_http_time_improvement_pct": decision.get("median_http_time_improvement_pct"),
+            "timing_threshold_pct": decision.get("timing_threshold_pct"),
+            "failed_gates": decision.get("failed_gates"),
+            "lane": decision.get("lane"),
+            "terminal_artifacts_present": terminal_artifacts,
+            "not_fidelity_or_performance_claim": decision.get("not_fidelity_or_performance_claim"),
+        }
+
+    status = "incomplete_formal_n10_no_terminal_decision"
+    if supervisor.get("status") == "running":
+        status = "incomplete_formal_n10_running_no_terminal_decision"
+    reason = (
+        "formal N>=10 supervisor is marked running and has no formal_n10_decision.json/RUN_REPORT terminal artifacts; "
+        "the run is not accepted, rejected, or a speedup claim until terminal per-pair evidence and summary are present"
+        if supervisor.get("status") == "running"
+        else "formal N>=10 run directory lacks a terminal formal_n10_decision.json/RUN_REPORT; do not promote or claim speedup"
+    )
+    return {
+        "status": status,
+        "source_run_dir": _evidence_rel(formal_dir, evidence_root),
+        "status_path": _evidence_rel(status_path, evidence_root) if status_path.is_file() else None,
+        "stdout_path": _evidence_rel(stdout_path, evidence_root) if stdout_path.is_file() else None,
+        "reason": reason,
+        "requested_pairs": requested_pairs,
+        "started_pairs": len(pair_dirs),
+        "completed_pairs": len(completed_pair_dirs),
+        "supervisor_status": supervisor.get("status"),
+        "supervisor_pid": supervisor.get("pid"),
+        "gpu_index": supervisor.get("gpu_index"),
+        "expected_uuid": supervisor.get("expected_uuid"),
+        "terminal_artifacts_present": terminal_artifacts,
+        "not_fidelity_or_performance_claim": True,
+        "lane": "formal_n10_matched_5step_sol_attn_opt_in_not_bf16_fidelity",
+    }
+
+
 def collect_sol_attn(evidence_root: Path) -> JsonDict:
     evidence: list[str] = []
     notes: list[str] = []
     legacy = _legacy_sol_attn_kernel_diagnostic(evidence_root, evidence, notes)
     runtime = _classify_sol_attn_runtime(evidence_root, evidence, notes)
     matched_retest = _collect_r8_matched_retest(evidence_root, evidence, notes)
+    formal_n10 = _collect_r8_formal_n10(evidence_root, evidence, notes)
     h3_e2e = runtime.get("h3_e2e") if isinstance(runtime.get("h3_e2e"), dict) else {"status": "pending", "reason": runtime.get("reason", "missing Sol-Attn runtime evidence")}
     data = {
         "legacy_kernel_diagnostic": legacy,
@@ -1185,6 +1286,7 @@ def collect_sol_attn(evidence_root: Path) -> JsonDict:
         "strict_r6_runtime": runtime,
         "h3_e2e": h3_e2e,
         "matched_retest": matched_retest,
+        "formal_n10": formal_n10,
         "deployment_status": "accepted_5step_diagnostic_not_release_manifest_eligible" if runtime.get("accepted_runtime_evidence") and not runtime.get("release_manifest_eligible") else ("release_manifest_eligible_runtime_evidence" if runtime.get("release_manifest_eligible") else "not_deployed_release_manifest_blocked"),
     }
     status = "partial" if legacy.get("status") == "present" or runtime.get("accepted_metadata") else "pending"
@@ -1235,10 +1337,15 @@ def _collect_pending(section_name: str, section: JsonDict) -> list[JsonDict]:
         h3_e2e = data.get("h3_e2e")
         if isinstance(h3_e2e, dict) and h3_e2e.get("status") in {"pending", "identity_mismatch", "stale_or_dry_run_rejected", "fail_closed_missing_metadata", "runtime_failure", "quality_drift", "speed_only_no_quality", "metadata_accepted"}:
             pending.append({"section": "sol_attn.h3_e2e", "status": h3_e2e.get("status", "pending"), "reason": h3_e2e.get("reason", "missing evidence")})
+        formal = data.get("formal_n10")
+        formal_status = formal.get("status") if isinstance(formal, dict) else None
         matched = data.get("matched_retest")
         if isinstance(matched, dict):
             if matched.get("status") == "proceed_to_formal_n10_candidate":
-                pending.append({"section": "sol_attn.formal_n10", "status": "pending_formal_n10_required_after_r8_n3_candidate_before_speedup_or_quality_claim", "reason": "r8 N=3 route gate recommends formal N>=10, but no formal N>=10 promotion result is accepted"})
+                if formal_status in {None, "not_available"}:
+                    pending.append({"section": "sol_attn.formal_n10", "status": "pending_formal_n10_required_after_r8_n3_candidate_before_speedup_or_quality_claim", "reason": "r8 N=3 route gate recommends formal N>=10, but no formal N>=10 promotion result is accepted"})
+                elif str(formal_status).startswith("incomplete_") or formal_status == "invalid_formal_n10_decision":
+                    pending.append({"section": "sol_attn.formal_n10", "status": formal_status, "reason": formal.get("reason", "formal N10 run is nonterminal")})
             elif matched.get("status") not in {None, "not_available"}:
                 pending.append({"section": "sol_attn.matched_workload", "status": matched.get("status", "pending"), "reason": matched.get("reason", "matched-workload route evidence is not terminal/pass")})
     return pending
@@ -1589,6 +1696,7 @@ def render_markdown(payload: JsonDict) -> str:
         times = runtime.get("paired_http_time_total_s", {}) if isinstance(runtime.get("paired_http_time_total_s"), dict) else {}
         image = runtime.get("image_identity", {}) if isinstance(runtime.get("image_identity"), dict) else {}
         matched = sol.get("matched_retest", {}) if isinstance(sol.get("matched_retest"), dict) else {}
+        formal = sol.get("formal_n10", {}) if isinstance(sol.get("formal_n10"), dict) else {}
         runtime_label = runtime.get("runtime_label") or image.get("runtime_label") or "unknown"
         timing_ratio_label = "dense/opt-in timing ratio (diagnostic only, not a speedup claim)"
         timing_ratio_value = runtime.get('paired_http_ratio_dense_over_opt_in_not_speedup')
@@ -1612,6 +1720,14 @@ def render_markdown(payload: JsonDict) -> str:
             )
         elif matched.get("status") not in {None, "not_available"}:
             lines.append(f"- Latest r8 matched-workload retest CPU inspection: `{matched.get('status')}`; evidence `{matched.get('evidence_path')}`. {matched.get('reason', 'pending')}.")
+        if formal.get("status") not in {None, "not_available"}:
+            formal_evidence = formal.get("decision_path") or formal.get("status_path") or formal.get("source_run_dir")
+            lines.append(
+                f"- Latest r8 formal N>=10 gate CPU inspection: `{formal.get('status')}`; evidence `{formal_evidence}`. "
+                f"Requested pairs={_fmt(formal.get('requested_pairs'))}; started pairs={_fmt(formal.get('started_pairs'))}; completed pairs={_fmt(formal.get('completed_pairs'))}; "
+                f"supervisor_status={_fmt(formal.get('supervisor_status'))}. {formal.get('reason', 'pending')}. "
+                "No formal Sol-Attn speedup, BF16 fidelity, release, or quality-equivalence claim is created by a nonterminal/incomplete gate."
+            )
     lines.extend(["", "## DMD / DMD2 status", ""])
     if sections["dmd"]["status"] == "pending":
         lines.append(f"- **pending**: {sections['dmd'].get('reason', 'missing DMD evidence')}.")

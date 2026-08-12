@@ -51,8 +51,12 @@ R8_MATCHED_RETEST_TERMINAL_FILES = (
 )
 R8_MATCHED_RETEST_TERMINAL_RECHECK_PREFIX = "r8_matched_retest_terminal_recheck_"
 R8_MATCHED_RETEST_TERMINAL_RECHECK_FILE = "summary.json"
+R8_FORMAL_N10_PREFIX = "sol_attn_h3_formal_n10_r8_n"
+R8_FORMAL_N10_DECISION_FILE = "formal_n10_decision.json"
+R8_FORMAL_N10_REPORT_FILE = "RUN_REPORT.md"
 FINAL_CPU_STATIC_GATE_PREFIX = "final_cpu_static_gate_"
 FINAL_DECISIVE_EXPORT_AUDIT_PREFIX = "final_decisive_export_audit_"
+FORMAL_N10_CPU_SYNC_EXPORT_AUDIT_PREFIX = "formal_n10_cpu_sync_export_audit_"
 
 Fidelity = "fidelity_bf16_exact"
 Practical = "practical_disclosed_approx"
@@ -85,6 +89,17 @@ def read_text(path: Path) -> str:
         return path.read_text(encoding="utf-8")
     except FileNotFoundError as exc:
         raise AggregationError(f"required evidence file not found: {path}") from exc
+
+
+def formal_pair_completed(pair_dir: Path) -> bool:
+    """Return True when a formal-N pair has terminal per-pair success evidence."""
+    if (pair_dir / "decision.json").is_file():
+        return True
+    exit_path = pair_dir.parent / f"{pair_dir.name}.exit_code"
+    try:
+        return exit_path.read_text(encoding="utf-8").strip() == "0"
+    except FileNotFoundError:
+        return False
 
 
 def sha256_file(path: Path) -> str:
@@ -419,6 +434,99 @@ def summarize_dmd(root: Path) -> dict[str, Any]:
     }
 
 
+def summarize_r8_formal_n10(root: Path) -> dict[str, Any]:
+    formal_dir = _latest_prefixed_dir(root / "sol_engine_port", R8_FORMAL_N10_PREFIX)
+    if formal_dir is None:
+        return {
+            "status": "not_available",
+            "reason": "no r8 formal N>=10 Sol-Attn run directory found",
+        }
+
+    status_path = formal_dir / "formal_n10_supervisor_status.json"
+    stdout_path = formal_dir / "formal_n10_supervisor_stdout.log"
+    decision_path = formal_dir / R8_FORMAL_N10_DECISION_FILE
+    report_path = formal_dir / R8_FORMAL_N10_REPORT_FILE
+    terminal_artifacts = {
+        R8_FORMAL_N10_DECISION_FILE: decision_path.is_file(),
+        R8_FORMAL_N10_REPORT_FILE: report_path.is_file(),
+    }
+    pair_dirs = sorted(path for path in formal_dir.glob("pair[0-9][0-9]") if path.is_dir())
+    completed_pair_dirs = [path for path in pair_dirs if formal_pair_completed(path)]
+    supervisor = load_json(status_path) if status_path.is_file() else {}
+    requested_pairs = supervisor.get("n_pairs") or supervisor.get("requested_pairs") or 10
+
+    if decision_path.is_file():
+        decision = load_json(decision_path)
+        classification = decision.get("formal_classification")
+        allowed = {
+            "accepted_formal_n10_same_gpu_sol_attn_speed_candidate",
+            "rejected_formal_n10_incomplete_pair_count",
+            "rejected_formal_n10_correctness_sparse_or_quality_gate_failed",
+            "rejected_formal_n10_resource_gate_failed",
+            "rejected_formal_n10_timing_gate_failed",
+            "rejected_formal_n10_unclassified_gate_failure",
+            "inconclusive_incomplete_formal_n10_run",
+            "blocked_requested_pairs_below_formal_n10",
+        }
+        if classification not in allowed:
+            raise AggregationError(f"unexpected formal N10 classification: {classification!r}")
+        gates = decision.get("gates") if isinstance(decision.get("gates"), dict) else {}
+        if classification == "accepted_formal_n10_same_gpu_sol_attn_speed_candidate":
+            required_true = [
+                "completed_pairs_ge_10",
+                "same_expected_gpu",
+                "raw_route_gate_passed",
+                "timing_gate_passed",
+            ]
+            failed = [name for name in required_true if gates.get(name) is not True]
+            if failed:
+                raise AggregationError(f"accepted formal N10 decision has failed gates: {failed}")
+        return {
+            "status": classification,
+            "source_run_dir": rel(formal_dir, root),
+            "decision_path": rel(decision_path, root),
+            "report_path": rel(report_path, root) if report_path.is_file() else None,
+            "reason": decision.get("reason"),
+            "requested_pairs": gates.get("requested_pairs", requested_pairs),
+            "completed_pairs": gates.get("completed_pairs", decision.get("completed_pairs")),
+            "started_pairs": len(pair_dirs),
+            "supervisor_status": supervisor.get("status"),
+            "supervisor_return_code": supervisor.get("return_code"),
+            "same_expected_gpu": decision.get("same_expected_gpu"),
+            "raw_matched_classification": decision.get("raw_matched_classification"),
+            "median_http_time_improvement_pct": decision.get("median_http_time_improvement_pct"),
+            "timing_threshold_pct": decision.get("timing_threshold_pct"),
+            "failed_gates": decision.get("failed_gates"),
+            "lane": decision.get("lane"),
+            "terminal_artifacts_present": terminal_artifacts,
+        }
+
+    status = "incomplete_formal_n10_no_terminal_decision"
+    if supervisor.get("status") == "running":
+        status = "incomplete_formal_n10_running_no_terminal_decision"
+    return {
+        "status": status,
+        "source_run_dir": rel(formal_dir, root),
+        "status_path": rel(status_path, root) if status_path.is_file() else None,
+        "stdout_path": rel(stdout_path, root) if stdout_path.is_file() else None,
+        "reason": (
+            "formal N>=10 supervisor is marked running and has no formal_n10_decision.json/RUN_REPORT terminal artifacts; "
+            "the run is not accepted, rejected, or a speedup claim until terminal per-pair evidence and summary are present"
+            if supervisor.get("status") == "running"
+            else "formal N>=10 run directory lacks a terminal formal_n10_decision.json/RUN_REPORT; do not promote or claim speedup"
+        ),
+        "requested_pairs": requested_pairs,
+        "started_pairs": len(pair_dirs),
+        "completed_pairs": len(completed_pair_dirs),
+        "supervisor_status": supervisor.get("status"),
+        "supervisor_pid": supervisor.get("pid"),
+        "gpu_index": supervisor.get("gpu_index"),
+        "expected_uuid": supervisor.get("expected_uuid"),
+        "terminal_artifacts_present": terminal_artifacts,
+        "lane": "formal_n10_matched_5step_sol_attn_opt_in_not_bf16_fidelity",
+    }
+
+
 def summarize_r8_h3_sol_attn(root: Path) -> dict[str, Any]:
     delivery_dir = root / DELIVERY_REL
     ingest_dir = _latest_prefixed_dir(delivery_dir, R8_SOL_ATTN_CPU_INGEST_PREFIX)
@@ -534,6 +642,7 @@ def summarize_r8_h3_sol_attn(root: Path) -> dict[str, Any]:
             "status": "not_available",
             "reason": "no r8 matched-workload nonterminal/terminal route-decision evidence was found by the aggregator",
         },
+        "formal_n10": summarize_r8_formal_n10(root),
     }
 
     terminal_run_dir = _latest_prefixed_dir(root / "sol_engine_port", R8_MATCHED_RETEST_TERMINAL_RUN_PREFIX)
@@ -732,6 +841,7 @@ def summarize_final_gates(root: Path) -> dict[str, Any]:
     delivery_dir = root / DELIVERY_REL
     cpu_dir = _latest_prefixed_dir(delivery_dir, FINAL_CPU_STATIC_GATE_PREFIX)
     decisive_dir = _latest_prefixed_dir(delivery_dir, FINAL_DECISIVE_EXPORT_AUDIT_PREFIX)
+    sync_dir = _latest_prefixed_dir(delivery_dir, FORMAL_N10_CPU_SYNC_EXPORT_AUDIT_PREFIX)
 
     cpu_status = "not_available"
     cpu_summary = ""
@@ -747,7 +857,14 @@ def summarize_final_gates(root: Path) -> dict[str, Any]:
         decisive_summary = load_json(summary_path) if summary_path.is_file() else {}
         decisive_status = decisive_summary.get("status") or "present_but_not_pass"
 
-    overall = "pass" if cpu_status == "pass" and decisive_status == "pass" else "pending_or_failed"
+    sync_status = "not_available"
+    sync_summary: dict[str, Any] = {}
+    if sync_dir is not None:
+        summary_path = sync_dir / "summary.json"
+        sync_summary = load_json(summary_path) if summary_path.is_file() else {}
+        sync_status = sync_summary.get("status") or "present_but_not_pass"
+
+    overall = "pass" if cpu_status == "pass" and decisive_status == "pass" and sync_status in {"not_available", "pass"} else "pending_or_failed"
     return {
         "status": overall,
         "cpu_static_gate": {
@@ -763,6 +880,16 @@ def summarize_final_gates(root: Path) -> dict[str, Any]:
             "export_file_count": decisive_summary.get("export_file_count"),
             "publication_audit_status": decisive_summary.get("publication_audit_status"),
             "publication_issue_count": decisive_summary.get("publication_issue_count"),
+        },
+        "formal_n10_cpu_sync_export_audit_gate": {
+            "status": sync_status,
+            "dir": rel(sync_dir, root) if sync_dir is not None else None,
+            "summary_path": rel(sync_dir / "summary.json", root) if sync_dir is not None else None,
+            "export_file_count": sync_summary.get("export_file_count"),
+            "publication_audit_status": sync_summary.get("publication_audit_status"),
+            "publication_issue_count": sync_summary.get("publication_issue_count"),
+            "push_performed": sync_summary.get("push_performed"),
+            "reviewer_status": sync_summary.get("reviewer_status"),
         },
         "claim_boundary": "CPU/static/export/audit gates only; no GPU, Docker-run, model-load, speed, fidelity, or quality claim is created by these gates.",
     }
@@ -934,8 +1061,10 @@ def aggregate_evidence(root: Path, *, repo_root: Path | None = None) -> dict[str
             }
         )
         matched = h3_sol.get("matched_retest", {})
+        formal = h3_sol.get("formal_n10", {})
         promotion_status = "pending_matched_workload_gate_required_before_speedup_n10_or_quality_claim"
         promotion_evidence = [h3_sol["evidence_path"]]
+        promotion_recorded = False
         if matched.get("status") == "proceed_to_formal_n10_candidate":
             summary["claims"]["accepted"].append(
                 {
@@ -947,13 +1076,39 @@ def aggregate_evidence(root: Path, *, repo_root: Path | None = None) -> dict[str
             )
             promotion_status = "pending_formal_n10_required_after_r8_n3_candidate_before_speedup_or_quality_claim"
             promotion_evidence = [matched["evidence_path"]]
-        summary["claims"]["pending"].append(
-            {
-                "claim": "Sol-Attn matched-workload correctness/quality and performance promotion is complete.",
-                "status": promotion_status,
-                "evidence": promotion_evidence,
-            }
-        )
+        formal_status = formal.get("status")
+        if formal_status not in {None, "not_available"}:
+            formal_evidence = [formal.get("decision_path") or formal.get("status_path") or formal.get("source_run_dir")]
+            if formal_status == "accepted_formal_n10_same_gpu_sol_attn_speed_candidate":
+                summary["claims"]["accepted"].append(
+                    {
+                        "claim": "Formal r8 Sol-Attn N>=10 matched-workload promotion is complete.",
+                        "track": "formal_n10_matched_5step_sol_attn_opt_in_not_bf16_fidelity",
+                        "evidence": formal_evidence,
+                        "limits": "Formal matched 5-step Sol-Attn lane only; not BF16 fidelity, Turbo, DLO, DMD, release, or human-auditory quality certification.",
+                    }
+                )
+                promotion_recorded = True
+            elif str(formal_status).startswith("rejected_") or str(formal_status).startswith("blocked_"):
+                summary["claims"]["rejected"].append(
+                    {
+                        "claim": "Formal r8 Sol-Attn N>=10 matched-workload promotion is accepted.",
+                        "reason": f"{formal_status}: {formal.get('reason')}",
+                        "evidence": formal_evidence,
+                    }
+                )
+                promotion_recorded = True
+            elif str(formal_status).startswith("incomplete_") or formal_status == "inconclusive_incomplete_formal_n10_run":
+                promotion_status = formal_status
+                promotion_evidence = formal_evidence
+        if not promotion_recorded:
+            summary["claims"]["pending"].append(
+                {
+                    "claim": "Sol-Attn matched-workload correctness/quality and performance promotion is complete.",
+                    "status": promotion_status,
+                    "evidence": promotion_evidence,
+                }
+            )
         if matched.get("status") == "pending_nonterminal_do_not_promote_or_stop":
             summary["claims"]["pending"].append(
                 {
@@ -1020,6 +1175,7 @@ def report_markdown(summary: dict[str, Any]) -> str:
         f"- Overall gate status: `{final_gates.get('status', 'not_available')}`.",
         f"- CPU/static gate: `{final_gates.get('cpu_static_gate', {}).get('status', 'not_available')}`; evidence `{final_gates.get('cpu_static_gate', {}).get('summary_path')}`; summary tail={final_gates.get('cpu_static_gate', {}).get('summary_tail', [])}.",
         f"- Strict aggregation/export/publication audit gate: `{final_gates.get('decisive_export_audit_gate', {}).get('status', 'not_available')}`; evidence `{final_gates.get('decisive_export_audit_gate', {}).get('summary_path')}`; export_file_count={final_gates.get('decisive_export_audit_gate', {}).get('export_file_count')}; publication_audit={final_gates.get('decisive_export_audit_gate', {}).get('publication_audit_status')}; issues={final_gates.get('decisive_export_audit_gate', {}).get('publication_issue_count')}.",
+        f"- Formal-N10 report-sync export/publication audit gate: `{final_gates.get('formal_n10_cpu_sync_export_audit_gate', {}).get('status', 'not_available')}`; evidence `{final_gates.get('formal_n10_cpu_sync_export_audit_gate', {}).get('summary_path')}`; export_file_count={final_gates.get('formal_n10_cpu_sync_export_audit_gate', {}).get('export_file_count')}; publication_audit={final_gates.get('formal_n10_cpu_sync_export_audit_gate', {}).get('publication_audit_status')}; issues={final_gates.get('formal_n10_cpu_sync_export_audit_gate', {}).get('publication_issue_count')}; reviewer_status={final_gates.get('formal_n10_cpu_sync_export_audit_gate', {}).get('reviewer_status')}; push_performed={final_gates.get('formal_n10_cpu_sync_export_audit_gate', {}).get('push_performed')}.",
         f"- Boundary: {final_gates.get('claim_boundary', 'gate evidence unavailable')}.",
         "",
         "## Reproducible Turbo quality-suite runner",
@@ -1056,6 +1212,12 @@ def report_markdown(summary: dict[str, Any]) -> str:
         elif matched.get("status") != "not_available":
             lines.append(
                 f"- R8 matched-workload retest route decision: `{matched['status']}`; evidence `{matched['evidence_path']}`; supervisor_status={matched['supervisor_status']}; pid_alive={matched['supervisor_pid_alive']}; n10_recommendation={matched['n10_recommendation']}. Reason: {matched['reason']}"
+            )
+        formal = h3_sol.get("formal_n10", {})
+        if formal.get("status") not in {None, "not_available"}:
+            formal_evidence = formal.get("decision_path") or formal.get("status_path") or formal.get("source_run_dir")
+            lines.append(
+                f"- R8 formal N>=10 matched-workload gate: `{formal.get('status')}`; evidence `{formal_evidence}`; requested_pairs={formal.get('requested_pairs')}; started_pairs={formal.get('started_pairs')}; completed_pairs={formal.get('completed_pairs')}; supervisor_status={formal.get('supervisor_status')}. Reason: {formal.get('reason')}. Nonterminal/incomplete formal evidence is not a Sol-Attn speedup, BF16 fidelity, release, or quality-equivalence claim."
             )
     lines.extend([
         "",
@@ -1131,6 +1293,12 @@ def default_manifest_paths(repo_root: Path, evidence_root: Path, out_path: Path 
         r8_matched_dir = _latest_prefixed_dir(delivery_dir, R8_MATCHED_RETEST_INSPECTION_PREFIX)
         if r8_matched_dir is not None:
             r8_paths.append(r8_matched_dir / R8_MATCHED_RETEST_INSPECTION_FILE)
+    r8_formal_dir = _latest_prefixed_dir(evidence_root / "sol_engine_port", R8_FORMAL_N10_PREFIX)
+    if r8_formal_dir is not None:
+        for name in ("formal_n10_supervisor_status.json", "formal_n10_supervisor_stdout.log", R8_FORMAL_N10_DECISION_FILE, R8_FORMAL_N10_REPORT_FILE):
+            candidate = r8_formal_dir / name
+            if candidate.is_file():
+                r8_paths.append(candidate)
     final_gate_paths: list[Path] = []
     cpu_gate_dir = _latest_prefixed_dir(delivery_dir, FINAL_CPU_STATIC_GATE_PREFIX)
     if cpu_gate_dir is not None:
@@ -1152,6 +1320,17 @@ def default_manifest_paths(repo_root: Path, evidence_root: Path, out_path: Path 
                 decisive_gate_dir / "strict_aggregation.log",
                 decisive_gate_dir / "publication_audit.json",
                 decisive_gate_dir / "export_build.json",
+            ]
+        )
+    formal_sync_gate_dir = _latest_prefixed_dir(delivery_dir, FORMAL_N10_CPU_SYNC_EXPORT_AUDIT_PREFIX)
+    if formal_sync_gate_dir is not None:
+        final_gate_paths.extend(
+            [
+                formal_sync_gate_dir / "summary.json",
+                formal_sync_gate_dir / "commands.txt",
+                formal_sync_gate_dir / "export_publication_tests.log",
+                formal_sync_gate_dir / "publication_audit.json",
+                formal_sync_gate_dir / "export_build.json",
             ]
         )
     candidates = [
