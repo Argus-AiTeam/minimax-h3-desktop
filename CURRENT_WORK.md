@@ -11,12 +11,6 @@ The active objective is **720p-class long-video MiniMax-H3 FL2VA production on o
 
 当前目标是在**单张 RTX A6000**上完成 720p 级 MiniMax-H3 FL2VA 长视频生产：先实现可复现的 30 秒音视频管线，再推进 60 秒。下列已验收数据均来自原生 **1344×768、124 帧、24 FPS、5.166667 秒**短片，并非长视频结果。目前尚无已验收的 30/60 秒结果，也不会把拼接输出表述为原生长上下文生成。
 
-## Dashboard publication status / 看板发布状态
-
-The public README live dashboard was published at `c5690f1ffd0ffb71a8581ca51afe2366a7a32687` (`docs: publish live research dashboard`, commit time 2026-08-13 14:22:33 UTC). This snapshot repairs stale pre-publication wording after that publication; it does not change accepted quantitative evidence. Commit/sync timestamps use the README's non-self-referential rule: the file records the last verified publication completed before the snapshot, while the containing commit's remote equality is checked externally and rolled into the next substantive update.
-
-公开 README 实时看板已在 `c5690f1ffd0ffb71a8581ca51afe2366a7a32687`（`docs: publish live research dashboard`，commit time 2026-08-13 14:22:33 UTC）发布。本快照只修复发布后残留的 pre-publication wording，不改变已验收量化证据。提交/同步时间采用 README 中的非自指规则：文件记录快照前已经完成并验证的发布，包含该文件的 commit 的远端一致性由外部 Git 校验，并在下一次实质性更新中滚动写入。
-
 ## Accepted evidence / 已验收证据
 
 | Lane / 路线 | Accepted result / 已验收结果 | Boundary / 边界 |
