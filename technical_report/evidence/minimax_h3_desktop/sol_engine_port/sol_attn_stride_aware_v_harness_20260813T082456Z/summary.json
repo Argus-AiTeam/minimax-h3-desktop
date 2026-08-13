@@ -1,0 +1,355 @@
+{
+  "bench": {
+    "dense_ms": {
+      "max_ms": 0.16281600296497345,
+      "mean_ms": 0.1324268877506256,
+      "median_ms": 0.131071999669075,
+      "min_ms": 0.12902399897575378,
+      "repeats": 100,
+      "warmup": 20
+    },
+    "kernel_candidates_only_not_h3_e2e": true,
+    "mode": "bench",
+    "model_load": false,
+    "preflight_telemetry": {
+      "_materialize_gpu_event_pairs": [],
+      "decline_reasons": {},
+      "dense_calls": 0,
+      "density_samples": [
+        {
+          "block_size": 64,
+          "blocks": 7,
+          "exact_block_pairs_lower_bound": 24,
+          "exact_density_lower_bound": 0.4897959183673469,
+          "kind": "static_exact_block_lower_bound",
+          "prefix_tokens": 6,
+          "sink_end": 6,
+          "sink_end_block": 1,
+          "sink_start": 0,
+          "sink_start_block": 0,
+          "stride_aware_value": true,
+          "total_block_pairs": 49,
+          "valid_tokens": 448,
+          "video_tokens": 442
+        }
+      ],
+      "fallback_calls": 0,
+      "fallback_reasons": {},
+      "layout_samples": [
+        {
+          "stage": "pre_decline",
+          "tensors": [
+            {
+              "device_type": "cuda",
+              "dtype": "bfloat16",
+              "is_contiguous": true,
+              "name": "query",
+              "shape": [
+                1,
+                512,
+                8,
+                128
+              ],
+              "storage_offset": 0,
+              "stride": [
+                524288,
+                1024,
+                128,
+                1
+              ]
+            },
+            {
+              "device_type": "cuda",
+              "dtype": "bfloat16",
+              "is_contiguous": true,
+              "name": "key",
+              "shape": [
+                1,
+                512,
+                8,
+                128
+              ],
+              "storage_offset": 0,
+              "stride": [
+                524288,
+                1024,
+                128,
+                1
+              ]
+            },
+            {
+              "device_type": "cuda",
+              "dtype": "bfloat16",
+              "is_contiguous": false,
+              "name": "value",
+              "shape": [
+                1,
+                512,
+                8,
+                128
+              ],
+              "storage_offset": 2048,
+              "stride": [
+                1572864,
+                3072,
+                128,
+                1
+              ]
+            }
+          ]
+        }
+      ],
+      "materialize_copy_by_tensor": {},
+      "materialize_copy_bytes": 0,
+      "materialize_copy_count": 0,
+      "materialize_gpu_copy_latency_ms": 0.0,
+      "materialize_gpu_timing_failures": 0,
+      "materialize_latency_ms": 0.0,
+      "prefix_query_dense_calls": 1,
+      "sink_ranges": [
+        [
+          0,
+          6
+        ]
+      ],
+      "sparse_calls": 1,
+      "sparse_candidate_calls": 1,
+      "stride_aware_value_bytes": 1048576,
+      "stride_aware_value_calls": 1
+    },
+    "shape": {
+      "B": 1,
+      "D": 128,
+      "H": 8,
+      "T_total": 512,
+      "T_valid": 448
+    },
+    "sparse_ms": {
+      "max_ms": 0.4607999920845032,
+      "mean_ms": 0.42392802238464355,
+      "median_ms": 0.41996800899505615,
+      "min_ms": 0.41574400663375854,
+      "repeats": 100,
+      "warmup": 20
+    },
+    "speedup_dense_over_sparse_median": 0.3120999620488188
+  },
+  "correctness": {
+    "comparison_reference": "materialized_same_values",
+    "compile_status": "compiled_and_launched",
+    "elapsed_s": 2.0080580711364746,
+    "max_abs_valid": 0.00390625,
+    "max_rel_valid": 21.256410598754883,
+    "mode": "correctness",
+    "numel_valid": 17920,
+    "padding_rows_zero": true,
+    "prefix_rows_equal_dense": true,
+    "telemetry": {
+      "_materialize_gpu_event_pairs": [],
+      "decline_reasons": {},
+      "dense_calls": 0,
+      "density_samples": [
+        {
+          "block_size": 64,
+          "blocks": 2,
+          "exact_block_pairs_lower_bound": 4,
+          "exact_density_lower_bound": 1.0,
+          "kind": "static_exact_block_lower_bound",
+          "prefix_tokens": 6,
+          "sink_end": 6,
+          "sink_end_block": 1,
+          "sink_start": 0,
+          "sink_start_block": 0,
+          "stride_aware_value": true,
+          "total_block_pairs": 4,
+          "valid_tokens": 70,
+          "video_tokens": 64
+        }
+      ],
+      "fallback_calls": 0,
+      "fallback_reasons": {},
+      "layout_samples": [
+        {
+          "stage": "pre_decline",
+          "tensors": [
+            {
+              "device_type": "cuda",
+              "dtype": "bfloat16",
+              "is_contiguous": true,
+              "name": "query",
+              "shape": [
+                1,
+                96,
+                2,
+                128
+              ],
+              "storage_offset": 0,
+              "stride": [
+                24576,
+                256,
+                128,
+                1
+              ]
+            },
+            {
+              "device_type": "cuda",
+              "dtype": "bfloat16",
+              "is_contiguous": true,
+              "name": "key",
+              "shape": [
+                1,
+                96,
+                2,
+                128
+              ],
+              "storage_offset": 0,
+              "stride": [
+                24576,
+                256,
+                128,
+                1
+              ]
+            },
+            {
+              "device_type": "cuda",
+              "dtype": "bfloat16",
+              "is_contiguous": false,
+              "name": "value",
+              "shape": [
+                1,
+                96,
+                2,
+                128
+              ],
+              "storage_offset": 512,
+              "stride": [
+                73728,
+                768,
+                128,
+                1
+              ]
+            }
+          ]
+        }
+      ],
+      "materialize_copy_by_tensor": {},
+      "materialize_copy_bytes": 0,
+      "materialize_copy_count": 0,
+      "materialize_gpu_copy_latency_ms": 0.0,
+      "materialize_gpu_timing_failures": 0,
+      "materialize_latency_ms": 0.0,
+      "prefix_query_dense_calls": 1,
+      "sink_ranges": [
+        [
+          0,
+          6
+        ]
+      ],
+      "sparse_calls": 1,
+      "sparse_candidate_calls": 1,
+      "stride_aware_value_bytes": 49152,
+      "stride_aware_value_calls": 1
+    },
+    "tolerance_note": "tau=-1e6 forces all route blocks exact; prefix query rows must equal dense exactly",
+    "value_layout": {
+      "is_contiguous": false,
+      "shape": [
+        1,
+        96,
+        2,
+        128
+      ],
+      "storage_offset": 512,
+      "stride": [
+        73728,
+        768,
+        128,
+        1
+      ]
+    }
+  },
+  "created_utc": "2026-08-13T08:25:08Z",
+  "export_note": "Sanitized model-free SM86 Sol-Attn harness summary; raw local lease log path omitted.",
+  "gpu_index": 0,
+  "gpu_uuid": "GPU-b3425477-0877-24de-c5b8-1549ab47cd4b",
+  "lease_after": {
+    "active_leases": [],
+    "gpus": [
+      {
+        "index": 0,
+        "mem_total_mib": 46068,
+        "mem_used_mib": 1,
+        "util_pct": 0
+      },
+      {
+        "index": 1,
+        "mem_total_mib": 46068,
+        "mem_used_mib": 1,
+        "util_pct": 0
+      },
+      {
+        "index": 2,
+        "mem_total_mib": 46068,
+        "mem_used_mib": 1,
+        "util_pct": 0
+      },
+      {
+        "index": 3,
+        "mem_total_mib": 46068,
+        "mem_used_mib": 1,
+        "util_pct": 0
+      }
+    ],
+    "gpus_idle": true,
+    "keepalive_pids": [],
+    "keepalive_running": false,
+    "keepalive_tree": []
+  },
+  "lease_before": {
+    "active_leases": [],
+    "gpus": [
+      {
+        "index": 0,
+        "mem_total_mib": 46068,
+        "mem_used_mib": 1,
+        "util_pct": 0
+      },
+      {
+        "index": 1,
+        "mem_total_mib": 46068,
+        "mem_used_mib": 1,
+        "util_pct": 0
+      },
+      {
+        "index": 2,
+        "mem_total_mib": 46068,
+        "mem_used_mib": 1,
+        "util_pct": 0
+      },
+      {
+        "index": 3,
+        "mem_total_mib": 46068,
+        "mem_used_mib": 1,
+        "util_pct": 0
+      }
+    ],
+    "gpus_idle": true,
+    "keepalive_pids": [],
+    "keepalive_running": false,
+    "keepalive_tree": []
+  },
+  "lease_supervision": {
+    "detached": false,
+    "gpus": "GPU-b3425477-0877-24de-c5b8-1549ab47cd4b",
+    "lease": "6ab779d4185f",
+    "owner": "minimax-h3-sol-attn-sm86-harness",
+    "parked": true,
+    "pid": 604265,
+    "released": "6ab779d4185f",
+    "returncode": 0,
+    "started": true
+  },
+  "model_free_kernel_evidence_only": true,
+  "one_visible_gpu": true,
+  "run_id": "sol_attn_stride_aware_v_harness_20260813T082456Z"
+}

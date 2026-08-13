@@ -1,6 +1,6 @@
 # MiniMax-H3 A6000 验证进度
 
-> 更新时间：2026-08-12T11:23:37+00:00
+> 更新时间：2026-08-13T08:26:10+00:00
 > 仅汇总已落盘证据；实验中或缺失结果明确标记，不估算。
 
 ## 固定工作负载
@@ -35,6 +35,14 @@
 - formal N>=10 evidence：decision=sol_engine_port/sol_attn_h3_formal_n10_r8_n10_20260812T031757Z/formal_n10_decision.json；summary=sol_engine_port/sol_attn_h3_formal_n10_r8_n10_20260812T031757Z/formal_n10_summary.json；terminal_artifacts={'formal_n10_decision.json': True, 'RUN_REPORT.md': True, 'formal_n10_summary.json': True, 'timing_summary.json': True, 'quality_proxy_comparison.json': True, 'resource_summary.json': True}。
 - formal N>=10边界：仅限formal 5-step Sol-Attn opt-in matched-workload lane；不是BF16 fidelity、release或人类听感/语义质量认证。
 
+## Non-Docker stride-aware V harness / 非 Docker stride-aware V harness
+
+- evidence：`sol_engine_port/sol_attn_stride_aware_v_harness_20260813T082456Z/summary.json` 与 `harness.json`。
+- GPU：`GPU-b3425477-0877-24de-c5b8-1549ab47cd4b`；Argus lease supervision；harness 内 exactly one visible CUDA device；model_load=False。
+- correctness：compile_status=compiled_and_launched；stride_aware_value_calls=1；sparse_calls=1；fallback_calls=0；materialize_copy_count=0；materialize_copy_bytes=0；prefix_rows_equal_dense=True；padding_rows_zero=True。
+- benchmark：warmup=20；repeats=100；shape B=1,T_total=512,T_valid=448,H=8,D=128；sparse median=0.419968 ms；dense median=0.131072 ms。
+- 边界：这是 kernel/model-free correctness 与 zero-materialization 证据；不是 H3 E2E、真实链路 speedup、长视频结果或产品质量证据。
+
 ## Clean-room one-command local lifecycle
 
 - 状态：pass；publication_audit=pass；local资源只读检查=81 files/144051182625 bytes。
@@ -51,12 +59,13 @@
 
 - BF16 fidelity lane仅包含baseline；Turbo属于practical_disclosed_approx，不得混入无损结论。
 - Sol-Attn r8 formal N>=10 matched-workload gate已终端接受：仅限formal 5-step Sol-Attn opt-in lane；不是BF16 fidelity、release或人类听感/语义质量认证。
+- 2026-08-13 non-Docker stride-aware-V harness 已证明当前 kernel path 在合成 fused-QKV V view 上 compile/launch 且 zero materialization；它仍是 model-free，不是 H3 E2E speedup。
 - Turbo自动结构/音频指标已完成，操作者总体播放/听感验收已记录；8-step保持默认，已知4-step视觉失败继续保留。
 - DMD/DMD2在无合法可复现H3 recipe/checkpoint时保持blocked。
 
 ## 下一步
 
-1. formal N>=10已终端接受且独立Reviewer已通过；post-review private main同步已完成，后续不要重复formal run或扩大为BF16/质量/release声明。
+1. 如果 Docker daemon 存储冲突被管理员修复或干净 daemon 已有固定 r2/r8/r9 镜像，运行只改变 Q/K/V materialization 的 real-chain N=1 gate；否则继续 larger synthetic active-token non-Docker benchmark，仍标记为 model-free。
 2. CPU/static、fixture、Turbo dry-run、strict aggregation、export和publication audit gate已通过；独立Reviewer已通过且private main非强制同步已完成。
 3. sanitized release tree已在Reviewer通过和fresh audit pass后提交/同步到既有Private GitHub main。
 4. 操作者总体播放/听感验收已完成；保留8-step默认和已知4-step失败边界。

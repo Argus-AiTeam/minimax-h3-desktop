@@ -29,6 +29,8 @@ def test_exact_kernel_source_contains_real_triton_kernels_and_guards():
         "torch.cuda.get_device_capability",
         "requires SM86/A6000",
         "freqs must be FP32",
+        "freq_channel = channel % half",
+        "consumes only the first rotary half",
         "indexed_modulate_bf16_reference",
         "indexed_gate_bf16_reference",
         "apply_rope_bf16_reference",
@@ -83,6 +85,10 @@ def test_sol_attn_sm86_source_contains_real_triton_candidate_and_harness():
         "requires SM86",
         "sink_start_block",
         "HAS_SINK",
+        "V_STRIDE_B",
+        "V_STRIDE_T",
+        "allow_strided_value",
+        "_strided_value_layout_reason",
     ):
         assert needle in source
     for needle in (
@@ -93,6 +99,9 @@ def test_sol_attn_sm86_source_contains_real_triton_candidate_and_harness():
         "unsupported_contiguity",
         "diagnostic_materialize_noncontiguous",
         "materialize_copy_bytes",
+        "materialize_gpu_copy_latency_ms",
+        "stride_aware_value_layout_reason",
+        "stride_aware_value_calls",
         "layout_samples",
         "kernel_error:",
         "sol_attn_sm86",
@@ -111,6 +120,8 @@ def test_sol_attn_sm86_source_contains_real_triton_candidate_and_harness():
         "prefix_rows_equal_dense",
         "kernel_candidates_only_not_h3_e2e",
         "warmup < 20",
+        "fused-QKV V view",
+        "materialized_same_values",
     ):
         assert needle in harness
 

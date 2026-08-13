@@ -91,6 +91,18 @@ def test_rope_batched_shape_and_validation():
         apply_rope_bf16_reference(hidden, torch.randn(4, 5))
 
 
+def test_rope_half_head_dim_false_ignores_second_freq_half():
+    hidden = torch.randn(2, 3, 8).to(torch.bfloat16)
+    freqs = torch.randn(2, 4)
+    changed_tail = freqs.clone()
+    changed_tail[:, 2:] = changed_tail[:, 2:] * 31.0 + 7.0
+
+    assert torch.equal(
+        apply_rope_bf16_reference(hidden, freqs),
+        apply_rope_bf16_reference(hidden, changed_tail),
+    )
+
+
 def test_swiglu_random_matches_locked_vllm_eager_expression():
     torch.manual_seed(11)
     x = torch.randn(3, 10, dtype=torch.float32).to(torch.bfloat16)

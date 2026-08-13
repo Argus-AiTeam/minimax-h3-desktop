@@ -22,34 +22,6 @@
 </p>
 
 > **长视频研发状态：** 当前聚焦单张 RTX A6000 的 720p 级 30/60 秒音视频生产；已验收数据、负结果、待检验假设与下一实验见 [`CURRENT_WORK.md`](CURRENT_WORK.md)。短片基线不会被表述为长视频结果。规范工作负载、计时层级、质量门槛与 claim-boundary validator 见 [`benchmark_contract/v1/README.md`](benchmark_contract/v1/README.md)；当前 pinned 开源路径只支持 4–15 秒原生输出，30/60 秒 manifest 均明确为尚未实测的 `extension` 路线。
->
-> **持续优化方向：** 项目按开放式证据循环继续推进 MiniMax-H3：优先打通可复现的 30 秒、再到 60 秒 720p 级长视频生产，持续剖析并改进真实链路中的 Sol-Engine、Sol-Attn、Q/K/V packing、复制/同步、VAE、音频和封装瓶颈。每轮都会查阅并固定一手论文、官方仓库 revision 与许可证，借鉴前沿方法后只通过同卡、同负载、同质量门槛的真实端到端实验决定保留或拒绝。目标是以可复现实证向世界领先水平推进，但在没有公开可比证据前不会宣称“世界第一”或 SOTA。
->
-> **最终部署目标：** 让完整 MiniMax-H3 音视频生成从数据中心多卡环境走向一台正常的单机电脑，以可审计的一键安装、准备、运行和验证流程工作。当前 A6000 是固定的单卡工程代理平台，用于持续压缩显存、host RAM、启动时间、每生成一秒视频的耗时、功耗和部署复杂度；它本身是 48 GB 工作站卡，且当前主机有大内存，所以 A6000 结果不能自动证明普通消费级电脑已经可运行。更低显存/内存硬件必须在真实设备上单独建立 baseline 和验收。
-
-### 持续量化看板
-
-下表只列已经验收、可追溯的同卡短片基线；30/60 秒仍是未测量的 extension 目标。`墙钟秒/生成秒` 越低越好。
-
-| 路线 | 已验收工作负载 | 中位耗时 | 墙钟秒/生成秒 | 峰值 GPU / host memory | 当前含义 |
-|---|---|---:|---:|---:|---|
-| BF16 fidelity | 5.1667 秒，N=10 | 1792.202 s | 346.878 | 26,836 MiB / 204.84 GiB | 保真分母 |
-| Turbo 8-step | 5.1667 秒，N=10 | 290.998 s | 56.322 | 26,836 MiB / 195.16 GiB | 当前 practical 默认 |
-| Turbo 4-step | 5.1667 秒，N=10 | 149.619 s | 28.959 | 26,836 MiB / 195.16 GiB | 更快但质量风险更高 |
-| Sol-Attn r8 opt-in | matched 5-step，10/10 pairs | HTTP 中位改善 15.203% | 不与上三行跨 lane 换算 | sparse 192 calls/pair，fallback 0 | 仅证明真实 sparse lane 晋级 |
-
-### 目前正在做
-
-1. 从现有 r8/r9 证据继续消除真实 H3 链路每次 5-step 约 192 次、约 105.34 GB 的 Q/K/V 实体化与复制；优先验证 layout-aware view/packing、block-map 复用和 fail-closed dense 回退。
-2. 恢复可复现 runtime/overlay 构建链，先做 N=1 小门槛，只有结构 AV、质量代理、复制字节和同卡 E2E 同时通过才晋级 N=3/N≥10。
-3. 建立 30 秒 720p 级 practical AV 生产 baseline，并明确标注 native long-context、chunk/overlap/conditioning 或 montage/stitching，绝不混写。
-
-### 未来会做
-
-- 从 30 秒推进到 60 秒，并量化长时身份、主体、背景、镜头、运动、重复/冻结、接缝、音频连续性与 AV-sync；
-- 同时优化 GPU 显存和 host RAM，而不只优化热路径速度；研究 offload/prefetch、VAE tiling/fusion、稳定 compile/CUDA Graph、音频/编码/I/O 与模型生命周期；
-- 为更接近普通电脑的硬件建立独立 feasibility/profile，逐级测量最低显存、最低内存、冷启动、磁盘、功耗和失败边界；
-- 每个有效正结果或可复现负结果都更新本看板与 [`CURRENT_WORK.md`](CURRENT_WORK.md)，通过测试、独立 Reviewer 和 publication audit 后再 commit/push；有变化时最长不超过 3 个活跃小时形成一次安全检查点。
 
 **不需要 A100/H100，也没有把多卡服务器结果冒充桌面结果。** 本项目在一张真实的 **NVIDIA RTX A6000 48GB（SM86）**上跑通完整 MiniMax-H3 FL2VA，并提供可复现的 BF16 baseline、Turbo practical 路线、默认关闭的 Sol-Attn 实验实现、部署脚本、测试和原始证据摘要。
 

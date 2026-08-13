@@ -133,6 +133,9 @@
       "path": "technical_report/evidence/minimax_h3_desktop/delivery/argus_ir04_delivery_summary.json"
     },
     {
+      "path": "technical_report/evidence/minimax_h3_desktop/delivery/sol_attn_stride_aware_v_harness_export_audit_20260813T082610Z/summary.json"
+    },
+    {
       "path": "technical_report/evidence/minimax_h3_desktop/turbo_merged/quality_suite_runs/gpu3_turbo_quality_20260810T005611Z/quality_suite_analysis.json"
     },
     {
@@ -155,6 +158,12 @@
     },
     {
       "path": "technical_report/evidence/minimax_h3_desktop/sol_engine_port/sol_attn_h3_formal_n10_r8_n10_20260812T031757Z/resource_summary.json"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/sol_engine_port/sol_attn_stride_aware_v_harness_20260813T082456Z/harness.json"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/sol_engine_port/sol_attn_stride_aware_v_harness_20260813T082456Z/summary.json"
     },
     {
       "path": "technical_report/evidence/minimax_h3_desktop/dlo_autotune/resident_layer_candidates.json"
@@ -222,7 +231,8 @@
         "integration/r4/*",
         "integration/r6/*",
         "integration/r7/*",
-        "integration/r8/*"
+        "integration/r8/*",
+        "integration/r9/*"
       ],
       "exclude": [
         "evidence/**",

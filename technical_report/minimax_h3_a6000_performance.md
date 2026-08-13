@@ -85,6 +85,7 @@ E2E diagnostic ablation quality/telemetry:
 - Sol-Attn legacy toy/kernel diagnostic: model_load=False; run_dir=`sol_engine_port/sol_attn_gpu_20260809T173323Z`.
 - Sol-Attn H3 diagnostic deployment boundary: `accepted_5step_diagnostic_not_release_manifest_eligible`.
 - Sol-Attn toy/kernel bench: dense median=0.12390399724245071 ms; sparse median=0.40243199467658997 ms; dense/sparse median speedup=0.30788803793302966.
+- Sol-Attn stride-aware-V SM86 harness: evidence `sol_engine_port/sol_attn_stride_aware_v_harness_20260813T082456Z/summary.json` and `harness.json`; model_load=False; GPU UUID `GPU-b3425477-0877-24de-c5b8-1549ab47cd4b`; one visible GPU under Argus lease supervision. Correctness compiled/launched on SM86, exercised `stride_aware_value_calls=1`, `sparse_calls=1`, `fallback_calls=0`, `materialize_copy_count=0`, `materialize_copy_bytes=0`, `prefix_rows_equal_dense=True`, and `padding_rows_zero=True`. Harness benchmark policy was warmup=20/repeats=100 on shape B=1,T_total=512,T_valid=448,H=8,D=128; sparse median=0.41996800899505615 ms and dense median=0.131071999669075 ms. Boundary: kernel/model-free zero-materialization correctness evidence only; not H3 E2E, not real-chain speedup, not long-video, and not product-quality evidence.
 - Sol-Attn r8 supervisor (current selected run by readable workload/version-label provenance, not run-id text prefix): status `complete`, latest_run_id `sol_attn_h3_gpu2_5step_r8_prompt0644_20260812T005600Z`, classified `sparse_runtime_valid_5step_diagnostic`.
 - Sol-Attn r8 readable provenance: image_tag=`argus/minimax-h3-vllm-omni:8e2e9b6b53e8-r8-sol-attn-overlay`, version=`r8`, required_version=`r8`, title=`MiniMax-H3 A6000 r8 Sol-Attn integration overlay`; opaque image/output identifiers are omitted and are not classification evidence.
 - Sol-Attn r8 HTTP timing: dense=186.498762s, opt-in=158.923988s, dense/opt-in timing ratio (diagnostic only, not a speedup claim)=1.173509199882399x.
@@ -153,6 +154,8 @@ Blockers:
 - `sol_engine_port/sol_attn_gpu2_supervisor/latest_run_id`
 - `sol_engine_port/sol_attn_gpu2_supervisor/status.txt`
 - `sol_engine_port/sol_attn_gpu_20260809T173323Z/result.json`
+- `sol_engine_port/sol_attn_stride_aware_v_harness_20260813T082456Z/harness.json`
+- `sol_engine_port/sol_attn_stride_aware_v_harness_20260813T082456Z/summary.json`
 - `sol_engine_port/sol_attn_h3_formal_n10_r8_n10_20260812T031757Z/FORMAL_N10_RUN_REPORT.md`
 - `sol_engine_port/sol_attn_h3_formal_n10_r8_n10_20260812T031757Z/RUN_REPORT.md`
 - `sol_engine_port/sol_attn_h3_formal_n10_r8_n10_20260812T031757Z/formal_n10_decision.json`

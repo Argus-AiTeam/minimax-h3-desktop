@@ -552,6 +552,12 @@ def _ensure_triton_kernels() -> tuple[Any, dict[str, Any]]:
     import triton
     import triton.language as tl
 
+    # Triton's JIT source parser resolves ``tl`` annotations through the
+    # function globals on current torch/triton wheels, not this local import
+    # frame.  Keep the import lazy (no CUDA probe at module import) but publish
+    # the language module before defining nested @triton.jit kernels.
+    globals()["tl"] = tl
+
     # From Sana sol-engine's exact BF16 fusions: Triton may fold
     # x.to(tl.bfloat16).to(tl.float32) away, so intermediate BF16 rounding is
     # forced in the integer domain with round-to-nearest-even semantics.
@@ -560,6 +566,8 @@ def _ensure_triton_kernels() -> tuple[Any, dict[str, Any]]:
         bits = x.to(tl.int32, bitcast=True)
         bits = bits + 0x7FFF + ((bits >> 16) & 1)
         return (bits & -65536).to(tl.float32, bitcast=True)
+
+    globals()["_round_bf16"] = _round_bf16
 
     @triton.jit
     def _indexed_modulate_kernel(x_ptr, scale_ptr, shift_ptr, idx_ptr, out_ptr, n_cols: tl.constexpr, BLOCK: tl.constexpr):
@@ -655,8 +663,9 @@ def _ensure_triton_kernels() -> tuple[Any, dict[str, Any]]:
         paired = tl.load(x_ptr + row * width + partner, mask=mask & rotating, other=0.0).to(tl.float32)
         rotated = tl.where(low, -paired, paired)
         seq = row % seq_len
-        cos = tl.load(cos_ptr + seq * rotary_dim + channel, mask=mask & rotating, other=0.0).to(tl.float32)
-        sin = tl.load(sin_ptr + seq * rotary_dim + channel, mask=mask & rotating, other=0.0).to(tl.float32)
+        freq_channel = channel % half
+        cos = tl.load(cos_ptr + seq * half + freq_channel, mask=mask & rotating, other=0.0).to(tl.float32)
+        sin = tl.load(sin_ptr + seq * half + freq_channel, mask=mask & rotating, other=0.0).to(tl.float32)
         y = _round_bf16(_round_bf16(x * cos) + _round_bf16(rotated * sin))
         tl.store(out_ptr + row * width + cols, tl.where(rotating, y, x).to(tl.bfloat16), mask=mask)
 
@@ -1015,8 +1024,15 @@ def apply_rope_bf16(
         rotary_dim = freqs.shape[-1]
         flat = hidden_states.reshape(-1, heads * head_dim)
         out = torch.empty_like(flat)
-        cos = torch.cos(freqs.to(torch.float32)).to(torch.bfloat16).contiguous()
-        sin = torch.sin(freqs.to(torch.float32)).to(torch.bfloat16).contiguous()
+        # vLLM RotaryEmbedding(half_head_dim=False, is_neox_style=True)
+        # consumes only the first rotary half, then broadcasts it over both
+        # NeoX halves.  MiniMax-H3's own RoPE generator duplicates this half,
+        # but the exact kernel must also match the locked eager expression when
+        # a harness supplies non-duplicated freqs.
+        half = rotary_dim // 2
+        freqs_half = freqs[:, :half].to(torch.float32)
+        cos = torch.cos(freqs_half).to(torch.bfloat16).contiguous()
+        sin = torch.sin(freqs_half).to(torch.bfloat16).contiguous()
         width = heads * head_dim
         kernels["rope"][(flat.shape[0], triton.cdiv(width, _TILE))](
             flat,

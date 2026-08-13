@@ -13,6 +13,20 @@ This overlay is Apache-2.0-compatible original adaptation/reference code. It was
   - H3 transformer/packing: `vllm_omni/diffusion/models/minimax_h3/minimax_h3_transformer.py`, `packed_sequence.py`.
   - Attention interface: `vllm_omni/diffusion/attention/backends/abstract.py`, `selector.py`, `backends/registry.py`, `backends/sdpa.py`.
   - Offloader interface: `vllm_omni/diffusion/offloader/offload_plan.py`.
+- Official Triton memory/pointer API (read 2026-08-12):
+  [`triton.language.load`](https://triton-lang.org/main/python-api/generated/triton.language.load.html) and
+  [`triton.language.store`](https://triton-lang.org/main/python-api/generated/triton.language.store.html).
+  These APIs load/store at the locations defined by each scalar or tensor of
+  pointers, which is why the r9 V path forms addresses from explicit
+  batch/token/head/dimension element strides instead of assuming packed rows.
+- Official PyTorch tensor semantics (read 2026-08-12):
+  [`torch/_tensor_docs.py`](https://github.com/pytorch/pytorch/blob/main/torch/_tensor_docs.py)
+  documents that `view` shares storage, `stride` is the element jump per
+  dimension, and `storage_offset` is measured in storage elements;
+  [`torch/_torch_docs.py`](https://github.com/pytorch/pytorch/blob/main/torch/_torch_docs.py)
+  documents that `as_strided` views must stay within storage and may overlap.
+  The r9 guard therefore validates the observed fused-QKV V offset/strides,
+  proves non-overlap for the admitted B=1 layout, and checks storage bounds.
 
 ## Overlay file mapping
 

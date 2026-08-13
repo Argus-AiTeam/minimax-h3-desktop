@@ -7,15 +7,15 @@ index fdfaf5f9..e0addc98 100644
      TRTLLM_ATTN = "vllm_omni.diffusion.attention.backends.trtllm_attn.TrtllmAttentionBackend"
      RAINFUSION_ATTN = "vllm_omni.diffusion.attention.backends.rainfusion_attn.RainFusionAttentionBackend"
 +    H3_A6000_SOL_ATTN = "vllm_omni.diffusion.attention.backends.sol_attn_h3_a6000.SolAttnH3A6000Backend"
- 
+
      def get_path(self, include_classname: bool = True) -> str:
          """Get the class path for this backend (respects overrides).
 diff --git a/vllm_omni/diffusion/attention/backends/sol_attn_h3_a6000.py b/vllm_omni/diffusion/attention/backends/sol_attn_h3_a6000.py
 new file mode 100644
-index 00000000..59c24ee0
+index 00000000..6ad785a2
 --- /dev/null
 +++ b/vllm_omni/diffusion/attention/backends/sol_attn_h3_a6000.py
-@@ -0,0 +1,486 @@
+@@ -0,0 +1,581 @@
 +# SPDX-License-Identifier: Apache-2.0
 +# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
 +"""Opt-in MiniMax-H3 A6000 Sol-Attn backend.
@@ -58,9 +58,11 @@ index 00000000..59c24ee0
 +    "MINIMAX_H3_A6000_SOL_ATTN_STRICT": "0",
 +    "MINIMAX_H3_A6000_SOL_ATTN_DENSE_FIRST_STEPS": "10",
 +    "MINIMAX_H3_A6000_SOL_ATTN_DENSE_FIRST_LAYERS": "2",
++    "MINIMAX_H3_A6000_SOL_ATTN_STRIDE_AWARE_V": "0",
 +    "MINIMAX_H3_A6000_SOL_ATTN_DIAGNOSTIC_MATERIALIZE": "0",
 +    "MINIMAX_H3_A6000_SOL_ATTN_MATERIALIZE_MAX_BYTES": "67108864",
 +    "MINIMAX_H3_A6000_SOL_ATTN_TELEMETRY_JSON": "",
++    "MINIMAX_H3_A6000_SOL_ATTN_TELEMETRY_ARM_FILE": "",
 +}
 +
 +MISSING_H3_HOOK_METADATA_PREFIX = "missing_h3_hook_metadata"
@@ -72,6 +74,11 @@ index 00000000..59c24ee0
 +
 +def _strict_enabled() -> bool:
 +    return _env_enabled("MINIMAX_H3_A6000_SOL_ATTN_STRICT")
++
++
++def _telemetry_armed() -> bool:
++    path = os.environ.get("MINIMAX_H3_A6000_SOL_ATTN_TELEMETRY_ARM_FILE", "").strip()
++    return not path or os.path.exists(path)
 +
 +
 +@dataclass
@@ -90,17 +97,36 @@ index 00000000..59c24ee0
 +    materialize_copy_bytes: int = 0
 +    materialize_copy_by_tensor: dict[str, int] = field(default_factory=dict)
 +    materialize_latency_ms: float = 0.0
++    materialize_gpu_copy_latency_ms: float = 0.0
++    materialize_gpu_timing_failures: int = 0
++    stride_aware_value_calls: int = 0
++    stride_aware_value_bytes: int = 0
++    sparse_attention_gpu_latency_ms: float = 0.0
++    sparse_attention_timed_calls: int = 0
++    sparse_attention_gpu_timing_failures: int = 0
++    denoise_gpu_latency_ms: float = 0.0
++    denoise_timed_calls: int = 0
++    denoise_gpu_timing_failures: int = 0
++    _materialize_gpu_event_pairs: list[tuple[Any, Any]] = field(default_factory=list, repr=False)
++    _sparse_attention_gpu_event_pairs: list[tuple[Any, Any]] = field(default_factory=list, repr=False)
++    _denoise_gpu_event_pairs: list[tuple[Any, Any]] = field(default_factory=list, repr=False)
 +
 +    def decline(self, reason: str) -> None:
++        if not _telemetry_armed():
++            return
 +        self.dense_calls += 1
 +        self.decline_reasons[reason] = self.decline_reasons.get(reason, 0) + 1
 +
 +    def fallback(self, reason: str) -> None:
++        if not _telemetry_armed():
++            return
 +        self.fallback_calls += 1
 +        self.fallback_reasons[reason] = self.fallback_reasons.get(reason, 0) + 1
 +        self.decline(reason)
 +
 +    def merge_wrapper(self, wrapper_telemetry: Any) -> None:
++        if not _telemetry_armed():
++            return
 +        self.dense_calls += int(getattr(wrapper_telemetry, "dense_calls", 0))
 +        self.sparse_candidate_calls += int(getattr(wrapper_telemetry, "sparse_candidate_calls", 0))
 +        self.sparse_calls += int(getattr(wrapper_telemetry, "sparse_calls", 0))
@@ -116,12 +142,18 @@ index 00000000..59c24ee0
 +        self.materialize_copy_count += int(getattr(wrapper_telemetry, "materialize_copy_count", 0))
 +        self.materialize_copy_bytes += int(getattr(wrapper_telemetry, "materialize_copy_bytes", 0))
 +        self.materialize_latency_ms += float(getattr(wrapper_telemetry, "materialize_latency_ms", 0.0))
++        self.stride_aware_value_calls += int(getattr(wrapper_telemetry, "stride_aware_value_calls", 0))
++        self.stride_aware_value_bytes += int(getattr(wrapper_telemetry, "stride_aware_value_bytes", 0))
++        self._materialize_gpu_event_pairs.extend(
++            list(getattr(wrapper_telemetry, "_materialize_gpu_event_pairs", []))
++        )
++        getattr(wrapper_telemetry, "_materialize_gpu_event_pairs", []).clear()
 +        for name, count in getattr(wrapper_telemetry, "materialize_copy_by_tensor", {}).items():
 +            key = str(name)
 +            self.materialize_copy_by_tensor[key] = self.materialize_copy_by_tensor.get(key, 0) + int(count)
 +
 +    def record_layout(self, *, stage: str, query: torch.Tensor, key: torch.Tensor, value: torch.Tensor) -> None:
-+        if len(self.layout_samples) >= 32:
++        if not _telemetry_armed() or len(self.layout_samples) >= 32:
 +            return
 +        self.layout_samples.append(
 +            {
@@ -129,6 +161,42 @@ index 00000000..59c24ee0
 +                "tensors": [_tensor_layout("query", query), _tensor_layout("key", key), _tensor_layout("value", value)],
 +            }
 +        )
++
++    def record_sparse_attention_events(self, start: Any, end: Any) -> None:
++        if not _telemetry_armed():
++            return
++        self.sparse_attention_timed_calls += 1
++        self._sparse_attention_gpu_event_pairs.append((start, end))
++
++    def record_denoise_events(self, start: Any, end: Any) -> None:
++        if not _telemetry_armed():
++            return
++        self.denoise_timed_calls += 1
++        self._denoise_gpu_event_pairs.append((start, end))
++
++    @staticmethod
++    def _finalize_event_pairs(pairs: list[tuple[Any, Any]]) -> tuple[float, int]:
++        total_ms = 0.0
++        failures = 0
++        for start, end in pairs:
++            try:
++                end.synchronize()
++                total_ms += float(start.elapsed_time(end))
++            except Exception:  # noqa: BLE001 - telemetry must not break process exit
++                failures += 1
++        pairs.clear()
++        return total_ms, failures
++
++    def finalize_gpu_timing(self) -> None:
++        value, failures = self._finalize_event_pairs(self._materialize_gpu_event_pairs)
++        self.materialize_gpu_copy_latency_ms += value
++        self.materialize_gpu_timing_failures += failures
++        value, failures = self._finalize_event_pairs(self._sparse_attention_gpu_event_pairs)
++        self.sparse_attention_gpu_latency_ms += value
++        self.sparse_attention_gpu_timing_failures += failures
++        value, failures = self._finalize_event_pairs(self._denoise_gpu_event_pairs)
++        self.denoise_gpu_latency_ms += value
++        self.denoise_gpu_timing_failures += failures
 +
 +
 +_TELEMETRY = H3A6000SolAttnTelemetry()
@@ -138,9 +206,14 @@ index 00000000..59c24ee0
 +    return _TELEMETRY
 +
 +
++def record_h3_a6000_denoise_events(start: Any, end: Any) -> None:
++    _TELEMETRY.record_denoise_events(start, end)
++
++
 +def _sol_attn_telemetry_json() -> dict[str, Any]:
++    _TELEMETRY.finalize_gpu_timing()
 +    return {
-+        "schema_version": "minimax_h3_a6000_sol_attn_telemetry_v2",
++        "schema_version": "minimax_h3_a6000_sol_attn_telemetry_v3",
 +        "density_sample_kind": "static_exact_block_lower_bound",
 +        "dense_calls": _TELEMETRY.dense_calls,
 +        "sparse_candidate_calls": _TELEMETRY.sparse_candidate_calls,
@@ -156,6 +229,20 @@ index 00000000..59c24ee0
 +        "materialize_copy_bytes": _TELEMETRY.materialize_copy_bytes,
 +        "materialize_copy_by_tensor": dict(_TELEMETRY.materialize_copy_by_tensor),
 +        "materialize_latency_ms": _TELEMETRY.materialize_latency_ms,
++        "materialize_host_enqueue_latency_ms": _TELEMETRY.materialize_latency_ms,
++        "materialize_gpu_copy_latency_ms": _TELEMETRY.materialize_gpu_copy_latency_ms,
++        "materialize_gpu_timing_failures": _TELEMETRY.materialize_gpu_timing_failures,
++        "input_copy_events": _TELEMETRY.materialize_copy_count,
++        "input_copy_bytes": _TELEMETRY.materialize_copy_bytes,
++        "input_copy_by_tensor": dict(_TELEMETRY.materialize_copy_by_tensor),
++        "stride_aware_value_calls": _TELEMETRY.stride_aware_value_calls,
++        "stride_aware_value_bytes": _TELEMETRY.stride_aware_value_bytes,
++        "sparse_attention_gpu_latency_ms": _TELEMETRY.sparse_attention_gpu_latency_ms,
++        "sparse_attention_timed_calls": _TELEMETRY.sparse_attention_timed_calls,
++        "sparse_attention_gpu_timing_failures": _TELEMETRY.sparse_attention_gpu_timing_failures,
++        "denoise_gpu_latency_ms": _TELEMETRY.denoise_gpu_latency_ms,
++        "denoise_timed_calls": _TELEMETRY.denoise_timed_calls,
++        "denoise_gpu_timing_failures": _TELEMETRY.denoise_gpu_timing_failures,
 +    }
 +
 +
@@ -425,7 +512,10 @@ index 00000000..59c24ee0
 +        if query.dtype != torch.bfloat16 or key.dtype != query.dtype or value.dtype != query.dtype:
 +            return "unsupported_dtype"
 +        if not (query.is_contiguous() and key.is_contiguous() and value.is_contiguous()):
-+            if not _env_enabled("MINIMAX_H3_A6000_SOL_ATTN_DIAGNOSTIC_MATERIALIZE"):
++            if not (
++                _env_enabled("MINIMAX_H3_A6000_SOL_ATTN_STRIDE_AWARE_V")
++                or _env_enabled("MINIMAX_H3_A6000_SOL_ATTN_DIAGNOSTIC_MATERIALIZE")
++            ):
 +                return "unsupported_contiguity"
 +        if query.device.type != "cuda" or key.device != query.device or value.device != query.device:
 +            return "unsupported_device"
@@ -481,6 +571,9 @@ index 00000000..59c24ee0
 +        )
 +        policy = SolAttnPolicy.from_env()
 +        wrapper_telemetry = SolAttnTelemetry()
++        attention_start = torch.cuda.Event(enable_timing=True)
++        attention_end = torch.cuda.Event(enable_timing=True)
++        attention_start.record()
 +        try:
 +            out = sol_attn_h3_sparse_candidate(
 +                query,
@@ -500,15 +593,17 @@ index 00000000..59c24ee0
 +            if _strict_enabled():
 +                raise RuntimeError(f"MiniMax-H3 Sol-Attn wrapper failed: {type(exc).__name__}: {exc}") from exc
 +            return _dense_sdpa(query, key, value, self.softmax_scale, attn_metadata)
++        attention_end.record()
++        _TELEMETRY.record_sparse_attention_events(attention_start, attention_end)
 +        _TELEMETRY.merge_wrapper(wrapper_telemetry)
 +        return out
 diff --git a/vllm_omni/diffusion/models/minimax_h3/minimax_h3_transformer.py b/vllm_omni/diffusion/models/minimax_h3/minimax_h3_transformer.py
-index 610c20d1..35b21901 100644
+index 610c20d1..ff04942b 100644
 --- a/vllm_omni/diffusion/models/minimax_h3/minimax_h3_transformer.py
 +++ b/vllm_omni/diffusion/models/minimax_h3/minimax_h3_transformer.py
 @@ -9,6 +9,8 @@ layout.
  from __future__ import annotations
- 
+
  import math
 +import atexit
 +import os
@@ -523,10 +618,10 @@ index 610c20d1..35b21901 100644
  from vllm_omni.diffusion.distributed.sp_plan import (
      SequenceParallelInput,
      SequenceParallelOutput,
-@@ -46,6 +49,103 @@ if TYPE_CHECKING:
+@@ -46,6 +49,132 @@ if TYPE_CHECKING:
  logger = init_logger(__name__)
- 
- 
+
+
 +_H3_A6000_EXACT_DEFAULTS = {
 +    "MINIMAX_H3_A6000_ENABLE_OVERLAY": "0",
 +    "MINIMAX_H3_A6000_ENABLE_TRITON_CANDIDATES": "0",
@@ -538,11 +633,13 @@ index 610c20d1..35b21901 100644
 +    "MINIMAX_H3_A6000_ENABLE_FUSED_SWIGLU": "0",
 +    "MINIMAX_H3_A6000_ENABLE_SOL_ATTN": "0",
 +    "MINIMAX_H3_A6000_SOL_ATTN_CACHE": "0",
++    "MINIMAX_H3_A6000_SOL_ATTN_STRIDE_AWARE_V": "0",
 +    "MINIMAX_H3_A6000_SOL_ATTN_DIAGNOSTIC_MATERIALIZE": "0",
 +    "MINIMAX_H3_A6000_SOL_ATTN_MATERIALIZE_MAX_BYTES": "67108864",
 +    "MINIMAX_H3_A6000_ENABLE_TELEMETRY": "0",
 +    "MINIMAX_H3_A6000_TELEMETRY_ATEXIT": "0",
 +    "MINIMAX_H3_A6000_TELEMETRY_JSON": "",
++    "MINIMAX_H3_A6000_SOL_ATTN_TELEMETRY_ARM_FILE": "",
 +    "MINIMAX_H3_A6000_ENABLE_SHADOW": "0",
 +    "MINIMAX_H3_A6000_SHADOW_CALLS": "3",
 +    "MINIMAX_H3_A6000_SHADOW_STRICT": "0",
@@ -624,10 +721,37 @@ index 610c20d1..35b21901 100644
 +        return None
 +
 +
++def _h3_a6000_sol_denoise_start(x: torch.Tensor) -> Any | None:
++    arm_file = os.environ.get("MINIMAX_H3_A6000_SOL_ATTN_TELEMETRY_ARM_FILE", "").strip()
++    if not (
++        x.device.type == "cuda"
++        and _h3_a6000_env_enabled("MINIMAX_H3_A6000_ENABLE_SOL_ATTN")
++        and _h3_a6000_env_enabled("MINIMAX_H3_A6000_ENABLE_TELEMETRY")
++        and (not arm_file or os.path.exists(arm_file))
++    ):
++        return None
++    start = torch.cuda.Event(enable_timing=True)
++    start.record()
++    return start
++
++
++def _h3_a6000_sol_denoise_end(start: Any | None) -> None:
++    if start is None:
++        return
++    try:
++        from vllm_omni.diffusion.attention.backends.sol_attn_h3_a6000 import record_h3_a6000_denoise_events
++
++        end = torch.cuda.Event(enable_timing=True)
++        end.record()
++        record_h3_a6000_denoise_events(start, end)
++    except Exception:
++        logger.debug("MiniMax-H3 A6000 denoise timing record failed", exc_info=True)
++
++
  @dataclass
  class MiniMaxH3DiTArchConfig:
      num_layers: int = 50
-@@ -187,6 +287,17 @@ def _modulate_scale_shift(
+@@ -187,6 +316,17 @@ def _modulate_scale_shift(
      dtype: torch.dtype,
  ) -> torch.Tensor:
      # Apply per-index affine modulation: x * (1 + scale[idx]) + shift[idx].
@@ -643,9 +767,9 @@ index 610c20d1..35b21901 100644
 +        if candidate is not None:
 +            return candidate
      return (x * (1.0 + scale.index_select(0, indices)) + shift.index_select(0, indices)).to(dtype)
- 
- 
-@@ -199,6 +310,17 @@ def _modulate_gate(
+
+
+@@ -199,6 +339,17 @@ def _modulate_gate(
      dtype: torch.dtype,
  ) -> torch.Tensor:
      # Apply the per-index gated residual: x + gate[idx] * other.
@@ -661,17 +785,17 @@ index 610c20d1..35b21901 100644
 +        if candidate is not None:
 +            return candidate
      return (x + gate.index_select(0, indices) * other).to(dtype)
- 
- 
-@@ -358,6 +480,7 @@ class MiniMaxH3Attention(nn.Module):
+
+
+@@ -358,6 +509,7 @@ class MiniMaxH3Attention(nn.Module):
              skip_sequence_parallel=skip_sequence_parallel,
              prefix=prefix,
          )
 +        self._h3_a6000_layer_index = _h3_a6000_layer_index_from_prefix(prefix)
- 
+
      def _apply_rope(self, x: torch.Tensor, freqs: torch.Tensor) -> torch.Tensor:
          """Rotate the first rot_dim head dims; pass the rest through.
-@@ -365,6 +488,14 @@ class MiniMaxH3Attention(nn.Module):
+@@ -365,6 +517,14 @@ class MiniMaxH3Attention(nn.Module):
          x: [T, heads, head_dim]; freqs: [T, rot_dim]. In the unfused path, cos/sin
          are cast to the activation dtype before the elementwise math.
          """
@@ -686,7 +810,7 @@ index 610c20d1..35b21901 100644
          rot_dim = freqs.shape[-1]
          x_rot, x_pass = x[..., :rot_dim], x[..., rot_dim:]
          cos = torch.cos(freqs).to(x.dtype)  # [T, rot_dim]
-@@ -407,15 +538,25 @@ class MiniMaxH3Attention(nn.Module):
+@@ -407,15 +567,25 @@ class MiniMaxH3Attention(nn.Module):
          )
          if used < packed_total and not prefix_slice:
              attn_mask = torch.arange(packed_total, device=q.device)[None] < used
@@ -719,8 +843,8 @@ index 610c20d1..35b21901 100644
              video_layout=video_layout,
          )
          return self.attention(
-@@ -513,8 +654,17 @@ class MiniMaxH3MLP(nn.Module):
- 
+@@ -513,8 +683,17 @@ class MiniMaxH3MLP(nn.Module):
+
      def forward(self, x: torch.Tensor) -> torch.Tensor:
          hidden, _ = self.fc1(x)
 -        gate, up = hidden.chunk(2, dim=-1)
@@ -738,4 +862,18 @@ index 610c20d1..35b21901 100644
 +            hidden = candidate
          out, _ = self.fc2(hidden)
          return out
- 
+
+@@ -1092,6 +1271,7 @@ class MiniMaxH3DiTModel(nn.Module):
+             )
+
+         x = _required_kwarg(kwargs, "x")
++        h3_a6000_sol_denoise_start = _h3_a6000_sol_denoise_start(x)
+         audio_x = _required_kwarg(kwargs, "audio_x")
+         img_position_ids = _required_kwarg(kwargs, "img_position_ids")
+         unique_timesteps = _required_kwarg(kwargs, "unique_timesteps")
+@@ -1193,4 +1373,5 @@ class MiniMaxH3DiTModel(nn.Module):
+             update_audio_mask = kwargs.get("update_audio_mask")
+             if update_audio_mask is not None:
+                 audio_logits = audio_logits * update_audio_mask.view(-1).unsqueeze(-1)
++        _h3_a6000_sol_denoise_end(h3_a6000_sol_denoise_start)
+         return video_logits, audio_logits

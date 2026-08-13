@@ -7,15 +7,21 @@
 # SM>=8 guard is preserved and the caller adds the stricter SM86 policy gate.
 """Pointer-backed Triton Sol-Attn candidate for MiniMax-H3 A6000/SM86.
 
-Stride audit for r7: every Triton pointer expression below linearizes tensors as
-packed row-major BTHD, e.g. ``((batch * T + token) * H + head) * D + dim`` for
-Q/K/V/O and the analogous packed summary layouts for KC/VC.  The actual
-vLLM-Omni H3 path builds Q/K/V by splitting a wider ``qkv`` projection and then
-``view``-ing each segment to ``[T, heads, head_dim]`` before ``unsqueeze(0)``;
-that source-backed construction can leave at least V with a row stride larger
-than ``heads * head_dim``.  Because this kernel does not accept explicit strides,
-non-contiguous H3 layouts must either decline or enter a separately gated,
-telemetry-visible diagnostic materialization path in the wrapper.
+Q/K and output use packed row-major BTHD pointer arithmetic.  V additionally
+accepts explicit batch/token/head/dimension element strides in both reduction
+and exact-value loads.  The default-off wrapper admits only the source-backed,
+non-overlapping V third of H3's fused-QKV projection (token stride ``3*H*D``,
+head stride ``D``, inner stride one, and matching storage offset); all other
+non-contiguous layouts decline before this module is imported.  A separate
+``prefix_exact_tokens`` experiment can route prefix query rows exactly inside
+this kernel instead of using the wrapper's dense SDPA overwrite; it remains
+caller/default-off because it must match the official dense-prefix semantics.  A
+separate default-off skip candidate may omit forward programs for query blocks
+wholly inside that overwritten prefix while leaving mixed prefix/tail blocks and
+the wrapper dense-prefix overwrite unchanged.  Another default-off scheduler
+candidate packs each GROUP=32 exact-route vector into a bitmask and consumes set
+bits in ascending order, mirroring the upstream SM90 route-mask stream while
+preserving the pointer path's online-softmax order.
 
 The module is intentionally not imported by :mod:`minimax_h3_a6000` package
 initialization.  Importing this file requires PyTorch+Triton, but no CUDA work is
@@ -36,6 +42,21 @@ THRESHOLD_GROUP_SIZE = 64
 SUMMARY_PAD = 64
 GROUP_SIZE = 32
 
+FORWARD_CONFIGS: dict[str, dict[str, int]] = {
+    "bv128_w4_s1": {"BV": 128, "num_warps": 4, "num_stages": 1},
+    "bv128_w8_s1": {"BV": 128, "num_warps": 8, "num_stages": 1},
+    "bv128_w4_s2": {"BV": 128, "num_warps": 4, "num_stages": 2},
+    "bv64_w4_s1": {"BV": 64, "num_warps": 4, "num_stages": 1},
+    "bv64_w8_s1": {"BV": 64, "num_warps": 8, "num_stages": 1},
+    "bv64_w8_s2": {"BV": 64, "num_warps": 8, "num_stages": 2},
+    # Default-off launch-shape probes.  The unprefixed configs preserve the
+    # pinned upstream pointer GROUP_SIZE=32; these names vary only the forward
+    # pointer route-group tile while keeping tau/routing/prefix/stride semantics
+    # fixed for synthetic phase-bench gates.
+    "g16_bv64_w4_s1": {"GROUP": 16, "BV": 64, "num_warps": 4, "num_stages": 1},
+    "g64_bv64_w4_s1": {"GROUP": 64, "BV": 64, "num_warps": 4, "num_stages": 1},
+}
+
 
 @triton.autotune(
     configs=[
@@ -54,6 +75,10 @@ def _reduce_kv_kernel(
     T,
     TP,
     NPAD,
+    V_STRIDE_B: tl.constexpr,
+    V_STRIDE_T: tl.constexpr,
+    V_STRIDE_H: tl.constexpr,
+    V_STRIDE_D: tl.constexpr,
     H: tl.constexpr,
     D: tl.constexpr,
     BLOCK: tl.constexpr,
@@ -68,7 +93,13 @@ def _reduce_kv_kernel(
         + dims[None, :]
     )
     k_values = tl.load(k + offsets, mask=valid[:, None], other=0.0)
-    v_values = tl.load(v + offsets, mask=valid[:, None], other=0.0)
+    v_offsets = (
+        batch * V_STRIDE_B
+        + tokens[:, None].to(tl.int64) * V_STRIDE_T
+        + head * V_STRIDE_H
+        + dims[None, :] * V_STRIDE_D
+    )
+    v_values = tl.load(v + v_offsets, mask=valid[:, None], other=0.0)
     block_len = tl.minimum(BLOCK, T - block * BLOCK).to(tl.float32)
     summary_offsets = ((batch * NPAD + block) * H + head) * D + dims
     tl.store(kc + summary_offsets, tl.sum(k_values, axis=0) / block_len)
@@ -229,10 +260,20 @@ def _forward_ptr_kernel(
     o_ptr,
     scale,
     T,
+    TP,
     NPAD,
     sink_start_block,
     sink_end_block,
+    prefix_exact_tokens,
+    q_block_offset,
+    V_STRIDE_B: tl.constexpr,
+    V_STRIDE_T: tl.constexpr,
+    V_STRIDE_H: tl.constexpr,
+    V_STRIDE_D: tl.constexpr,
     HAS_SINK: tl.constexpr,
+    PREFIX_EXACT: tl.constexpr,
+    STATIC_PREFIX_SINK_BLOCKS: tl.constexpr,
+    BITMASK_EXACT_SCHEDULER: tl.constexpr,
     H: tl.constexpr,
     D: tl.constexpr,
     NT: tl.constexpr,
@@ -240,7 +281,8 @@ def _forward_ptr_kernel(
     BLOCK: tl.constexpr,
     GROUP: tl.constexpr,
 ):
-    v_tile, q_block, batch_head = tl.program_id(0), tl.program_id(1), tl.program_id(2)
+    v_tile, q_block_program, batch_head = tl.program_id(0), tl.program_id(1), tl.program_id(2)
+    q_block = q_block_program + q_block_offset
     batch, head = batch_head // H, batch_head % H
     group_offsets = tl.max_contiguous(tl.arange(0, GROUP), GROUP)
     token_offsets = tl.max_contiguous(tl.arange(0, BLOCK), BLOCK)
@@ -248,7 +290,7 @@ def _forward_ptr_kernel(
     value_dims = v_tile * BV + tl.arange(0, BV)
     q_tokens = q_block * BLOCK + token_offsets
     q_valid = q_tokens < T
-    q_offsets = ((batch * T + q_tokens[:, None]).to(tl.int64) * H + head) * D + dims[None, :]
+    q_offsets = ((batch * TP + q_tokens[:, None]).to(tl.int64) * H + head) * D + dims[None, :]
     q = tl.load(q_ptr + q_offsets, mask=q_valid[:, None], other=0.0)
     q_len = tl.minimum(BLOCK, T - q_block * BLOCK).to(tl.float32)
 
@@ -257,6 +299,8 @@ def _forward_ptr_kernel(
     row_max = tl.full((BLOCK,), -float("inf"), tl.float32)
     scale_log2 = scale * 1.4426950408889634
     route_threshold = tl.load(threshold_ptr + (batch * NT + q_block) * H + head)
+    prefix_rows = (q_tokens < prefix_exact_tokens) & q_valid
+    q_block_has_prefix = tl.sum(prefix_rows.to(tl.int32), axis=0) > 0
 
     for group_start in range(0, NT, GROUP):
         block_indices = group_start + group_offsets
@@ -271,42 +315,156 @@ def _forward_ptr_kernel(
             exact = exact | ((block_indices >= sink_start_block) & (block_indices < sink_end_block))
         exact = exact & valid
 
-        approximate = valid & ~exact
-        has_approximate = tl.sum(approximate.to(tl.int32), axis=0) > 0
-        approximate_scores = tl.where(approximate[None, :], scores, -float("inf"))
-        safe_scores = tl.where(has_approximate, approximate_scores, 0.0)
-        candidate_max = tl.maximum(row_max, tl.max(safe_scores, axis=1))
-        new_max = tl.where(has_approximate, candidate_max, row_max)
-        alpha = tl.math.exp2(tl.where(has_approximate, row_max - new_max, 0.0))
-        probability = tl.math.exp2(safe_scores - tl.where(has_approximate, new_max, 0.0)[:, None])
-        probability = tl.where(has_approximate & approximate[None, :], probability, 0.0)
-        output = output * alpha[:, None] + tl.dot(probability.to(vc.dtype), vc)
-        lengths = tl.minimum(BLOCK, tl.maximum(0, T - block_indices * BLOCK)).to(tl.float32)
-        row_sum = row_sum * alpha + tl.sum(probability * lengths[None, :], axis=1)
-        row_max = new_max
-
-        exact_offsets = tl.where(exact, group_offsets, GROUP)
-        num_exact = tl.sum(exact.to(tl.int32), axis=0)
-        for _ in range(num_exact):
-            offset = tl.min(exact_offsets)
-            block = group_start + offset
-            exact_offsets = tl.where(group_offsets == offset, GROUP, exact_offsets)
-            kv_tokens = block * BLOCK + token_offsets
-            kv_valid = kv_tokens < T
-            k_offsets = ((batch * T + kv_tokens[:, None]).to(tl.int64) * H + head) * D + dims[None, :]
-            k = tl.load(k_ptr + k_offsets, mask=kv_valid[:, None], other=0.0)
-            exact_scores = tl.dot(q, k.T).to(tl.float32) * scale_log2
-            exact_scores += tl.where(kv_valid[None, :], 0.0, -float("inf"))
-            new_max = tl.maximum(row_max, tl.max(exact_scores, axis=1))
-            alpha = tl.math.exp2(row_max - new_max)
-            exact_probability = tl.math.exp2(exact_scores - new_max[:, None])
-            row_sum = row_sum * alpha + tl.sum(exact_probability, axis=1)
-            v_offsets = ((batch * T + kv_tokens[:, None]).to(tl.int64) * H + head) * D + value_dims[None, :]
-            v = tl.load(v_ptr + v_offsets, mask=kv_valid[:, None], other=0.0)
-            output = output * alpha[:, None] + tl.dot(exact_probability.to(v.dtype), v)
+        if PREFIX_EXACT:
+            approximate = valid & ~exact
+            approximate_rows = approximate[None, :] & q_valid[:, None] & ~prefix_rows[:, None]
+            has_approximate = tl.sum(approximate_rows.to(tl.int32), axis=1) > 0
+            approximate_scores = tl.where(approximate_rows, scores, -float("inf"))
+            safe_scores = tl.where(has_approximate[:, None], approximate_scores, 0.0)
+            candidate_max = tl.maximum(row_max, tl.max(safe_scores, axis=1))
+            new_max = tl.where(has_approximate, candidate_max, row_max)
+            alpha = tl.math.exp2(tl.where(has_approximate, row_max - new_max, 0.0))
+            probability = tl.math.exp2(safe_scores - tl.where(has_approximate, new_max, 0.0)[:, None])
+            probability = tl.where(approximate_rows, probability, 0.0)
+            output = output * alpha[:, None] + tl.dot(probability.to(vc.dtype), vc)
+            lengths = tl.minimum(BLOCK, tl.maximum(0, T - block_indices * BLOCK)).to(tl.float32)
+            row_sum = row_sum * alpha + tl.sum(probability * lengths[None, :], axis=1)
             row_max = new_max
 
-    output_offsets = ((batch * T + q_tokens[:, None]).to(tl.int64) * H + head) * D + value_dims[None, :]
+            exact_or_prefix = exact | (q_block_has_prefix & valid)
+            exact_offsets = tl.where(exact_or_prefix, group_offsets, GROUP)
+            num_exact = tl.sum(exact_or_prefix.to(tl.int32), axis=0)
+            for _ in range(num_exact):
+                offset = tl.min(exact_offsets)
+                block = group_start + offset
+                exact_offsets = tl.where(group_offsets == offset, GROUP, exact_offsets)
+                normal_exact = tl.sum(tl.where(group_offsets == offset, exact.to(tl.int32), 0), axis=0) > 0
+                row_exact = (prefix_rows | normal_exact) & q_valid
+                kv_tokens = block * BLOCK + token_offsets
+                kv_valid = kv_tokens < T
+                has_exact_row = row_exact & (tl.sum(kv_valid.to(tl.int32), axis=0) > 0)
+                k_offsets = ((batch * TP + kv_tokens[:, None]).to(tl.int64) * H + head) * D + dims[None, :]
+                k = tl.load(k_ptr + k_offsets, mask=kv_valid[:, None], other=0.0)
+                exact_scores = tl.dot(q, k.T).to(tl.float32) * scale_log2
+                exact_scores = tl.where(row_exact[:, None] & kv_valid[None, :], exact_scores, -float("inf"))
+                candidate_exact_max = tl.max(exact_scores, axis=1)
+                new_max = tl.where(has_exact_row, tl.maximum(row_max, candidate_exact_max), row_max)
+                alpha = tl.math.exp2(tl.where(has_exact_row, row_max - new_max, 0.0))
+                exact_probability = tl.math.exp2(exact_scores - tl.where(has_exact_row, new_max, 0.0)[:, None])
+                exact_probability = tl.where(row_exact[:, None] & kv_valid[None, :], exact_probability, 0.0)
+                row_sum = row_sum * alpha + tl.sum(exact_probability, axis=1)
+                v_offsets = (
+                    batch * V_STRIDE_B
+                    + kv_tokens[:, None].to(tl.int64) * V_STRIDE_T
+                    + head * V_STRIDE_H
+                    + value_dims[None, :] * V_STRIDE_D
+                )
+                v = tl.load(v_ptr + v_offsets, mask=kv_valid[:, None], other=0.0)
+                output = output * alpha[:, None] + tl.dot(exact_probability.to(v.dtype), v)
+                row_max = new_max
+        else:
+            approximate = valid & ~exact
+            has_approximate = tl.sum(approximate.to(tl.int32), axis=0) > 0
+            approximate_scores = tl.where(approximate[None, :], scores, -float("inf"))
+            safe_scores = tl.where(has_approximate, approximate_scores, 0.0)
+            candidate_max = tl.maximum(row_max, tl.max(safe_scores, axis=1))
+            new_max = tl.where(has_approximate, candidate_max, row_max)
+            alpha = tl.math.exp2(tl.where(has_approximate, row_max - new_max, 0.0))
+            probability = tl.math.exp2(safe_scores - tl.where(has_approximate, new_max, 0.0)[:, None])
+            probability = tl.where(has_approximate & approximate[None, :], probability, 0.0)
+            output = output * alpha[:, None] + tl.dot(probability.to(vc.dtype), vc)
+            lengths = tl.minimum(BLOCK, tl.maximum(0, T - block_indices * BLOCK)).to(tl.float32)
+            row_sum = row_sum * alpha + tl.sum(probability * lengths[None, :], axis=1)
+            row_max = new_max
+
+            static_prefix_sink = STATIC_PREFIX_SINK_BLOCKS > 0 and group_start == 0
+            if static_prefix_sink:
+                for static_block in tl.static_range(0, STATIC_PREFIX_SINK_BLOCKS):
+                    kv_tokens = static_block * BLOCK + token_offsets
+                    kv_valid = kv_tokens < T
+                    k_offsets = ((batch * TP + kv_tokens[:, None]).to(tl.int64) * H + head) * D + dims[None, :]
+                    k = tl.load(k_ptr + k_offsets, mask=kv_valid[:, None], other=0.0)
+                    exact_scores = tl.dot(q, k.T).to(tl.float32) * scale_log2
+                    exact_scores += tl.where(kv_valid[None, :], 0.0, -float("inf"))
+                    new_max = tl.maximum(row_max, tl.max(exact_scores, axis=1))
+                    alpha = tl.math.exp2(row_max - new_max)
+                    exact_probability = tl.math.exp2(exact_scores - new_max[:, None])
+                    row_sum = row_sum * alpha + tl.sum(exact_probability, axis=1)
+                    v_offsets = (
+                        batch * V_STRIDE_B
+                        + kv_tokens[:, None].to(tl.int64) * V_STRIDE_T
+                        + head * V_STRIDE_H
+                        + value_dims[None, :] * V_STRIDE_D
+                    )
+                    v = tl.load(v_ptr + v_offsets, mask=kv_valid[:, None], other=0.0)
+                    output = output * alpha[:, None] + tl.dot(exact_probability.to(v.dtype), v)
+                    row_max = new_max
+
+            dynamic_exact = exact
+            if static_prefix_sink:
+                dynamic_exact = exact & ~(block_indices < STATIC_PREFIX_SINK_BLOCKS)
+            num_exact = tl.sum(dynamic_exact.to(tl.int32), axis=0)
+            if BITMASK_EXACT_SCHEDULER:
+                bit_values = tl.full((GROUP,), 1, dtype=tl.int32) << group_offsets
+                exact_mask = tl.sum(tl.where(dynamic_exact, bit_values, 0), axis=0)
+                for _ in range(num_exact):
+                    lowbit = exact_mask & -exact_mask
+                    offset = tl.inline_asm_elementwise(
+                        "bfind.u32 $0, $1;",
+                        constraints="=r,r",
+                        args=[lowbit],
+                        dtype=tl.int32,
+                        is_pure=True,
+                        pack=1,
+                    )
+                    block = group_start + offset
+                    exact_mask = exact_mask & (exact_mask - 1)
+                    kv_tokens = block * BLOCK + token_offsets
+                    kv_valid = kv_tokens < T
+                    k_offsets = ((batch * TP + kv_tokens[:, None]).to(tl.int64) * H + head) * D + dims[None, :]
+                    k = tl.load(k_ptr + k_offsets, mask=kv_valid[:, None], other=0.0)
+                    exact_scores = tl.dot(q, k.T).to(tl.float32) * scale_log2
+                    exact_scores += tl.where(kv_valid[None, :], 0.0, -float("inf"))
+                    new_max = tl.maximum(row_max, tl.max(exact_scores, axis=1))
+                    alpha = tl.math.exp2(row_max - new_max)
+                    exact_probability = tl.math.exp2(exact_scores - new_max[:, None])
+                    row_sum = row_sum * alpha + tl.sum(exact_probability, axis=1)
+                    v_offsets = (
+                        batch * V_STRIDE_B
+                        + kv_tokens[:, None].to(tl.int64) * V_STRIDE_T
+                        + head * V_STRIDE_H
+                        + value_dims[None, :] * V_STRIDE_D
+                    )
+                    v = tl.load(v_ptr + v_offsets, mask=kv_valid[:, None], other=0.0)
+                    output = output * alpha[:, None] + tl.dot(exact_probability.to(v.dtype), v)
+                    row_max = new_max
+            else:
+                exact_offsets = tl.where(dynamic_exact, group_offsets, GROUP)
+                for _ in range(num_exact):
+                    offset = tl.min(exact_offsets)
+                    block = group_start + offset
+                    exact_offsets = tl.where(group_offsets == offset, GROUP, exact_offsets)
+                    kv_tokens = block * BLOCK + token_offsets
+                    kv_valid = kv_tokens < T
+                    k_offsets = ((batch * TP + kv_tokens[:, None]).to(tl.int64) * H + head) * D + dims[None, :]
+                    k = tl.load(k_ptr + k_offsets, mask=kv_valid[:, None], other=0.0)
+                    exact_scores = tl.dot(q, k.T).to(tl.float32) * scale_log2
+                    exact_scores += tl.where(kv_valid[None, :], 0.0, -float("inf"))
+                    new_max = tl.maximum(row_max, tl.max(exact_scores, axis=1))
+                    alpha = tl.math.exp2(row_max - new_max)
+                    exact_probability = tl.math.exp2(exact_scores - new_max[:, None])
+                    row_sum = row_sum * alpha + tl.sum(exact_probability, axis=1)
+                    v_offsets = (
+                        batch * V_STRIDE_B
+                        + kv_tokens[:, None].to(tl.int64) * V_STRIDE_T
+                        + head * V_STRIDE_H
+                        + value_dims[None, :] * V_STRIDE_D
+                    )
+                    v = tl.load(v_ptr + v_offsets, mask=kv_valid[:, None], other=0.0)
+                    output = output * alpha[:, None] + tl.dot(exact_probability.to(v.dtype), v)
+                    row_max = new_max
+
+    output_offsets = ((batch * TP + q_tokens[:, None]).to(tl.int64) * H + head) * D + value_dims[None, :]
     tl.store(
         o_ptr + output_offsets,
         (output / row_sum[:, None]).to(tl.bfloat16),
@@ -322,6 +480,33 @@ def _sink_block_range(tokens: int, sink_start: int | None, sink_tokens: int) -> 
     return start // BLOCK_SIZE, (start + int(sink_tokens) + BLOCK_SIZE - 1) // BLOCK_SIZE
 
 
+def _strided_value_layout_reason(v: torch.Tensor) -> str | None:
+    if v.ndim != 4:
+        return "rank"
+    batch, tokens, heads, head_dim = (int(x) for x in v.shape)
+    if batch != 1 or tokens <= 0 or heads <= 0 or head_dim != HEAD_DIM:
+        return "shape"
+    stride_b, stride_t, stride_h, stride_d = (int(x) for x in v.stride())
+    if any(x <= 0 for x in (stride_b, stride_t, stride_h, stride_d)):
+        return "non_positive_stride"
+    head_plane = heads * head_dim
+    if stride_d != 1 or stride_h != head_dim or stride_t != 3 * head_plane:
+        return "strides"
+    if stride_b < tokens * stride_t or stride_b % stride_t:
+        return "batch_stride"
+    storage_offset = int(v.storage_offset())
+    if storage_offset < 0 or storage_offset % stride_t != 2 * head_plane:
+        return "storage_offset"
+    max_storage_index = storage_offset + (tokens - 1) * stride_t + (heads - 1) * stride_h + head_dim - 1
+    try:
+        storage_elements = int(v.untyped_storage().nbytes()) // int(v.element_size())
+    except Exception:  # noqa: BLE001 - uninspectable storage is unsupported
+        return "storage_uninspectable"
+    if max_storage_index >= storage_elements:
+        return "storage_bounds"
+    return None
+
+
 def _validate_inputs(
     q: torch.Tensor,
     k: torch.Tensor,
@@ -329,7 +514,10 @@ def _validate_inputs(
     thresh_type: str,
     sink_tokens: int = 0,
     sink_start: int | None = None,
-) -> tuple[int, int]:
+    *,
+    allow_strided_value: bool = False,
+    tokens: int | None = None,
+) -> tuple[tuple[int, int], tuple[int, int, int, int], int]:
     if q.ndim != 4 or q.shape != k.shape or q.shape != v.shape:
         raise ValueError("q, k, and v must share shape [B, T, H, 128]")
     if q.shape[1] == 0 or q.shape[3] != HEAD_DIM:
@@ -338,21 +526,29 @@ def _validate_inputs(
         raise TypeError("q, k, and v must use torch.bfloat16")
     if q.device.type != "cuda" or k.device != q.device or v.device != q.device:
         raise ValueError("q, k, and v must be on the same CUDA device")
-    if not (q.is_contiguous() and k.is_contiguous() and v.is_contiguous()):
-        raise ValueError("q, k, and v must be contiguous BTHD tensors")
+    if not (q.is_contiguous() and k.is_contiguous()):
+        raise ValueError("q and k must be packed contiguous BTHD tensors")
+    if not v.is_contiguous():
+        reason = _strided_value_layout_reason(v) if allow_strided_value else "disabled"
+        if reason is not None:
+            raise ValueError(f"unsupported stride-aware V layout: {reason}")
     if thresh_type not in ("diag", "exact"):
         raise ValueError("thresh_type must be 'diag' or 'exact'")
+    padded_tokens = int(q.shape[1])
+    active_tokens = padded_tokens if tokens is None else int(tokens)
+    if not 0 < active_tokens <= padded_tokens:
+        raise ValueError("tokens must be in (0, padded T]")
     if not isinstance(sink_tokens, int):
         raise TypeError("sink_tokens must be an integer")
-    if not 0 <= sink_tokens <= q.shape[1]:
-        raise ValueError("sink_tokens must be in [0, T]")
+    if not 0 <= sink_tokens <= active_tokens:
+        raise ValueError("sink_tokens must be in [0, tokens]")
     if sink_start is not None:
         if not isinstance(sink_start, int):
             raise TypeError("sink_start must be an integer or None")
-        if not 0 <= sink_start <= q.shape[1]:
-            raise ValueError("sink_start must be in [0, T]")
-        if sink_start + sink_tokens > q.shape[1]:
-            raise ValueError("sink_start + sink_tokens must be <= T")
+        if not 0 <= sink_start <= active_tokens:
+            raise ValueError("sink_start must be in [0, tokens]")
+        if sink_start + sink_tokens > active_tokens:
+            raise ValueError("sink_start + sink_tokens must be <= tokens")
 
     arch = tuple(torch.cuda.get_device_capability(q.device))
     if arch[0] < 8:
@@ -360,7 +556,7 @@ def _validate_inputs(
             "Triton Sol-Attn requires an NVIDIA GPU with compute capability >= 8.0; "
             f"got SM{arch[0]}{arch[1]}"
         )
-    return arch
+    return arch, tuple(int(x) for x in v.stride()), active_tokens
 
 
 def _reduce_kv(k: torch.Tensor, v: torch.Tensor, *, tokens: int | None = None) -> tuple[torch.Tensor, torch.Tensor]:
@@ -378,6 +574,10 @@ def _reduce_kv(k: torch.Tensor, v: torch.Tensor, *, tokens: int | None = None) -
         tokens,
         padded_tokens,
         padded_blocks,
+        int(v.stride(0)),
+        int(v.stride(1)),
+        int(v.stride(2)),
+        int(v.stride(3)),
         heads,
         head_dim,
         BLOCK_SIZE,
@@ -497,6 +697,137 @@ def _prepare(
     return kc, vc, threshold
 
 
+def _launch_forward_ptr(
+    q: torch.Tensor,
+    k: torch.Tensor,
+    v: torch.Tensor,
+    kc: torch.Tensor,
+    vc: torch.Tensor,
+    threshold: torch.Tensor,
+    output: torch.Tensor,
+    *,
+    scale: float,
+    active_tokens: int,
+    sink_start_block: int,
+    sink_end_block: int,
+    prefix_exact_tokens: int,
+    value_strides: tuple[int, int, int, int],
+    exact_prefix_query: bool = False,
+    skip_full_prefix_blocks: bool = False,
+    static_prefix_sink: bool = False,
+    forward_config: str | None = None,
+    bitmask_exact_scheduler: bool = False,
+) -> None:
+    """Launch the pointer forward kernel, optionally bypassing autotune.
+
+    ``forward_config=None`` preserves the existing Triton autotuner path.  Named
+    configs are a default-off profiling/candidate hook for same-semantics launch
+    configuration tests; they call the same JIT body with explicit meta/options.
+    ``bitmask_exact_scheduler`` is a default-off GROUP<=32 exact-block scheduler
+    probe that consumes exact offsets from a packed bitmask instead of repeated
+    vector min/update selection.
+    """
+
+    batch, _padded_tokens, heads, head_dim = q.shape
+    blocks = triton.cdiv(int(active_tokens), BLOCK_SIZE)
+    prefix_skip_blocks = 0
+    if bool(skip_full_prefix_blocks):
+        prefix_skip_blocks = max(0, min(int(blocks), int(prefix_exact_tokens) // BLOCK_SIZE))
+    launch_blocks = int(blocks) - int(prefix_skip_blocks)
+    if launch_blocks <= 0:
+        return
+    static_prefix_sink_blocks = 0
+    if bool(static_prefix_sink):
+        if bool(exact_prefix_query):
+            raise ValueError("static_prefix_sink is only supported with dense prefix-query overwrite")
+        if int(sink_start_block) != 0 or not (0 < int(sink_end_block) <= GROUP_SIZE):
+            raise ValueError("static_prefix_sink requires a prefix sink contained in forward group 0")
+        static_prefix_sink_blocks = int(sink_end_block)
+    config_name = "" if forward_config is None else str(forward_config).strip()
+    bitmask_exact_scheduler = bool(bitmask_exact_scheduler)
+    if bitmask_exact_scheduler and GROUP_SIZE > 32:
+        raise ValueError("bitmask_exact_scheduler requires GROUP_SIZE <= 32")
+    if config_name in ("", "autotune", "current"):
+        grid = lambda meta: (head_dim // meta["BV"], launch_blocks, batch * heads)
+        _forward_ptr_kernel[grid](
+            q,
+            k,
+            v,
+            kc,
+            vc,
+            threshold,
+            output,
+            scale,
+            int(active_tokens),
+            int(q.shape[1]),
+            kc.shape[1],
+            int(sink_start_block),
+            int(sink_end_block),
+            int(prefix_exact_tokens),
+            int(prefix_skip_blocks),
+            value_strides[0],
+            value_strides[1],
+            value_strides[2],
+            value_strides[3],
+            HAS_SINK=int(sink_end_block) > int(sink_start_block),
+            PREFIX_EXACT=bool(exact_prefix_query),
+            STATIC_PREFIX_SINK_BLOCKS=int(static_prefix_sink_blocks),
+            BITMASK_EXACT_SCHEDULER=bitmask_exact_scheduler,
+            H=heads,
+            D=head_dim,
+            NT=blocks,
+            BLOCK=BLOCK_SIZE,
+            GROUP=GROUP_SIZE,
+        )
+        return
+
+    config = FORWARD_CONFIGS.get(config_name)
+    if config is None:
+        raise ValueError(f"unknown Sol-Attn forward_config {forward_config!r}")
+    bv = int(config["BV"])
+    group = int(config.get("GROUP", GROUP_SIZE))
+    if head_dim % bv:
+        raise ValueError(f"forward_config {config_name!r} BV={bv} does not divide head_dim={head_dim}")
+    if group <= 0 or group & (group - 1):
+        raise ValueError(f"forward_config {config_name!r} GROUP={group} must be a positive power of two")
+    if bitmask_exact_scheduler and group > 32:
+        raise ValueError("bitmask_exact_scheduler requires GROUP <= 32")
+    grid_tuple = (head_dim // bv, launch_blocks, batch * heads)
+    _forward_ptr_kernel.fn[grid_tuple](
+        q,
+        k,
+        v,
+        kc,
+        vc,
+        threshold,
+        output,
+        scale,
+        int(active_tokens),
+        int(q.shape[1]),
+        kc.shape[1],
+        int(sink_start_block),
+        int(sink_end_block),
+        int(prefix_exact_tokens),
+        int(prefix_skip_blocks),
+        value_strides[0],
+        value_strides[1],
+        value_strides[2],
+        value_strides[3],
+        HAS_SINK=int(sink_end_block) > int(sink_start_block),
+        PREFIX_EXACT=bool(exact_prefix_query),
+        STATIC_PREFIX_SINK_BLOCKS=int(static_prefix_sink_blocks),
+        BITMASK_EXACT_SCHEDULER=bitmask_exact_scheduler,
+        H=heads,
+        D=head_dim,
+        NT=blocks,
+        BV=bv,
+        BLOCK=BLOCK_SIZE,
+        GROUP=group,
+        num_warps=int(config["num_warps"]),
+        num_stages=int(config["num_stages"]),
+    )
+
+
 def sol_attn_sm86(
     q: torch.Tensor,
     k: torch.Tensor,
@@ -507,22 +838,67 @@ def sol_attn_sm86(
     thresh_type: str = "diag",
     sink_tokens: int = 0,
     sink_start: int | None = None,
+    allow_strided_value: bool = False,
+    tokens: int | None = None,
+    prefix_exact_tokens: int = 0,
+    exact_prefix_query: bool | None = None,
+    skip_full_prefix_blocks: bool = False,
+    static_prefix_sink: bool = False,
+    forward_config: str | None = None,
+    bitmask_exact_scheduler: bool = False,
 ) -> torch.Tensor:
-    """Run the Triton Sol-Attn pointer path on contiguous BF16 BTHD SM86 inputs."""
+    """Run the SM86 pointer path with packed Q/K and optional validated strided V.
 
-    arch = _validate_inputs(q, k, v, thresh_type, int(sink_tokens), sink_start)
+    ``tokens`` is the active valid length inside a padded BTHD tensor.  When it
+    is smaller than ``q.shape[1]``, kernels read only valid rows but write into
+    the full padded output, then zero just the padding tail.  This avoids the
+    wrapper-level valid-slice output plus a second full-output copy.  Nonzero
+    ``prefix_exact_tokens`` forces those query rows to load every valid KV block
+    exactly inside this same kernel instead of relying on a post-kernel dense
+    prefix overwrite.  With ``skip_full_prefix_blocks=True`` the launcher omits
+    only query blocks whose entire token range lies before ``prefix_exact_tokens``;
+    callers must still overwrite those prefix rows densely.  With
+    ``static_prefix_sink=True`` and a group-0 prefix sink, the forward kernel
+    visits the same prefix exact blocks in the same order using a static loop,
+    leaving dynamic threshold/local exact blocks on the original scheduler.
+    ``forward_config`` is a default-off diagnostic hook for fixed same-semantics
+    launch configurations; ``None`` keeps the existing autotuned production path.
+    ``bitmask_exact_scheduler`` is a default-off scheduler probe that packs the
+    GROUP=32 exact vector into an int32 route mask and visits set bits in
+    ascending order, preserving the current online-softmax update order.
+    """
+
+    arch, value_strides, active_tokens = _validate_inputs(
+        q,
+        k,
+        v,
+        thresh_type,
+        int(sink_tokens),
+        sink_start,
+        allow_strided_value=bool(allow_strided_value),
+        tokens=tokens,
+    )
     if arch != (8, 6):
         raise RuntimeError(f"MiniMax-H3 A6000 Sol-Attn overlay requires SM86; got SM{arch[0]}{arch[1]}")
     scale = q.shape[-1] ** -0.5 if scale is None else float(scale)
     tau = float(tau)
-    batch, tokens, heads, head_dim = q.shape
-    blocks = triton.cdiv(tokens, BLOCK_SIZE)
-    sink_start_block, sink_end_block = _sink_block_range(tokens, sink_start, int(sink_tokens))
+    prefix_exact_tokens = int(prefix_exact_tokens)
+    if not 0 <= prefix_exact_tokens <= active_tokens:
+        raise ValueError("prefix_exact_tokens must be in [0, tokens]")
+    skip_full_prefix_blocks = bool(skip_full_prefix_blocks)
+    if exact_prefix_query is None:
+        exact_prefix_query = bool(prefix_exact_tokens > 0 and not skip_full_prefix_blocks)
+    else:
+        exact_prefix_query = bool(exact_prefix_query)
+    if exact_prefix_query and skip_full_prefix_blocks:
+        raise ValueError("exact_prefix_query and skip_full_prefix_blocks are mutually exclusive")
+    batch, padded_tokens, heads, head_dim = q.shape
+    blocks = triton.cdiv(active_tokens, BLOCK_SIZE)
+    sink_start_block, sink_end_block = _sink_block_range(active_tokens, sink_start, int(sink_tokens))
 
-    kc, vc, threshold = _prepare(q, k, v, scale=scale, tau=tau, thresh_type=thresh_type, tokens=tokens)
-    output = torch.empty_like(v)
-    grid = lambda meta: (head_dim // meta["BV"], blocks, batch * heads)
-    _forward_ptr_kernel[grid](
+    kc, vc, threshold = _prepare(q, k, v, scale=scale, tau=tau, thresh_type=thresh_type, tokens=active_tokens)
+    output = torch.empty(q.shape, dtype=q.dtype, device=q.device)
+    _launch_forward_ptr(
         q,
         k,
         v,
@@ -530,19 +906,21 @@ def sol_attn_sm86(
         vc,
         threshold,
         output,
-        scale,
-        tokens,
-        kc.shape[1],
-        sink_start_block,
-        sink_end_block,
-        HAS_SINK=int(sink_tokens) > 0,
-        H=heads,
-        D=head_dim,
-        NT=blocks,
-        BLOCK=BLOCK_SIZE,
-        GROUP=GROUP_SIZE,
+        scale=scale,
+        active_tokens=active_tokens,
+        sink_start_block=sink_start_block,
+        sink_end_block=sink_end_block,
+        prefix_exact_tokens=prefix_exact_tokens,
+        value_strides=value_strides,
+        exact_prefix_query=bool(exact_prefix_query),
+        skip_full_prefix_blocks=skip_full_prefix_blocks,
+        static_prefix_sink=bool(static_prefix_sink),
+        forward_config=forward_config,
+        bitmask_exact_scheduler=bool(bitmask_exact_scheduler),
     )
+    if active_tokens < padded_tokens:
+        output[:, active_tokens:].zero_()
     return output
 
 
-__all__ = ["BLOCK_SIZE", "HEAD_DIM", "sol_attn_sm86"]
+__all__ = ["BLOCK_SIZE", "HEAD_DIM", "FORWARD_CONFIGS", "sol_attn_sm86"]

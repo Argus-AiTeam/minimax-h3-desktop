@@ -11,6 +11,7 @@ PORT = ROOT / "ports" / "minimax_h3_a6000"
 R6 = PORT / "integration" / "r6"
 R7 = PORT / "integration" / "r7"
 R8 = PORT / "integration" / "r8"
+R9 = PORT / "integration" / "r9"
 PATCH = PORT / "patches" / "vllm_omni_h3_a6000_opt_in.patch"
 EXPECTED_PATCH_CHANGED_FILES = [
     "vllm_omni/diffusion/attention/backends/registry.py",
@@ -29,7 +30,12 @@ def _patch_changed_files() -> list[str]:
 
 
 def test_r6_patch_file_audit_helper_matches_current_patch() -> None:
-    for helper in (R6 / "dual_install_patch_files.py", R7 / "dual_install_patch_files.py", R8 / "dual_install_patch_files.py"):
+    for helper in (
+        R6 / "dual_install_patch_files.py",
+        R7 / "dual_install_patch_files.py",
+        R8 / "dual_install_patch_files.py",
+        R9 / "dual_install_patch_files.py",
+    ):
         proc = subprocess.run(
             [sys.executable, str(helper), "--patch", str(PATCH), "--list-patch-files"],
             check=True,
@@ -121,6 +127,12 @@ def test_r8_build_script_is_build_only_and_emits_required_evidence() -> None:
     helper = (R8 / "dual_install_patch_files.py").read_text(encoding="utf-8")
     assert "BASE_IMAGE=${BASE_IMAGE:-argus/minimax-h3-vllm-omni:8e2e9b6b53e8-r2}" in script
     assert "r8-sol-attn-overlay" in script
+    assert "--dry-run" in script and "unknown argument" in script
+    assert "docker image inspect \"$BASE_IMAGE\" > \"$EVIDENCE_DIR/r8_base_image_inspect.json\"" in script
+    assert "r8_base_image_blocker.json" in script
+    assert "r8_image_identity_summary.txt" in script
+    assert "pinned_base_image_not_inspectable_locally" in script
+    assert script.index("docker image inspect \"$BASE_IMAGE\"") < script.index("docker build --pull=false --network=none")
     assert "docker build --pull=false --network=none" in script
     assert "--iidfile \"$EVIDENCE_DIR/r8_image_iid.txt\"" in script
     assert "docker image inspect \"$TAG\" > \"$EVIDENCE_DIR/r8_image_inspect.json\"" in script
@@ -131,6 +143,58 @@ def test_r8_build_script_is_build_only_and_emits_required_evidence() -> None:
     assert "MINIMAX_H3_A6000_SOL_ATTN_DIAGNOSTIC_MATERIALIZE=0" in dockerfile
     assert "minimax_h3_a6000_r8_patched_source_hashes_v1" in helper
     assert "docker run" not in script and "--gpus" not in script
+
+
+def test_r9_build_script_is_build_only_default_off_and_stride_aware() -> None:
+    script = (R9 / "build_r9_overlay_image.sh").read_text(encoding="utf-8")
+    dockerfile = (R9 / "Dockerfile").read_text(encoding="utf-8")
+    helper = (R9 / "dual_install_patch_files.py").read_text(encoding="utf-8")
+    assert "BASE_IMAGE=${BASE_IMAGE:-argus/minimax-h3-vllm-omni:8e2e9b6b53e8-r2}" in script
+    assert "r9-sol-attn-overlay" in script
+    assert "--dry-run" in script and "unknown argument" in script
+    assert "docker image inspect \"$BASE_IMAGE\" > \"$EVIDENCE_DIR/r9_base_image_inspect.json\"" in script
+    assert "r9_base_image_blocker.json" in script
+    assert "r9_image_identity_summary.txt" in script
+    assert "pinned_base_image_not_inspectable_locally" in script
+    assert script.index("docker image inspect \"$BASE_IMAGE\"") < script.index("docker build --pull=false --network=none")
+    assert "docker build --pull=false --network=none" in script
+    assert "--iidfile \"$EVIDENCE_DIR/r9_image_iid.txt\"" in script
+    assert "r9_source_hashes.sha256" in script
+    assert "minimax_h3_a6000_r9_source_hashes_v1" in script
+    assert "org.opencontainers.image.version=\"r9\"" in dockerfile
+    assert "MiniMax-H3 A6000 r9 Sol-Attn integration overlay" in dockerfile
+    assert "MINIMAX_H3_A6000_SOL_ATTN_STRIDE_AWARE_V=0" in dockerfile
+    assert "MINIMAX_H3_A6000_SOL_ATTN_DIAGNOSTIC_MATERIALIZE=0" in dockerfile
+    assert "minimax_h3_a6000_r9_patched_source_hashes_v1" in helper
+    assert "docker run" not in script and "--gpus" not in script
+
+
+def test_stride_aware_v_n1_gate_is_matched_warm_copy_timed_and_default_dry() -> None:
+    script = (PORT / "integration" / "run_sol_attn_h3_stride_aware_v_n1.sh").read_text(encoding="utf-8")
+    assert "DRY_RUN=1" in script
+    assert "ARGUS_ALLOW_A6000_SOL_ATTN_STRIDE_AWARE_V_N1=1" in script
+    assert "argus/minimax-h3-vllm-omni:8e2e9b6b53e8-r9-sol-attn-overlay" in script
+    assert "REQUIRED_IMAGE_VERSION_LABEL=${REQUIRED_IMAGE_VERSION_LABEL:-r9}" in script
+    assert "run_one r8_materialized_reference" in script
+    assert "run_one stride_aware_v" in script
+    assert "request warmup" in script and "request output" in script
+    assert "SOL_ATTN_TELEMETRY_ARM_FILE=/evidence/r8_materialized_reference/measure.arm" in script
+    assert "SOL_ATTN_TELEMETRY_ARM_FILE=/evidence/stride_aware_v/measure.arm" in script
+    assert "MINIMAX_H3_A6000_SOL_ATTN_STRIDE_AWARE_V=0" in script
+    assert "MINIMAX_H3_A6000_SOL_ATTN_STRIDE_AWARE_V=1" in script
+    assert "MINIMAX_H3_A6000_SOL_ATTN_DIAGNOSTIC_MATERIALIZE=1" in script
+    assert "MINIMAX_H3_A6000_SOL_ATTN_DIAGNOSTIC_MATERIALIZE=0" in script
+    assert "materialize_gpu_copy_latency_ms" in script
+    assert "sparse_attention_gpu_latency_ms" in script
+    assert "denoise_gpu_latency_ms" in script
+    assert "observed_r8_cv_pct = 0.5072177175606011" in script
+    assert "promotion_threshold_pct = max(1.5, 2.0 * observed_r8_cv_pct)" in script
+    assert "both_sparse_calls_192" in script and "both_fallback_calls_zero" in script
+    assert "candidate_zero_input_copy_events_bytes" in script
+    assert "real_h3_fused_value_layout_seen" in script
+    assert "rejected_no_above_noise_product_signal" in script
+    assert "promote_to_matched_n3" in script
+    assert "duration=5.166667" in script and "duration=30" not in script and "duration=60" not in script
 
 
 def test_sol_attn_gpu2_diagnostic_requires_fresh_r8_identity_and_resource_telemetry() -> None:

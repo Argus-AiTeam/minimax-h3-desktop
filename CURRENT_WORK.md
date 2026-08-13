@@ -1,6 +1,6 @@
 # Current Work / 当前工作
 
-> **Updated / 更新时间：2026-08-12 16:16 UTC**
+> **Updated / 更新时间：2026-08-13 08:26 UTC**
 >
 > This page reports accepted evidence and active work separately. Status is not a result.
 > 本页严格区分已验收证据与进行中状态；“正在研究”不等于“已有结果”。
@@ -30,15 +30,15 @@ Single-A6000 evidence remains separate from any multi-GPU production study. Stru
 - **Sol-Attn r7:** packed H3 layout metadata did not reach the backend; it failed closed with `sparse_calls=0`.
 - **DLO resident_layers=16:** the 50-step warm candidate improved **0.456%**, below the BF16 baseline CV of **0.837%**; no formal N=10 promotion.
 - **Exact-kernel route:** RoPE/all-exact changed audiovisual output; SwiGLU retained no accepted end-to-end gain. Kernel-only microbenchmarks were not promoted to product speedups.
-- **Sol-Attn toy harness:** sparse median was slower than dense and was not deployed.
+- **Sol-Attn model-free harnesses:** the legacy toy harness had sparse median slower than dense and was not deployed; the 2026-08-13 stride-aware-V SM86 harness is correctness/zero-materialization evidence only (`sparse` median **0.419968 ms** vs dense **0.131072 ms**) and is not an H3 end-to-end or product speedup.
 
 以上失败均保留为可复现边界，不因后续 r8 成功而删除或改写。
 
 ## Hypothesis under test / 待检验假设
 
-The r8 real-chain profile records **192 Q/K/V materialization events totaling 105,344,139,264 bytes per 5-step run**. The falsifiable hypothesis is that a layout-aware view/packing path can remove most of this materialization while preserving metadata validation, dense fail-closed behavior, structural correctness, and the same bounded quality threshold. Success requires a matched end-to-end gain on the same physical GPU; a microbenchmark alone is insufficient.
+The r8 real-chain profile records **192 Q/K/V materialization events totaling 105,344,139,264 bytes per 5-step run**. The falsifiable hypothesis is that a layout-aware view/packing path can remove most of this materialization while preserving metadata validation, dense fail-closed behavior, structural correctness, and the same bounded quality threshold. The current non-Docker SM86 harness result (`sol_attn_stride_aware_v_harness_20260813T082456Z`) proves the synthetic fused-QKV V view compiles/launches with `stride_aware_value_calls=1`, zero fallback, zero materialized copy events/bytes, prefix rows equal to dense, and zero padding rows. It loads no H3 model; its benchmark is kernel/model-free only (`sparse` median **0.419968 ms**, dense **0.131072 ms**) and is not a product speedup. Success still requires a matched end-to-end gain on the same physical GPU; a microbenchmark alone is insufficient.
 
-r8 真实链路在每次 5-step 运行中记录了 **192 次 Q/K/V 实体化，共 105,344,139,264 字节**。可证伪假设是：布局感知的 view/packing 路径能够消除其中大部分复制，同时保持 metadata 校验、异常时回退 dense、结构正确性和相同质量阈值。成功必须体现为同一物理 GPU 上的匹配端到端收益；仅有微基准不成立。
+r8 真实链路在每次 5-step 运行中记录了 **192 次 Q/K/V 实体化，共 105,344,139,264 字节**。可证伪假设是：布局感知的 view/packing 路径能够消除其中大部分复制，同时保持 metadata 校验、异常时回退 dense、结构正确性和相同质量阈值。当前非 Docker SM86 harness 结果（`sol_attn_stride_aware_v_harness_20260813T082456Z`）证明合成 fused-QKV V view 能够 compile/launch，且 `stride_aware_value_calls=1`、fallback 为 0、materialized copy 次数/字节为 0、prefix 行与 dense 相同、padding 行为 0。该结果没有加载 H3 模型；benchmark 仅限 kernel/model-free（`sparse` median **0.419968 ms**，dense **0.131072 ms**），不是产品级加速。成功仍必须体现为同一物理 GPU 上的匹配端到端收益；仅有微基准不成立。
 
 ## Benchmark contract status / 基准合同状态
 
@@ -48,9 +48,9 @@ The canonical public v1 contract is at [`benchmark_contract/v1/README.md`](bench
 
 ## Next experiment / 下一实验
 
-**Not started.** Contract v1 has cleared independent review and audited publication gates. The next experiment is one matched N=1 small gate that changes only Q/K/V materialization, checks dense fallback and output/AV correctness, and measures copy bytes plus comparable end-to-end timing. Promote to N=3 and later N≥10 only if that gate passes. No GPU or model run was launched for the contract milestone.
+**Non-Docker stride-aware-V harness passed; real-chain Docker gate remains storage-blocked.** Contract v1 has cleared independent review and audited publication gates. The next real-chain experiment is one matched N=1 small gate that changes only Q/K/V materialization, checks dense fallback and output/AV correctness, and measures copy bytes plus comparable end-to-end timing. If Docker remains blocked, the next independent non-Docker step is a larger synthetic active-token benchmark closer to the real `valid_tokens=38247`, still explicitly model-free. Promote to N=3 and later N≥10 only if a real-chain gate passes. A 2026-08-13 preflight found all four A6000s idle, but the pinned r2 base image and r8/r9 Sol-Attn overlay images are not inspectable in the local Docker daemon. The operator-authorized r2 restore/rebuild from the pinned vLLM-Omni commit `8e2e9b6b53e86e6a479ed2c0a53782f655f60e04` and pinned base digest `docker.io/vllm/vllm-openai@sha256:770fe65b2c73ee74a5c42165cf3433de4048cc2cd9c57a937ca4e35aba5aa87b` failed while registering the pulled base layer with `layerdb/...: file exists`, recorded at `technical_report/evidence/minimax_h3_desktop/packaging/minimax-h3-r2-restore-build-20260813T074702Z/r2_restore_docker_storage_blocker.json`. This is an operator/admin Docker storage blocker; no identical Docker restore/build retry should be run until the daemon storage conflict is repaired or a clean daemon with the pinned r2 image is available. No real-chain r9 N=1 run, GPU inference, or new speedup claim was produced.
 
-**尚未启动。** Contract v1 已通过独立审阅和审计发布门槛。下一实验将只改变 Q/K/V 实体化这一项，执行匹配 N=1 小门槛，验证 dense 回退与输出/音视频正确性，并同时测量复制字节数和可比端到端耗时。只有通过后才晋级 N=3，最终再考虑 N≥10。本次合同里程碑没有启动 GPU 或模型推理。
+**非 Docker stride-aware-V harness 已通过；真实链路 Docker gate 仍被存储状态阻塞。** Contract v1 已通过独立审阅和审计发布门槛。下一真实链路实验将只改变 Q/K/V 实体化这一项，执行匹配 N=1 小门槛，验证 dense 回退与输出/音视频正确性，并同时测量复制字节数和可比端到端耗时。如果 Docker 仍阻塞，下一项独立非 Docker 工作是更接近真实 `valid_tokens=38247` 的大型合成 active-token benchmark，且仍必须明确标记为 model-free。只有真实链路 gate 通过后才晋级 N=3，最终再考虑 N≥10。2026-08-13 的预检显示四张 A6000 均空闲，但本地 Docker daemon 中无法 inspect 到固定的 r2 基础镜像以及 r8/r9 Sol-Attn overlay 镜像；按 operator 授权从固定 vLLM-Omni commit `8e2e9b6b53e86e6a479ed2c0a53782f655f60e04` 与固定基础 digest `docker.io/vllm/vllm-openai@sha256:770fe65b2c73ee74a5c42165cf3433de4048cc2cd9c57a937ca4e35aba5aa87b` 重建 r2 时，在注册拉取的基础层时失败：`layerdb/...: file exists`，阻塞证据记录于 `technical_report/evidence/minimax_h3_desktop/packaging/minimax-h3-r2-restore-build-20260813T074702Z/r2_restore_docker_storage_blocker.json`。这属于 operator/admin 级 Docker 存储阻塞；在 daemon 存储冲突修复或干净 daemon 已有固定 r2 镜像之前，不应重复同一 Docker restore/build 命令。本轮没有产生 r9 N=1 真实链路运行、GPU 推理或新的端到端加速声明。
 
 ## Workflow kickoff and source tracking / 工作流启动与来源跟踪
 

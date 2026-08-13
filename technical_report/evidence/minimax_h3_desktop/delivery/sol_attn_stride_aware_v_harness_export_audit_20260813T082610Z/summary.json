@@ -1,0 +1,21 @@
+{
+  "claim_boundary": "kernel/model-free correctness and zero-materialization only; no H3 E2E or long-video speedup claim",
+  "cpu_static_tests": {
+    "command": "PYTHONPATH=code:ports/minimax_h3_a6000/src .venv/bin/python -m pytest -q tests ports/minimax_h3_a6000/tests",
+    "result": "152 passed in 7.41s"
+  },
+  "created_utc": "2026-08-13T08:26:10Z",
+  "export_build": {
+    "destination": "../github-release",
+    "file_count": 131,
+    "status": "built"
+  },
+  "harness_evidence": "technical_report/evidence/minimax_h3_desktop/sol_engine_port/sol_attn_stride_aware_v_harness_20260813T082456Z/summary.json",
+  "publication_audit": {
+    "issue_count": 0,
+    "root": "../github-release",
+    "status": "pass"
+  },
+  "scope": "post stride-aware-V model-free harness report/export gate",
+  "status": "pass"
+}

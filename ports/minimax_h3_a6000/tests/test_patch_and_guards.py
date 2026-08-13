@@ -47,6 +47,8 @@ def test_patch_builder_copies_without_runtime_write():
     assert "MINIMAX_H3_A6000_SHADOW_STRICT=0" in report
     assert "MINIMAX_H3_A6000_SOL_ATTN_DENSE_FIRST_STEPS=10" in report
     assert "MINIMAX_H3_A6000_SOL_ATTN_DENSE_FIRST_LAYERS=2" in report
+    assert "MINIMAX_H3_A6000_SOL_ATTN_STRIDE_AWARE_V=0" in report
+    assert "MINIMAX_H3_A6000_SOL_ATTN_SKIP_FULL_PREFIX_BLOCKS=0" in report
     assert "MINIMAX_H3_A6000_SOL_ATTN_DIAGNOSTIC_MATERIALIZE=0" in report
     assert "MINIMAX_H3_A6000_SOL_ATTN_MATERIALIZE_MAX_BYTES=67108864" in report
     assert not any(line.endswith("=1") for line in report.splitlines())
@@ -61,6 +63,12 @@ def test_static_guards_no_cuda_probe_or_kernel_compile_at_package_import():
     assert "cuda.compile" not in package_text
     assert "DEFAULT_ENV_SWITCHES" in package_text
     assert "torch.cuda.get_device_capability" in (PORT / "src" / "minimax_h3_a6000" / "exact_kernels.py").read_text()
+
+
+def test_stride_aware_v_path_cannot_enter_diagnostic_materialization_branch():
+    source = (PORT / "src" / "minimax_h3_a6000" / "sol_attn_backend.py").read_text()
+    assert 'if reason == "unsupported_contiguity" and not policy.stride_aware_value:' in source
+    assert 'if reason == "unsupported_contiguity":\n        candidate_query' not in source
 
 
 def _extract_added_file(patch_text: str, path: str) -> str:
@@ -105,7 +113,11 @@ def test_patch_is_opt_in_and_default_dense():
     assert "static_exact_block_lower_bound" in patch_text
     assert "SOL_ATTN_CACHE" in patch_text
     assert "SOL_ATTN_DIAGNOSTIC_MATERIALIZE" in patch_text
+    assert "SOL_ATTN_STRIDE_AWARE_V" in patch_text
     assert "materialize_copy_bytes" in patch_text
+    assert "materialize_gpu_copy_latency_ms" in patch_text
+    assert "sparse_attention_gpu_latency_ms" in patch_text
+    assert "denoise_gpu_latency_ms" in patch_text
 
 
 def test_embedded_sol_attn_backend_blocks_until_real_metadata_and_kernel_path():
@@ -126,6 +138,9 @@ def test_embedded_sol_attn_backend_blocks_until_real_metadata_and_kernel_path():
     assert "density_samples" in source
     assert "PackedH3Metadata" in source
     assert "sol_attn_h3_sparse_candidate" in source
+    assert "MINIMAX_H3_A6000_SOL_ATTN_STRIDE_AWARE_V" in source
+    assert "materialize_gpu_copy_latency_ms" in source
+    assert "stride_aware_value_calls" in source
     assert "overlay_package_unavailable" in source
     assert source.index("non_h3_dit_attention_prefix") < source.index("_extract_sparse_metadata(attn_metadata")
 

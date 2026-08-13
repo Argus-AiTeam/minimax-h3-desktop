@@ -8,12 +8,19 @@ candidate in :mod:`minimax_h3_a6000.sol_attn_triton_sm86`:
 * ``[prefix | video tail | padding]`` metadata and contiguous valid length;
 * first-10 denoise steps and first-2 layers stay dense;
 * every prefix KV block is an exact sink, while prefix query rows are replaced
-  by dense SDPA output;
+  by dense SDPA output unless the default-off exact-prefix-query experiment is
+  explicitly selected; separate default-off scheduler probes may skip only query
+  blocks wholly inside that overwritten prefix range, statically schedule the
+  prefix-sink exact blocks, or consume GROUP=32 exact-route masks via a bitmask;
+  each probe must preserve exact-block order and dense-prefix overwrite;
 * cache stays disabled by contract;
 * unsupported inputs strictly fall back to dense reference attention unless the
   caller opts into ``strict``;
-* non-contiguous H3 Q/K/V decline by default; r7 can only test past that gate
-  through a separate diagnostic materialization env switch with copy telemetry;
+* non-contiguous H3 Q/K/V decline by default; the separate stride-aware-V
+  switch accepts only the observed non-overlapping fused-QKV value view while
+  the legacy diagnostic materialization switch remains an explicit reference;
+* copy telemetry separates host enqueue latency from deferred CUDA-event copy
+  duration, so asynchronous enqueue time is never reported as GPU copy time;
 * importing this module never imports Triton or probes CUDA.
 
 The Triton candidate is loaded only after the env/policy, tensor, metadata, and
@@ -226,8 +233,14 @@ class SolAttnPolicy:
     sink_start: int = 0
     sink_tokens: int | None = None
     prefix_query_dense: bool = True
+    exact_prefix_query: bool = False
+    skip_full_prefix_blocks: bool = False
+    static_prefix_sink: bool = False
+    bitmask_exact_scheduler: bool = False
+    forward_config: str | None = None
     cache_enabled: bool = False
     strict: bool = False
+    stride_aware_value: bool = False
     diagnostic_materialize_noncontiguous: bool = False
     diagnostic_materialize_max_bytes: int = 67_108_864
 
@@ -252,6 +265,12 @@ class SolAttnPolicy:
             ),
             cache_enabled=env_enabled("MINIMAX_H3_A6000_SOL_ATTN_CACHE", env),
             strict=env_enabled("MINIMAX_H3_A6000_SOL_ATTN_STRICT", env),
+            stride_aware_value=env_enabled("MINIMAX_H3_A6000_SOL_ATTN_STRIDE_AWARE_V", env),
+            exact_prefix_query=env_enabled("MINIMAX_H3_A6000_SOL_ATTN_EXACT_PREFIX_QUERY", env),
+            skip_full_prefix_blocks=env_enabled("MINIMAX_H3_A6000_SOL_ATTN_SKIP_FULL_PREFIX_BLOCKS", env),
+            static_prefix_sink=env_enabled("MINIMAX_H3_A6000_SOL_ATTN_STATIC_PREFIX_SINK", env),
+            bitmask_exact_scheduler=env_enabled("MINIMAX_H3_A6000_SOL_ATTN_BITMASK_SCHEDULER", env),
+            forward_config=_read_env_str_or_none(env, "MINIMAX_H3_A6000_SOL_ATTN_FORWARD_CONFIG"),
             diagnostic_materialize_noncontiguous=env_enabled(
                 "MINIMAX_H3_A6000_SOL_ATTN_DIAGNOSTIC_MATERIALIZE", env
             ),
@@ -272,6 +291,7 @@ class SolAttnTelemetry:
     sparse_calls: int = 0
     fallback_calls: int = 0
     prefix_query_dense_calls: int = 0
+    exact_prefix_query_calls: int = 0
     decline_reasons: dict[str, int] = field(default_factory=dict)
     fallback_reasons: dict[str, int] = field(default_factory=dict)
     sink_ranges: list[tuple[int, int]] = field(default_factory=list)
@@ -280,7 +300,17 @@ class SolAttnTelemetry:
     materialize_copy_count: int = 0
     materialize_copy_bytes: int = 0
     materialize_copy_by_tensor: dict[str, int] = field(default_factory=dict)
+    # Compatibility field: host-side enqueue latency, never GPU copy duration.
     materialize_latency_ms: float = 0.0
+    materialize_gpu_copy_latency_ms: float = 0.0
+    materialize_gpu_timing_failures: int = 0
+    stride_aware_value_calls: int = 0
+    stride_aware_value_bytes: int = 0
+    _materialize_gpu_event_pairs: list[tuple[Any, Any]] = field(default_factory=list, repr=False)
+
+    @property
+    def materialize_host_enqueue_latency_ms(self) -> float:
+        return self.materialize_latency_ms
 
     def record_decline(self, reason: str) -> None:
         self.dense_calls += 1
@@ -296,10 +326,12 @@ class SolAttnTelemetry:
         self.sink_ranges.append(sink_range)
         self.density_samples.append(density)
 
-    def record_sparse_success(self, *, prefix_query_dense: bool) -> None:
+    def record_sparse_success(self, *, prefix_query_dense: bool, exact_prefix_query: bool = False) -> None:
         self.sparse_calls += 1
         if prefix_query_dense:
             self.prefix_query_dense_calls += 1
+        if exact_prefix_query:
+            self.exact_prefix_query_calls += 1
 
     def record_layout(self, *, stage: str, query: torch.Tensor, key: torch.Tensor, value: torch.Tensor) -> None:
         if len(self.layout_samples) >= 32:
@@ -315,12 +347,38 @@ class SolAttnTelemetry:
             }
         )
 
-    def record_materialize(self, *, by_tensor: dict[str, int], latency_ms: float) -> None:
+    def record_materialize(
+        self,
+        *,
+        by_tensor: dict[str, int],
+        host_enqueue_latency_ms: float,
+        gpu_event_pair: tuple[Any, Any] | None = None,
+    ) -> None:
         self.materialize_copy_count += len(by_tensor)
         self.materialize_copy_bytes += sum(int(v) for v in by_tensor.values())
-        self.materialize_latency_ms += float(latency_ms)
+        self.materialize_latency_ms += float(host_enqueue_latency_ms)
+        if gpu_event_pair is not None:
+            self._materialize_gpu_event_pairs.append(gpu_event_pair)
         for name, value in by_tensor.items():
             self.materialize_copy_by_tensor[name] = self.materialize_copy_by_tensor.get(name, 0) + int(value)
+
+    def record_stride_aware_value(self, value: torch.Tensor) -> None:
+        self.stride_aware_value_calls += 1
+        copy_bytes = _copy_bytes_for(value)
+        if copy_bytes is not None:
+            self.stride_aware_value_bytes += copy_bytes
+
+    def finalize_materialize_gpu_timing(self) -> float:
+        """Resolve deferred CUDA events after the measured request has completed."""
+
+        pairs, self._materialize_gpu_event_pairs = self._materialize_gpu_event_pairs, []
+        for start, end in pairs:
+            try:
+                end.synchronize()
+                self.materialize_gpu_copy_latency_ms += float(start.elapsed_time(end))
+            except Exception:  # noqa: BLE001 - telemetry must not break inference
+                self.materialize_gpu_timing_failures += 1
+        return self.materialize_gpu_copy_latency_ms
 
 
 def _read_env_int(env: Mapping[str, str], name: str, *, default: int) -> int:
@@ -328,6 +386,11 @@ def _read_env_int(env: Mapping[str, str], name: str, *, default: int) -> int:
         return int(str(env.get(name, DEFAULT_ENV_SWITCHES.get(name, str(default)))).strip())
     except (TypeError, ValueError):
         return int(default)
+
+
+def _read_env_str_or_none(env: Mapping[str, str], name: str) -> str | None:
+    value = str(env.get(name, DEFAULT_ENV_SWITCHES.get(name, ""))).strip()
+    return value or None
 
 
 def _tensor_layout(name: str, tensor: torch.Tensor) -> dict[str, Any]:
@@ -344,6 +407,50 @@ def _tensor_layout(name: str, tensor: torch.Tensor) -> dict[str, Any]:
 
 def _ceil_div(value: int, divisor: int) -> int:
     return (int(value) + int(divisor) - 1) // int(divisor)
+
+
+def stride_aware_value_layout_reason(value: torch.Tensor) -> str | None:
+    """Validate the one source-backed non-contiguous H3 value layout.
+
+    PyTorch strides are element jumps and ``storage_offset`` is expressed in
+    storage elements.  The accepted view is exactly the V third of a fused
+    ``[B, T, 3 * H * D]`` BF16 projection, reshaped to BTHD: D and H are packed,
+    token stride is three head planes, and V starts at the third plane.  The
+    batch stride may retain tail-padding rows after slicing to valid tokens but
+    must remain a whole, non-overlapping number of fused token rows.
+    """
+
+    if value.ndim != 4:
+        return "rank"
+    batch, tokens, heads, head_dim = (int(x) for x in value.shape)
+    if batch != 1:
+        return "batch_not_one"
+    if tokens <= 0 or heads <= 0 or head_dim != 128:
+        return "shape"
+    strides = tuple(int(x) for x in value.stride())
+    if len(strides) != 4 or any(x <= 0 for x in strides):
+        return "non_positive_stride"
+    stride_b, stride_t, stride_h, stride_d = strides
+    if stride_d != 1:
+        return "inner_stride"
+    if stride_h != head_dim:
+        return "head_stride"
+    head_plane = heads * head_dim
+    if stride_t != 3 * head_plane:
+        return "token_stride"
+    if stride_b < tokens * stride_t or stride_b % stride_t:
+        return "batch_stride"
+    storage_offset = int(value.storage_offset())
+    if storage_offset < 0 or storage_offset % stride_t != 2 * head_plane:
+        return "storage_offset"
+    max_storage_index = storage_offset + (tokens - 1) * stride_t + (heads - 1) * stride_h + head_dim - 1
+    try:
+        storage_elements = int(value.untyped_storage().nbytes()) // int(value.element_size())
+    except Exception:  # noqa: BLE001 - an uninspectable storage is unsupported
+        return "storage_uninspectable"
+    if max_storage_index >= storage_elements:
+        return "storage_bounds"
+    return None
 
 
 def derive_sink_range(metadata: PackedH3Metadata, policy: SolAttnPolicy) -> tuple[int, int]:
@@ -429,8 +536,14 @@ def decline_reason(
         return "invalid_valid_length"
     if query.dtype != torch.bfloat16 or key.dtype != query.dtype or value.dtype != query.dtype:
         return "unsupported_dtype"
-    if not (query.is_contiguous() and key.is_contiguous() and value.is_contiguous()):
+    if not (query.is_contiguous() and key.is_contiguous()):
         return "unsupported_contiguity"
+    if not value.is_contiguous():
+        if not policy.stride_aware_value:
+            return "unsupported_contiguity"
+        value_layout_reason = stride_aware_value_layout_reason(value)
+        if value_layout_reason is not None:
+            return f"unsupported_stride_aware_v_layout:{value_layout_reason}"
     if query.device.type != "cuda" or key.device != query.device or value.device != query.device:
         return "unsupported_device"
     if not sm86_capability_guard(device_capability):
@@ -532,13 +645,23 @@ def _diagnostic_materialize_qkv(
             return query, key, value, "diagnostic_materialize_cap_exceeded"
         by_tensor[name] = copy_bytes
 
-    start = time.perf_counter_ns()
+    gpu_event_pair: tuple[Any, Any] | None = None
     try:
+        if value.device.type == "cuda":
+            gpu_event_pair = (torch.cuda.Event(enable_timing=True), torch.cuda.Event(enable_timing=True))
+            gpu_event_pair[0].record()
+        start = time.perf_counter_ns()
         out = tuple(t.contiguous() if not t.is_contiguous() else t for t in (query, key, value))
+        host_enqueue_latency_ms = (time.perf_counter_ns() - start) / 1_000_000.0
+        if gpu_event_pair is not None:
+            gpu_event_pair[1].record()
     except Exception as exc:  # noqa: BLE001 - diagnostic path must fail closed
         return query, key, value, f"diagnostic_materialize_error:{type(exc).__name__}"
-    elapsed_ms = (time.perf_counter_ns() - start) / 1_000_000.0
-    telemetry.record_materialize(by_tensor=by_tensor, latency_ms=elapsed_ms)
+    telemetry.record_materialize(
+        by_tensor=by_tensor,
+        host_enqueue_latency_ms=host_enqueue_latency_ms,
+        gpu_event_pair=gpu_event_pair,
+    )
     return out[0], out[1], out[2], None
 
 
@@ -571,7 +694,7 @@ def sol_attn_h3_sparse_candidate(
         policy=policy,
         device_capability=device_capability,
     )
-    if reason == "unsupported_contiguity":
+    if reason == "unsupported_contiguity" and not policy.stride_aware_value:
         candidate_query, candidate_key, candidate_value, materialize_reason = _diagnostic_materialize_qkv(
             candidate_query,
             candidate_key,
@@ -607,36 +730,80 @@ def sol_attn_h3_sparse_candidate(
     density = estimate_sparse_density(metadata, policy)
     if telemetry.materialize_copy_count:
         density = {**density, "diagnostic_materialized_qkv": True}
+    exact_prefix_query = bool(policy.prefix_query_dense and policy.exact_prefix_query and metadata.prefix_len > 0)
+    skip_full_prefix_blocks = bool(
+        policy.prefix_query_dense
+        and policy.skip_full_prefix_blocks
+        and not exact_prefix_query
+        and metadata.prefix_len >= SOL_ATTN_BLOCK_SIZE
+    )
+    if exact_prefix_query:
+        density = {**density, "exact_prefix_query": True}
+    if skip_full_prefix_blocks:
+        density = {
+            **density,
+            "skip_full_prefix_blocks": True,
+            "skipped_full_prefix_query_blocks_estimate": int(metadata.prefix_len) // SOL_ATTN_BLOCK_SIZE,
+        }
+    static_prefix_sink = bool(
+        policy.prefix_query_dense
+        and policy.static_prefix_sink
+        and not exact_prefix_query
+        and sink_range[0] == 0
+        and sink_range[1] > 0
+    )
+    if static_prefix_sink:
+        density = {
+            **density,
+            "static_prefix_sink": True,
+            "static_prefix_sink_blocks_estimate": _ceil_div(sink_range[1] - sink_range[0], SOL_ATTN_BLOCK_SIZE),
+        }
+    bitmask_exact_scheduler = bool(policy.bitmask_exact_scheduler and not exact_prefix_query)
+    if bitmask_exact_scheduler:
+        density = {**density, "bitmask_exact_scheduler": True}
+    if policy.forward_config:
+        density = {**density, "forward_config": str(policy.forward_config)}
+    stride_aware_value = not candidate_value.is_contiguous()
+    if stride_aware_value:
+        telemetry.record_stride_aware_value(candidate_value)
+        density = {**density, "stride_aware_value": True}
     telemetry.record_sparse_candidate(sink_range, density)
     valid = int(metadata.valid_length)
     prefix = int(metadata.prefix_len)
 
     try:
         kernel = _load_sol_attn_sm86()
-        q_valid = candidate_query[:, :valid].contiguous()
-        k_valid = candidate_key[:, :valid].contiguous()
-        v_valid = candidate_value[:, :valid].contiguous()
-        sparse_valid = kernel(
-            q_valid,
-            k_valid,
-            v_valid,
+        # Keep the full padded tensors in the kernel call and pass the active
+        # valid length explicitly.  The SM86 pointer path writes the final
+        # padded output directly and zeros only the padding tail, avoiding a
+        # second full-output allocation/copy after a valid-token slice result.
+        output = kernel(
+            candidate_query,
+            candidate_key,
+            candidate_value,
             scale=softmax_scale,
             tau=float(policy.tau),
             thresh_type=str(policy.thresh_type),
             sink_start=sink_range[0],
             sink_tokens=sink_range[1] - sink_range[0],
+            allow_strided_value=stride_aware_value,
+            tokens=valid,
+            prefix_exact_tokens=prefix if (exact_prefix_query or skip_full_prefix_blocks) else 0,
+            exact_prefix_query=exact_prefix_query,
+            skip_full_prefix_blocks=skip_full_prefix_blocks,
+            static_prefix_sink=static_prefix_sink,
+            forward_config=policy.forward_config,
+            bitmask_exact_scheduler=bitmask_exact_scheduler,
         )
-        output = torch.zeros_like(value)
-        output[:, :valid] = sparse_valid
-        prefix_dense = bool(policy.prefix_query_dense and prefix > 0)
+        prefix_dense = bool(policy.prefix_query_dense and prefix > 0 and not exact_prefix_query)
         if prefix_dense:
             output[:, :prefix] = dense_attention_reference(
-                q_valid[:, :prefix],
-                k_valid,
-                v_valid,
+                candidate_query[:, :prefix],
+                candidate_key[:, :valid],
+                candidate_value[:, :valid],
                 softmax_scale=softmax_scale,
             )
-        telemetry.record_sparse_success(prefix_query_dense=prefix_dense)
+        telemetry.record_sparse_success(prefix_query_dense=prefix_dense, exact_prefix_query=exact_prefix_query)
         return output
     except Exception as exc:  # noqa: BLE001 - fallback must preserve runtime availability
         reason = f"kernel_error:{type(exc).__name__}"
