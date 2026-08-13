@@ -24,6 +24,32 @@
 > **Long-video work:** the current focus is 720p-class 30/60-second audiovisual production on one RTX A6000. See [`CURRENT_WORK.md`](CURRENT_WORK.md) for accepted evidence, negative results, active hypotheses, and the next experiment. Short-clip baselines are not presented as long-video results. The canonical workloads, timing hierarchy, quality gates, and fail-closed claim validator are in [`benchmark_contract/v1/README.md`](benchmark_contract/v1/README.md). The pinned open-source path supports only 4–15-second native output, so both 30/60-second manifests remain unmeasured `extension` lanes.
 >
 > **Continuous optimization direction:** the project continues MiniMax-H3 through open-ended evidence cycles: first a reproducible 30-second and then a 60-second 720p-class production path, with real-chain work on Sol-Engine, Sol-Attn, Q/K/V packing, copy/synchronization, VAE, audio, and container/encoding bottlenecks. Each cycle tracks primary papers, official repository revisions, and licenses, then keeps or rejects frontier ideas only through same-GPU, matched-workload, matched-quality end-to-end evidence. The ambition is to advance toward world-leading performance with reproducible evidence; the repository will not claim “world best” or SOTA without a valid public comparison.
+>
+> **Ultimate deployment goal:** move complete MiniMax-H3 audiovisual generation from a data-center multi-GPU setting to a normal single-machine computer with an auditable one-command prepare/run/verify workflow. The A6000 is the current fixed single-GPU engineering proxy for reducing VRAM, host RAM, startup time, wall-clock seconds per generated second, power, and deployment complexity. It is still a 48 GB workstation GPU on a high-memory host, so these results do not prove consumer-PC support; lower-memory hardware requires its own real-device baseline and acceptance.
+
+### Continuous quantitative scoreboard
+
+Only accepted, traceable same-GPU short-clip evidence is shown here. The 30/60-second lanes remain unmeasured extensions. Lower wall-clock seconds per generated second is better.
+
+| Lane | Accepted workload | Median | Wall-clock s / generated s | Peak GPU / host memory | Meaning |
+|---|---|---:|---:|---:|---|
+| BF16 fidelity | 5.1667 s, N=10 | 1792.202 s | 346.878 | 26,836 MiB / 204.84 GiB | Fidelity denominator |
+| Turbo 8-step | 5.1667 s, N=10 | 290.998 s | 56.322 | 26,836 MiB / 195.16 GiB | Current practical default |
+| Turbo 4-step | 5.1667 s, N=10 | 149.619 s | 28.959 | 26,836 MiB / 195.16 GiB | Faster, with greater quality risk |
+| Sol-Attn r8 opt-in | matched 5-step, 10/10 pairs | 15.203% median HTTP improvement | not converted across lanes | 192 sparse calls/pair, 0 fallback | Real sparse-lane promotion only |
+
+### Work in progress
+
+1. Remove the r8/r9 real-chain Q/K/V materialization—about 192 events and 105.34 GB per 5-step run—using layout-aware views/packing and reusable block maps while preserving dense fail-closed behavior.
+2. Restore a reproducible runtime/overlay build chain and promote N=1 → N=3 → N≥10 only when structural AV, quality proxies, copy bytes, and same-GPU E2E evidence pass together.
+3. Establish the first 30-second 720p-class practical AV production baseline with an explicit native-long-context, chunk/overlap/conditioning, or montage/stitching classification.
+
+### Next
+
+- advance 30 seconds to 60 seconds with long-horizon identity, subject, background, camera, motion, repetition/freezing, seam, audio-continuity, and AV-sync measurements;
+- reduce GPU VRAM and host RAM alongside speed through offload/prefetch, VAE tiling/fusion, stable compile/CUDA Graph regions, audio/encoding/I/O, and model lifecycle work;
+- create separate real-device feasibility profiles closer to normal computers, measuring minimum VRAM/RAM, cold start, disk, power, and failure boundaries;
+- update this scoreboard and [`CURRENT_WORK.md`](CURRENT_WORK.md) for every accepted positive result or reproducible negative result, then commit/push only after tests, independent review, and publication audit, with a safe checkpoint at least every three active hours when changes exist.
 
 This project runs the complete MiniMax-H3 FL2VA pipeline on **one real NVIDIA RTX A6000 48 GB (SM86)**. It does not substitute a smaller model and does not report a multi-GPU server as a desktop result. The repository includes a reproducible BF16 baseline, practical Turbo deployment, default-off Sol-Attn work, build/run scripts, tests, and compact evidence.
 
