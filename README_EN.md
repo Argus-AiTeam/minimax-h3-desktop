@@ -22,6 +22,8 @@
 </p>
 
 > **Long-video work:** the current focus is 720p-class 30/60-second audiovisual production on one RTX A6000. See [`CURRENT_WORK.md`](CURRENT_WORK.md) for accepted evidence, negative results, active hypotheses, and the next experiment. Short-clip baselines are not presented as long-video results. The canonical workloads, timing hierarchy, quality gates, and fail-closed claim validator are in [`benchmark_contract/v1/README.md`](benchmark_contract/v1/README.md). The pinned open-source path supports only 4–15-second native output, so both 30/60-second manifests remain unmeasured `extension` lanes.
+>
+> **Continuous optimization direction:** the project continues MiniMax-H3 through open-ended evidence cycles: first a reproducible 30-second and then a 60-second 720p-class production path, with real-chain work on Sol-Engine, Sol-Attn, Q/K/V packing, copy/synchronization, VAE, audio, and container/encoding bottlenecks. Each cycle tracks primary papers, official repository revisions, and licenses, then keeps or rejects frontier ideas only through same-GPU, matched-workload, matched-quality end-to-end evidence. The ambition is to advance toward world-leading performance with reproducible evidence; the repository will not claim “world best” or SOTA without a valid public comparison.
 
 This project runs the complete MiniMax-H3 FL2VA pipeline on **one real NVIDIA RTX A6000 48 GB (SM86)**. It does not substitute a smaller model and does not report a multi-GPU server as a desktop result. The repository includes a reproducible BF16 baseline, practical Turbo deployment, default-off Sol-Attn work, build/run scripts, tests, and compact evidence.
 
