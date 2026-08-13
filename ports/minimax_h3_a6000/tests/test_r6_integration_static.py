@@ -197,6 +197,34 @@ def test_stride_aware_v_n1_gate_is_matched_warm_copy_timed_and_default_dry() -> 
     assert "duration=5.166667" in script and "duration=30" not in script and "duration=60" not in script
 
 
+def test_pair_value_halves_n1_gate_is_matched_default_off_no_materialization() -> None:
+    script = (PORT / "integration" / "run_sol_attn_h3_pair_value_halves_n1.sh").read_text(encoding="utf-8")
+    assert "DRY_RUN=1" in script
+    assert "ARGUS_ALLOW_A6000_SOL_ATTN_PAIR_VALUE_HALVES_N1=1" in script
+    assert "argus/minimax-h3-vllm-omni:8e2e9b6b53e8-r9-sol-attn-overlay" in script
+    assert "REQUIRED_IMAGE_VERSION_LABEL=${REQUIRED_IMAGE_VERSION_LABEL:-r9}" in script
+    assert "run_one current_retained" in script
+    assert "run_one pair_value_halves" in script
+    assert "request warmup" in script and "request output" in script
+    assert "SOL_ATTN_TELEMETRY_ARM_FILE=/evidence/current_retained/measure.arm" in script
+    assert "SOL_ATTN_TELEMETRY_ARM_FILE=/evidence/pair_value_halves/measure.arm" in script
+    assert "MINIMAX_H3_A6000_SOL_ATTN_STRIDE_AWARE_V=1" in script
+    assert "MINIMAX_H3_A6000_SOL_ATTN_SKIP_FULL_PREFIX_BLOCKS=1" in script
+    assert "MINIMAX_H3_A6000_SOL_ATTN_DIAGNOSTIC_MATERIALIZE=0" in script
+    assert "MINIMAX_H3_A6000_SOL_ATTN_DIAGNOSTIC_MATERIALIZE=1" not in script
+    assert "MINIMAX_H3_A6000_SOL_ATTN_PAIR_VALUE_HALVES=0" in script
+    assert "MINIMAX_H3_A6000_SOL_ATTN_PAIR_VALUE_HALVES=1" in script
+    assert "both_zero_materialization_and_input_copies" in script
+    assert "candidate_pair_value_halves_seen" in script
+    assert "current_pair_value_halves_absent" in script
+    assert "both_skip_full_prefix_blocks_seen" in script
+    assert "sparse_attention_gpu_latency_ms" in script and "denoise_gpu_latency_ms" in script
+    assert "peak_gpu_power_w" in script and "host_mem_available_kib" in script
+    assert "rejected_no_above_noise_n1_signal" in script
+    assert "promote_to_matched_n3" in script
+    assert "duration=5.166667" in script and "duration=30" not in script and "duration=60" not in script
+
+
 def test_sol_attn_gpu2_diagnostic_requires_fresh_r8_identity_and_resource_telemetry() -> None:
     script = (PORT / "integration" / "run_gpu2_sol_attn_h3_5step_diagnostic.sh").read_text(encoding="utf-8")
     assert "argus/minimax-h3-vllm-omni:8e2e9b6b53e8-r8-sol-attn-overlay" in script

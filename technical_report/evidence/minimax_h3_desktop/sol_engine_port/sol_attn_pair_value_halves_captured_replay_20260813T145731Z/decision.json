@@ -1,0 +1,20 @@
+{
+  "claim_boundary": "Captured-metadata/non-Docker full-shape SM86 replay only: exercises captured r8 H3 metadata derivation, SolAttnPolicy.from_env, current retained lane, and MINIMAX_H3_A6000_SOL_ATTN_PAIR_VALUE_HALVES. Not Docker H3 E2E, not long-video, not BF16 fidelity, not quality/product speedup, not normal-PC/public-comparison/SOTA evidence.",
+  "classification": "retain_default_off_pair_value_halves_captured_replay_for_next_real_chain_gate",
+  "created_utc": "2026-08-13T14:57:55Z",
+  "decision": "retain",
+  "failed_gates": [],
+  "fixed_variables": {
+    "cache": "off",
+    "dense_prefix_overwrite": "preserved",
+    "diagnostic_materialization": "off",
+    "skip_full_prefix_blocks": "on",
+    "stride_aware_v": "on",
+    "tau_routing_exact_order": "unchanged"
+  },
+  "principal_variable": "MINIMAX_H3_A6000_SOL_ATTN_PAIR_VALUE_HALVES=1 versus current retained pair_value_halves=0",
+  "promote_real_chain": false,
+  "promotion_blocker": "pinned Docker real-chain runtime remains separate; this non-Docker replay is not H3 E2E",
+  "retain_candidate": true,
+  "schema_version": "minimax_h3_a6000_pair_value_halves_captured_replay_decision_v1"
+}

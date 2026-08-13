@@ -74,6 +74,7 @@ def _parse_args() -> argparse.Namespace:
             "prefix-skip-bench",
             "static-prefix-sink-bench",
             "bitmask-scheduler-bench",
+            "pair-value-halves-bench",
             "both",
         ),
         default="both",
@@ -122,6 +123,12 @@ def _parse_args() -> argparse.Namespace:
         type=float,
         default=1.0,
         help="minimum whole-lane or forward-subphase median improvement required to retain the bitmask exact-block scheduler",
+    )
+    parser.add_argument(
+        "--pair-value-halves-min-gain-pct",
+        type=float,
+        default=1.0,
+        help="minimum whole-lane or forward-subphase median improvement required to retain the BV64-pair value-halves candidate",
     )
     return parser.parse_args()
 
@@ -397,6 +404,7 @@ def _new_large_policy(
     skip_full_prefix_blocks: bool = False,
     static_prefix_sink: bool = False,
     bitmask_exact_scheduler: bool = False,
+    pair_value_halves: bool = False,
     forward_config: str | None = None,
 ) -> SolAttnPolicy:
     return SolAttnPolicy(
@@ -411,6 +419,7 @@ def _new_large_policy(
         skip_full_prefix_blocks=bool(skip_full_prefix_blocks),
         static_prefix_sink=bool(static_prefix_sink),
         bitmask_exact_scheduler=bool(bitmask_exact_scheduler),
+        pair_value_halves=bool(pair_value_halves),
         forward_config=forward_config,
         tau=float(tau),
         thresh_type=str(thresh_type),
@@ -565,6 +574,7 @@ def _profiled_current_semantics_call(
     skip_full_prefix_blocks: bool = False,
     static_prefix_sink: bool = False,
     bitmask_exact_scheduler: bool = False,
+    pair_value_halves: bool = False,
 ) -> tuple[torch.Tensor, dict[str, float]]:
     valid = int(metadata.valid_length)
     prefix = int(metadata.prefix_len)
@@ -622,6 +632,7 @@ def _profiled_current_semantics_call(
             static_prefix_sink=static_prefix_sink,
             forward_config=forward_config,
             bitmask_exact_scheduler=bitmask_exact_scheduler,
+            pair_value_halves=pair_value_halves,
         )
     )
 
@@ -662,6 +673,7 @@ def _phase_profile_distribution(
     skip_full_prefix_blocks: bool = False,
     static_prefix_sink: bool = False,
     bitmask_exact_scheduler: bool = False,
+    pair_value_halves: bool = False,
 ) -> dict[str, Any]:
     if warmup < 0 or repeats < 1:
         raise RuntimeError("phase-bench requires repeats >= 1 and warmup >= 0")
@@ -677,6 +689,7 @@ def _phase_profile_distribution(
             skip_full_prefix_blocks=skip_full_prefix_blocks,
             static_prefix_sink=static_prefix_sink,
             bitmask_exact_scheduler=bitmask_exact_scheduler,
+            pair_value_halves=pair_value_halves,
         )
         del out
     torch.cuda.synchronize()
@@ -694,6 +707,7 @@ def _phase_profile_distribution(
             skip_full_prefix_blocks=skip_full_prefix_blocks,
             static_prefix_sink=static_prefix_sink,
             bitmask_exact_scheduler=bitmask_exact_scheduler,
+            pair_value_halves=pair_value_halves,
         )
         for key, value in phase_ms.items():
             samples_by_phase.setdefault(key, []).append(float(value))
@@ -708,6 +722,7 @@ def _phase_profile_distribution(
         "skip_full_prefix_blocks": bool(skip_full_prefix_blocks),
         "static_prefix_sink": bool(static_prefix_sink),
         "bitmask_exact_scheduler": bool(bitmask_exact_scheduler),
+        "pair_value_halves": bool(pair_value_halves),
         "phase_latency_ms": phase_stats,
         "dominant_phase_by_median": dominant,
         "dominant_phase_median_ms": medians[dominant],
@@ -2289,6 +2304,298 @@ def _bitmask_scheduler_route_decision(record: dict[str, Any], *, min_gain_pct: f
     }
 
 
+def _pair_value_halves_performance_model(forward_attribution: dict[str, Any]) -> dict[str, Any]:
+    """Explain what the BV64-pair candidate can and cannot remove."""
+
+    shape = forward_attribution.get("shape", {})
+    work = forward_attribution.get("work_estimate_fma_or_bytes", {})
+    visits = forward_attribution.get("program_visit_counts_after_value_tile_multiplier", {})
+    v_tiles = max(1, int(shape.get("v_tiles", 2) or 2))
+    return {
+        "kind": "bv64_pair_value_halves_work_model_not_in_kernel_timer",
+        "current_value_tiles": v_tiles,
+        "candidate_forward_program_multiplier": 1,
+        "score_probability_work_reuse_claim": (
+            "Candidate should compute summary QK routing, exact QK scores, exp2 probabilities, "
+            "row_max and row_sum once per query block/head instead of once per BV64 value tile."
+        ),
+        "unchanged_work_claim": (
+            "Probability-value FMAs, V/VC bytes, dense-prefix overwrite, reduction/threshold prep, "
+            "tau/routing and exact-block online order are unchanged."
+        ),
+        "estimated_reused_current_program_events": {
+            "online_softmax_updates_current": int(visits.get("online_softmax_updates_total", 0)),
+            "online_softmax_updates_if_reused_once_per_value_pair": int(visits.get("online_softmax_updates_total", 0)) // v_tiles,
+            "exact_qk_dot_fma_current": int(work.get("exact_qk_dot_fma", 0)),
+            "exact_qk_dot_fma_if_reused_once_per_value_pair": int(work.get("exact_qk_dot_fma", 0)) // v_tiles,
+            "approximate_summary_routing_dot_fma_current": int(work.get("approximate_summary_routing_dot_fma", 0)),
+            "approximate_summary_routing_dot_fma_if_reused_once_per_value_pair": int(work.get("approximate_summary_routing_dot_fma", 0)) // v_tiles,
+        },
+        "estimated_unchanged_current_events": {
+            "exact_probability_value_dot_fma": int(work.get("exact_probability_value_dot_fma", 0)),
+            "approximate_value_summary_dot_fma": int(work.get("approximate_value_summary_dot_fma", 0)),
+            "strided_exact_v_gather_bytes": int(work.get("strided_exact_v_gather_bytes", 0)),
+        },
+        "risk_model": (
+            "One program carries two M64x64 FP32 O accumulators plus one shared score/probability tile; "
+            "on SM86 the extra register pressure and occupancy loss can exceed the saved QK/probability work."
+        ),
+    }
+
+
+def _pair_value_halves_route_decision(record: dict[str, Any], *, min_gain_pct: float) -> dict[str, Any]:
+    current_pre = record["current_preflight_telemetry"]
+    candidate_pre = record["candidate_preflight_telemetry"]
+    current_summary = record["current_timing_ms"]["timed_telemetry_summary"]
+    candidate_summary = record["candidate_timing_ms"]["timed_telemetry_summary"]
+    current_median = float(record["current_timing_ms"]["latency_ms"]["median_ms"])
+    candidate_median = float(record["candidate_timing_ms"]["latency_ms"]["median_ms"])
+    whole_gain_pct = 100.0 * (current_median - candidate_median) / current_median if current_median else 0.0
+    current_forward = float(record["current_phase_profile_ms"]["phase_latency_ms"]["forward_pointer_kernel"].get("median_ms", 0.0))
+    candidate_forward = float(record["candidate_phase_profile_ms"]["phase_latency_ms"]["forward_pointer_kernel"].get("median_ms", 0.0))
+    forward_gain_pct = 100.0 * (current_forward - candidate_forward) / current_forward if current_forward else 0.0
+    candidate_vs_current = record["candidate_vs_current_sanity"]
+    gates = {
+        "full_target_shape": int(record["shape"]["T_total"]) == TARGET_H3_TOTAL and int(record["shape"]["T_valid"]) == TARGET_H3_VALID,
+        "current_preflight_sparse_once": int(current_pre.get("sparse_calls", 0)) == 1,
+        "candidate_preflight_sparse_once": int(candidate_pre.get("sparse_calls", 0)) == 1,
+        "current_preflight_zero_fallback": int(current_pre.get("fallback_calls", -1)) == 0,
+        "candidate_preflight_zero_fallback": int(candidate_pre.get("fallback_calls", -1)) == 0,
+        "current_preflight_zero_materialization": int(current_pre.get("materialize_copy_count", -1)) == 0 and int(current_pre.get("materialize_copy_bytes", -1)) == 0,
+        "candidate_preflight_zero_materialization": int(candidate_pre.get("materialize_copy_count", -1)) == 0 and int(candidate_pre.get("materialize_copy_bytes", -1)) == 0,
+        "current_timed_zero_fallback": int(current_summary.get("fallback_calls", -1)) == 0,
+        "candidate_timed_zero_fallback": int(candidate_summary.get("fallback_calls", -1)) == 0,
+        "current_timed_zero_materialization": int(current_summary.get("materialize_copy_count", -1)) == 0 and int(current_summary.get("materialize_copy_bytes", -1)) == 0,
+        "candidate_timed_zero_materialization": int(candidate_summary.get("materialize_copy_count", -1)) == 0 and int(candidate_summary.get("materialize_copy_bytes", -1)) == 0,
+        "current_skip_marker_present": _density_sample_flag(current_pre, "skip_full_prefix_blocks") and _density_sample_flag(current_summary, "skip_full_prefix_blocks"),
+        "candidate_skip_marker_present": _density_sample_flag(candidate_pre, "skip_full_prefix_blocks") and _density_sample_flag(candidate_summary, "skip_full_prefix_blocks"),
+        "current_pair_value_marker_absent": not _density_sample_flag(current_pre, "pair_value_halves") and not _density_sample_flag(current_summary, "pair_value_halves"),
+        "candidate_pair_value_marker_present": _density_sample_flag(candidate_pre, "pair_value_halves") and _density_sample_flag(candidate_summary, "pair_value_halves"),
+        "candidate_stride_aware_calls_match_repeats": int(candidate_summary.get("stride_aware_value_calls", 0)) == int(record["candidate_timing_ms"]["repeats"]),
+        "current_prefix_dense_calls_match_repeats": int(current_summary.get("prefix_query_dense_calls", 0)) == int(record["current_timing_ms"]["repeats"]),
+        "candidate_prefix_dense_calls_match_repeats": int(candidate_summary.get("prefix_query_dense_calls", 0)) == int(record["candidate_timing_ms"]["repeats"]),
+        "candidate_matches_current_valid": bool(candidate_vs_current.get("candidate_reference_exact_equal_valid")),
+        "candidate_prefix_rows_equal_current": bool(candidate_vs_current.get("prefix_rows_equal_reference")),
+        "candidate_tail_rows_equal_current": bool(candidate_vs_current.get("tail_rows_equal_reference")),
+        "candidate_padding_zero": bool(candidate_vs_current.get("padding_rows_zero_candidate")),
+        "current_padding_zero": bool(candidate_vs_current.get("padding_rows_zero_reference")),
+        "performance_model_identifies_duplicate_value_tile_score_work": int(record["pair_value_halves_performance_model"]["current_value_tiles"]) == 2,
+        "candidate_median_improves_by_min_gain": max(whole_gain_pct, forward_gain_pct) >= float(min_gain_pct),
+    }
+    failed = [key for key, value in gates.items() if not value]
+    if failed:
+        semantic_keys = (
+            "candidate_matches_current_valid",
+            "candidate_prefix_rows_equal_current",
+            "candidate_tail_rows_equal_current",
+            "candidate_padding_zero",
+        )
+        if any(key in failed for key in semantic_keys):
+            decision = "reject_pair_value_halves_semantic_mismatch"
+        elif "candidate_median_improves_by_min_gain" in failed:
+            decision = "reject_pair_value_halves_no_meaningful_median_gain"
+        else:
+            decision = "reject_pair_value_halves_gate_failure"
+    else:
+        decision = "retain_default_off_pair_value_halves_for_next_real_chain_gate"
+    return {
+        "decision": decision,
+        "not_h3_e2e": True,
+        "not_long_video": True,
+        "not_bf16_fidelity": True,
+        "not_quality_or_product_speedup": True,
+        "gates": gates,
+        "failed_gates": failed,
+        "median_ms": {
+            "current_prefix_skip_total": current_median,
+            "candidate_pair_value_halves_total": candidate_median,
+            "current_forward_pointer_kernel": current_forward,
+            "candidate_forward_pointer_kernel": candidate_forward,
+            "whole_lane_gain_pct": whole_gain_pct,
+            "forward_subphase_gain_pct": forward_gain_pct,
+        },
+        "min_required_gain_pct": float(min_gain_pct),
+        "principal_variable": "default-off SM86 BV64-pair value-halves kernel versus the retained current lane, with prefix-skip, tau/routing, exact-block order, stride-aware V, dense-prefix overwrite, cache-off, and padding semantics fixed",
+        "claim_boundary": "Synthetic/model-free Sol-Attn kernel evidence only; no H3 E2E, long-video, BF16-fidelity, quality, product speedup, normal-PC, or SOTA claim.",
+    }
+
+
+def run_pair_value_halves_bench(
+    device: torch.device,
+    *,
+    seed: int,
+    warmup: int,
+    repeats: int,
+    target_total: int,
+    target_valid: int,
+    prefix: int,
+    heads: int,
+    tau: float,
+    thresh_type: str,
+    step_index: int,
+    layer_index: int,
+    min_gain_pct: float,
+) -> dict[str, Any]:
+    if heads != TARGET_H3_HEADS:
+        raise RuntimeError(f"pair-value-halves-bench requires H={TARGET_H3_HEADS}, got {heads}")
+    if int(target_total) != TARGET_H3_TOTAL or int(target_valid) != TARGET_H3_VALID or int(prefix) != TARGET_H3_PREFIX:
+        raise RuntimeError("pair-value-halves-bench is intentionally fixed to the full observed r8 shape")
+    started = time.time()
+    torch.cuda.empty_cache()
+    torch.cuda.reset_peak_memory_stats()
+    q = k = fused_qkv = v = None
+    try:
+        q, k, fused_qkv, v, metadata = _large_case_tensors(
+            device,
+            total=int(target_total),
+            valid=int(target_valid),
+            heads=int(heads),
+            prefix=int(prefix),
+            seed=seed,
+            target_total=target_total,
+            target_valid=target_valid,
+        )
+        allocation_memory = _cuda_memory_snapshot()
+        value_layout = _tensor_layout(v)
+        fused_layout = _tensor_layout(fused_qkv)
+        expected_materialize_bytes = _copy_bytes_for(v)
+        current_policy = _new_large_policy(
+            stride_aware_value=True,
+            tau=tau,
+            thresh_type=thresh_type,
+            prefix_query_dense=True,
+            exact_prefix_query=False,
+            skip_full_prefix_blocks=True,
+            static_prefix_sink=False,
+            bitmask_exact_scheduler=False,
+            pair_value_halves=False,
+        )
+        candidate_policy = _new_large_policy(
+            stride_aware_value=True,
+            tau=tau,
+            thresh_type=thresh_type,
+            prefix_query_dense=True,
+            exact_prefix_query=False,
+            skip_full_prefix_blocks=True,
+            static_prefix_sink=False,
+            bitmask_exact_scheduler=False,
+            pair_value_halves=True,
+        )
+        forward_attribution = _routing_attribution_profile(
+            q,
+            k,
+            v,
+            metadata,
+            tau=tau,
+            thresh_type=thresh_type,
+            skip_full_prefix_blocks=True,
+            bv=64,
+        )
+        pair_model = _pair_value_halves_performance_model(forward_attribution)
+        current_out, current_preflight_telemetry = _checked_sparse_call(
+            q, k, v, metadata, policy=current_policy, step_index=step_index, layer_index=layer_index
+        )
+        candidate_out, candidate_preflight_telemetry = _checked_sparse_call(
+            q, k, v, metadata, policy=candidate_policy, step_index=step_index, layer_index=layer_index
+        )
+        torch.cuda.synchronize()
+        candidate_vs_current_sanity = _large_output_sanity(candidate_out, current_out, prefix=prefix, valid=target_valid)
+        candidate_vs_current_sanity["comparison_reference"] = "retained_current_prefix_skip_stride_aware_v_dense_prefix_overwrite_lane"
+        preflight_peak_memory = _cuda_memory_snapshot()
+        del current_out, candidate_out
+        gc.collect()
+        torch.cuda.synchronize()
+        current_phase = _phase_profile_distribution(
+            q, k, v, metadata, warmup=warmup, repeats=repeats, tau=tau, thresh_type=thresh_type,
+            forward_config=None, skip_full_prefix_blocks=True, static_prefix_sink=False, bitmask_exact_scheduler=False, pair_value_halves=False,
+        )
+        candidate_phase = _phase_profile_distribution(
+            q, k, v, metadata, warmup=warmup, repeats=repeats, tau=tau, thresh_type=thresh_type,
+            forward_config=None, skip_full_prefix_blocks=True, static_prefix_sink=False, bitmask_exact_scheduler=False, pair_value_halves=True,
+        )
+        current_timing = _time_cuda_distribution(
+            lambda: _checked_sparse_call(q, k, v, metadata, policy=current_policy, step_index=step_index, layer_index=layer_index),
+            warmup=warmup,
+            repeats=repeats,
+        )
+        candidate_timing = _time_cuda_distribution(
+            lambda: _checked_sparse_call(q, k, v, metadata, policy=candidate_policy, step_index=step_index, layer_index=layer_index),
+            warmup=warmup,
+            repeats=repeats,
+        )
+        final_peak_memory = _cuda_memory_snapshot()
+        record: dict[str, Any] = {
+            "mode": "pair-value-halves-bench",
+            "schema_version": "minimax_h3_a6000_sol_attn_sm86_pair_value_halves_bench_v1",
+            "kernel_candidates_only_not_h3_e2e": True,
+            "synthetic_model_free": True,
+            "model_load": False,
+            "not_h3_e2e": True,
+            "not_long_video": True,
+            "not_bf16_fidelity": True,
+            "not_quality_or_product_speedup": True,
+            "shape": {"B": 1, "T_total": int(target_total), "T_valid": int(target_valid), "H": int(heads), "D": TARGET_H3_D, "prefix": int(prefix)},
+            "metadata": {"prefix_len": metadata.prefix_len, "latent_grid": list(metadata.latent_grid), "valid_length": metadata.valid_length, "total_length": metadata.total_length},
+            "upstream_semantics_grounding": {
+                "pinned_sources": [
+                    "upstreams/Sana-sol-engine/techniques/sparse_backends/sol_attn/triton_ref/fwd.py",
+                    "upstreams/Sana-sol-engine/techniques/sparse_backends/sol_attn/sm100/softmax.py",
+                    "upstreams/Sana-sol-engine/techniques/sparse_backends/sol_attn/sm100/mainloop.py",
+                    "ports/minimax_h3_a6000/src/minimax_h3_a6000/sol_attn_backend.py",
+                    "ports/minimax_h3_a6000/src/minimax_h3_a6000/sol_attn_triton_sm86.py",
+                ],
+                "grounded_semantics": "Current upstream/local pointer kernels update row_max, row_sum, approximate summaries, and exact blocks in a fixed group/ascending-block order. Candidate preserves that online-softmax order and the BV64 PV dot shape, but shares the score/probability stream across the two D=128 value halves.",
+            },
+            "candidate": {"name": "default_off_pair_value_halves", "env_switch": "MINIMAX_H3_A6000_SOL_ATTN_PAIR_VALUE_HALVES", "default_off": True},
+            "timing_policy": {"warmup": int(warmup), "repeats": int(repeats), "cuda_event_distributions": True, "min_required_gain_pct": float(min_gain_pct)},
+            "value_layout": value_layout,
+            "fused_qkv_layout": fused_layout,
+            "expected_materialize_bytes_per_call": expected_materialize_bytes,
+            "forward_attribution_model": forward_attribution,
+            "pair_value_halves_performance_model": pair_model,
+            "current_preflight_telemetry": _jsonable(current_preflight_telemetry.__dict__),
+            "candidate_preflight_telemetry": _jsonable(candidate_preflight_telemetry.__dict__),
+            "current_phase_profile_ms": current_phase,
+            "candidate_phase_profile_ms": candidate_phase,
+            "current_timing_ms": current_timing,
+            "candidate_timing_ms": candidate_timing,
+            "candidate_vs_current_sanity": candidate_vs_current_sanity,
+            "cuda_memory": {"after_input_allocation": allocation_memory, "after_preflight_sanity": preflight_peak_memory, "after_all_lanes": final_peak_memory},
+            "elapsed_s": time.time() - started,
+            "claim_boundary": "Synthetic/model-free Sol-Attn kernel evidence only; no H3 E2E, long-video, BF16-fidelity, quality, product speedup, normal-PC, or SOTA claim.",
+        }
+        record["route_decision"] = _pair_value_halves_route_decision(record, min_gain_pct=min_gain_pct)
+        return record
+    except Exception as exc:  # noqa: BLE001 - compile/runtime failure is the rejection boundary
+        return {
+            "mode": "pair-value-halves-bench",
+            "schema_version": "minimax_h3_a6000_sol_attn_sm86_pair_value_halves_bench_v1",
+            "status": "failed",
+            "kernel_candidates_only_not_h3_e2e": True,
+            "synthetic_model_free": True,
+            "not_h3_e2e": True,
+            "not_long_video": True,
+            "not_bf16_fidelity": True,
+            "not_quality_or_product_speedup": True,
+            "shape": {"B": 1, "T_total": int(target_total), "T_valid": int(target_valid), "H": int(heads), "D": TARGET_H3_D, "prefix": int(prefix)},
+            "failure_type": type(exc).__name__,
+            "failure_message": str(exc),
+            "traceback_tail": traceback.format_exc().splitlines()[-16:],
+            "route_decision": {
+                "decision": "reject_pair_value_halves_compile_or_runtime_failure",
+                "failed_gates": ["candidate_compile_or_runtime"],
+                "claim_boundary": "Synthetic/model-free Sol-Attn kernel evidence only; no H3 E2E, long-video, BF16-fidelity, quality, product speedup, normal-PC, or SOTA claim.",
+            },
+            "cuda_memory_at_failure": _cuda_memory_snapshot() if torch.cuda.is_available() else None,
+            "elapsed_s": time.time() - started,
+        }
+    finally:
+        del q, k, fused_qkv, v
+        gc.collect()
+        torch.cuda.empty_cache()
+        torch.cuda.synchronize()
+
+
 def run_bitmask_scheduler_bench(
     device: torch.device,
     *,
@@ -3267,6 +3574,22 @@ def main() -> int:
             step_index=args.large_step_index,
             layer_index=args.large_layer_index,
             min_gain_pct=args.bitmask_scheduler_min_gain_pct,
+        )
+    if args.mode == "pair-value-halves-bench":
+        results["pair_value_halves_bench"] = run_pair_value_halves_bench(
+            device,
+            seed=args.seed,
+            warmup=args.large_warmup,
+            repeats=args.large_repeats,
+            target_total=args.large_target_total,
+            target_valid=args.large_target_valid,
+            prefix=args.large_prefix,
+            heads=args.large_heads,
+            tau=args.large_tau,
+            thresh_type=args.large_thresh_type,
+            step_index=args.large_step_index,
+            layer_index=args.large_layer_index,
+            min_gain_pct=args.pair_value_halves_min_gain_pct,
         )
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(results, indent=2, sort_keys=True), encoding="utf-8")

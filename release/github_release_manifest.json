@@ -169,6 +169,21 @@
       "path": "technical_report/evidence/minimax_h3_desktop/sol_engine_port/sol_attn_stride_aware_v_harness_20260813T082456Z/summary.json"
     },
     {
+      "path": "technical_report/evidence/minimax_h3_desktop/sol_engine_port/sol_attn_pair_value_halves_20260813T110953Z/harness.json"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/sol_engine_port/sol_attn_pair_value_halves_20260813T110953Z/summary.json"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/sol_engine_port/sol_attn_pair_value_halves_captured_replay_20260813T145731Z/decision.json"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/sol_engine_port/sol_attn_pair_value_halves_captured_replay_20260813T145731Z/summary.json"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/sol_engine_port/sol_attn_pair_value_halves_captured_replay_20260813T145731Z/validation.json"
+    },
+    {
       "path": "technical_report/evidence/minimax_h3_desktop/dlo_autotune/resident_layer_candidates.json"
     },
     {

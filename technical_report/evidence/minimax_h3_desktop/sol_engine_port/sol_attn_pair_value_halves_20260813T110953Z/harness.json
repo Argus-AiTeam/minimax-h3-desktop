@@ -1,0 +1,1216 @@
+{
+  "capability": [
+    8,
+    6
+  ],
+  "created_utc": "2026-08-13T11:10:35Z",
+  "cuda_visible_devices": "0",
+  "device": "cuda:0",
+  "model_load": false,
+  "pair_value_halves_bench": {
+    "candidate": {
+      "default_off": true,
+      "env_switch": "MINIMAX_H3_A6000_SOL_ATTN_PAIR_VALUE_HALVES",
+      "name": "default_off_pair_value_halves"
+    },
+    "candidate_phase_profile_ms": {
+      "bitmask_exact_scheduler": false,
+      "dominant_phase_by_median": "forward_pointer_kernel",
+      "dominant_phase_median_ms": 130.04287719726562,
+      "forward_autotune_cache": [
+        {
+          "key": [
+            38247,
+            "torch.bfloat16",
+            "torch.bfloat16",
+            "torch.bfloat16",
+            "torch.bfloat16",
+            "torch.bfloat16",
+            "torch.float32",
+            "torch.bfloat16"
+          ],
+          "kwargs": {
+            "BV": 64
+          },
+          "num_stages": 1,
+          "num_warps": 4
+        }
+      ],
+      "forward_config": "autotune_current",
+      "pair_value_halves": true,
+      "peak_cuda_memory": {
+        "max_memory_allocated_bytes": 3335476736,
+        "max_memory_reserved_bytes": 4676648960,
+        "memory_allocated_bytes": 2753691648,
+        "memory_reserved_bytes": 4676648960
+      },
+      "phase_latency_ms": {
+        "diag_threshold_preparation": {
+          "max_ms": 1.0291199684143066,
+          "mean_ms": 1.0105417285646712,
+          "median_ms": 1.0076160430908203,
+          "min_ms": 1.0045440196990967,
+          "n": 7,
+          "samples_ms": [
+            1.0291199684143066,
+            1.006592035293579,
+            1.0045440196990967,
+            1.0106879472732544,
+            1.0076160430908203,
+            1.0076160430908203,
+            1.0076160430908203
+          ]
+        },
+        "forward_pointer_kernel": {
+          "max_ms": 130.38284301757812,
+          "mean_ms": 130.0838405064174,
+          "median_ms": 130.04287719726562,
+          "min_ms": 129.9220428466797,
+          "n": 7,
+          "samples_ms": [
+            130.06643676757812,
+            130.0367431640625,
+            129.96505737304688,
+            130.17088317871094,
+            129.9220428466797,
+            130.38284301757812,
+            130.04287719726562
+          ]
+        },
+        "output_allocation_padding_zero": {
+          "max_ms": 0.05632000043988228,
+          "mean_ms": 0.05033142917922565,
+          "median_ms": 0.04915200173854828,
+          "min_ms": 0.04816000163555145,
+          "n": 7,
+          "samples_ms": [
+            0.05632000043988228,
+            0.04915200173854828,
+            0.050175998359918594,
+            0.05020799860358238,
+            0.04915200173854828,
+            0.04915200173854828,
+            0.04816000163555145
+          ]
+        },
+        "prefix_dense_overwrite": {
+          "max_ms": 11.734016418457031,
+          "mean_ms": 11.546039036342076,
+          "median_ms": 11.522047996520996,
+          "min_ms": 11.416576385498047,
+          "n": 7,
+          "samples_ms": [
+            11.522047996520996,
+            11.416576385498047,
+            11.454463958740234,
+            11.610112190246582,
+            11.45139217376709,
+            11.734016418457031,
+            11.63366413116455
+          ]
+        },
+        "reduce_kv": {
+          "max_ms": 2.0152320861816406,
+          "mean_ms": 1.965051429612296,
+          "median_ms": 1.9537919759750366,
+          "min_ms": 1.9527679681777954,
+          "n": 7,
+          "samples_ms": [
+            2.0152320861816406,
+            1.9547840356826782,
+            1.9537919759750366,
+            1.9711999893188477,
+            1.9537919759750366,
+            1.9537919759750366,
+            1.9527679681777954
+          ]
+        },
+        "total_profiled_sum": {
+          "max_ms": 145.12741945683956,
+          "mean_ms": 144.65580413011568,
+          "median_ms": 144.68508534133434,
+          "min_ms": 144.38399504125118,
+          "n": 7,
+          "samples_ms": [
+            144.68915681913495,
+            144.46384762227535,
+            144.42803332582116,
+            144.8130913041532,
+            144.38399504125118,
+            145.12741945683956,
+            144.68508534133434
+          ]
+        }
+      },
+      "repeats": 7,
+      "skip_full_prefix_blocks": true,
+      "static_prefix_sink": false,
+      "warmup": 1
+    },
+    "candidate_preflight_telemetry": {
+      "_materialize_gpu_event_pairs": [],
+      "decline_reasons": {},
+      "dense_calls": 0,
+      "density_samples": [
+        {
+          "block_size": 64,
+          "blocks": 598,
+          "exact_block_pairs_lower_bound": 10718,
+          "exact_density_lower_bound": 0.02997170054026241,
+          "kind": "static_exact_block_lower_bound",
+          "pair_value_halves": true,
+          "prefix_tokens": 951,
+          "sink_end": 951,
+          "sink_end_block": 15,
+          "sink_start": 0,
+          "sink_start_block": 0,
+          "skip_full_prefix_blocks": true,
+          "skipped_full_prefix_query_blocks_estimate": 14,
+          "stride_aware_value": true,
+          "total_block_pairs": 357604,
+          "valid_tokens": 38247,
+          "video_tokens": 37296
+        }
+      ],
+      "exact_prefix_query_calls": 0,
+      "fallback_calls": 0,
+      "fallback_reasons": {},
+      "layout_samples": [
+        {
+          "stage": "pre_decline",
+          "tensors": [
+            {
+              "device_type": "cuda",
+              "dtype": "bfloat16",
+              "is_contiguous": true,
+              "name": "query",
+              "shape": [
+                1,
+                38272,
+                56,
+                128
+              ],
+              "storage_offset": 0,
+              "stride": [
+                274333696,
+                7168,
+                128,
+                1
+              ]
+            },
+            {
+              "device_type": "cuda",
+              "dtype": "bfloat16",
+              "is_contiguous": true,
+              "name": "key",
+              "shape": [
+                1,
+                38272,
+                56,
+                128
+              ],
+              "storage_offset": 0,
+              "stride": [
+                274333696,
+                7168,
+                128,
+                1
+              ]
+            },
+            {
+              "device_type": "cuda",
+              "dtype": "bfloat16",
+              "is_contiguous": false,
+              "name": "value",
+              "shape": [
+                1,
+                38272,
+                56,
+                128
+              ],
+              "storage_offset": 14336,
+              "stride": [
+                823001088,
+                21504,
+                128,
+                1
+              ]
+            }
+          ]
+        }
+      ],
+      "materialize_copy_by_tensor": {},
+      "materialize_copy_bytes": 0,
+      "materialize_copy_count": 0,
+      "materialize_gpu_copy_latency_ms": 0.0,
+      "materialize_gpu_timing_failures": 0,
+      "materialize_latency_ms": 0.0,
+      "prefix_query_dense_calls": 1,
+      "sink_ranges": [
+        [
+          0,
+          951
+        ]
+      ],
+      "sparse_calls": 1,
+      "sparse_candidate_calls": 1,
+      "stride_aware_value_bytes": 548667392,
+      "stride_aware_value_calls": 1
+    },
+    "candidate_timing_ms": {
+      "latency_ms": {
+        "max_ms": 145.86778259277344,
+        "mean_ms": 145.32972281319755,
+        "median_ms": 145.3987274169922,
+        "min_ms": 144.9256591796875,
+        "n": 7,
+        "samples_ms": [
+          144.9256591796875,
+          144.95948791503906,
+          145.0741729736328,
+          145.3987274169922,
+          145.5257568359375,
+          145.86778259277344,
+          145.5564727783203
+        ]
+      },
+      "peak_cuda_memory": {
+        "max_memory_allocated_bytes": 3321629696,
+        "max_memory_reserved_bytes": 4676648960,
+        "memory_allocated_bytes": 2753691648,
+        "memory_reserved_bytes": 4676648960
+      },
+      "repeats": 7,
+      "timed_telemetry_summary": {
+        "decline_reasons": {},
+        "dense_calls": 0,
+        "exact_prefix_query_calls": 0,
+        "fallback_calls": 0,
+        "fallback_reasons": {},
+        "first_density_samples": [
+          {
+            "block_size": 64,
+            "blocks": 598,
+            "exact_block_pairs_lower_bound": 10718,
+            "exact_density_lower_bound": 0.02997170054026241,
+            "kind": "static_exact_block_lower_bound",
+            "pair_value_halves": true,
+            "prefix_tokens": 951,
+            "sink_end": 951,
+            "sink_end_block": 15,
+            "sink_start": 0,
+            "sink_start_block": 0,
+            "skip_full_prefix_blocks": true,
+            "skipped_full_prefix_query_blocks_estimate": 14,
+            "stride_aware_value": true,
+            "total_block_pairs": 357604,
+            "valid_tokens": 38247,
+            "video_tokens": 37296
+          }
+        ],
+        "first_layout_samples": [
+          {
+            "stage": "pre_decline",
+            "tensors": [
+              {
+                "device_type": "cuda",
+                "dtype": "bfloat16",
+                "is_contiguous": true,
+                "name": "query",
+                "shape": [
+                  1,
+                  38272,
+                  56,
+                  128
+                ],
+                "storage_offset": 0,
+                "stride": [
+                  274333696,
+                  7168,
+                  128,
+                  1
+                ]
+              },
+              {
+                "device_type": "cuda",
+                "dtype": "bfloat16",
+                "is_contiguous": true,
+                "name": "key",
+                "shape": [
+                  1,
+                  38272,
+                  56,
+                  128
+                ],
+                "storage_offset": 0,
+                "stride": [
+                  274333696,
+                  7168,
+                  128,
+                  1
+                ]
+              },
+              {
+                "device_type": "cuda",
+                "dtype": "bfloat16",
+                "is_contiguous": false,
+                "name": "value",
+                "shape": [
+                  1,
+                  38272,
+                  56,
+                  128
+                ],
+                "storage_offset": 14336,
+                "stride": [
+                  823001088,
+                  21504,
+                  128,
+                  1
+                ]
+              }
+            ]
+          }
+        ],
+        "materialize_copy_by_tensor": {},
+        "materialize_copy_bytes": 0,
+        "materialize_copy_count": 0,
+        "materialize_gpu_copy_latency_ms": 0,
+        "materialize_gpu_timing_failures": 0,
+        "n_calls_recorded": 7,
+        "prefix_query_dense_calls": 7,
+        "sparse_calls": 7,
+        "sparse_candidate_calls": 7,
+        "stride_aware_value_bytes": 3840671744,
+        "stride_aware_value_calls": 7
+      },
+      "warmup": 1,
+      "warmup_telemetry_summary": {
+        "decline_reasons": {},
+        "dense_calls": 0,
+        "exact_prefix_query_calls": 0,
+        "fallback_calls": 0,
+        "fallback_reasons": {},
+        "first_density_samples": [
+          {
+            "block_size": 64,
+            "blocks": 598,
+            "exact_block_pairs_lower_bound": 10718,
+            "exact_density_lower_bound": 0.02997170054026241,
+            "kind": "static_exact_block_lower_bound",
+            "pair_value_halves": true,
+            "prefix_tokens": 951,
+            "sink_end": 951,
+            "sink_end_block": 15,
+            "sink_start": 0,
+            "sink_start_block": 0,
+            "skip_full_prefix_blocks": true,
+            "skipped_full_prefix_query_blocks_estimate": 14,
+            "stride_aware_value": true,
+            "total_block_pairs": 357604,
+            "valid_tokens": 38247,
+            "video_tokens": 37296
+          }
+        ],
+        "first_layout_samples": [
+          {
+            "stage": "pre_decline",
+            "tensors": [
+              {
+                "device_type": "cuda",
+                "dtype": "bfloat16",
+                "is_contiguous": true,
+                "name": "query",
+                "shape": [
+                  1,
+                  38272,
+                  56,
+                  128
+                ],
+                "storage_offset": 0,
+                "stride": [
+                  274333696,
+                  7168,
+                  128,
+                  1
+                ]
+              },
+              {
+                "device_type": "cuda",
+                "dtype": "bfloat16",
+                "is_contiguous": true,
+                "name": "key",
+                "shape": [
+                  1,
+                  38272,
+                  56,
+                  128
+                ],
+                "storage_offset": 0,
+                "stride": [
+                  274333696,
+                  7168,
+                  128,
+                  1
+                ]
+              },
+              {
+                "device_type": "cuda",
+                "dtype": "bfloat16",
+                "is_contiguous": false,
+                "name": "value",
+                "shape": [
+                  1,
+                  38272,
+                  56,
+                  128
+                ],
+                "storage_offset": 14336,
+                "stride": [
+                  823001088,
+                  21504,
+                  128,
+                  1
+                ]
+              }
+            ]
+          }
+        ],
+        "materialize_copy_by_tensor": {},
+        "materialize_copy_bytes": 0,
+        "materialize_copy_count": 0,
+        "materialize_gpu_copy_latency_ms": 0,
+        "materialize_gpu_timing_failures": 0,
+        "n_calls_recorded": 1,
+        "prefix_query_dense_calls": 1,
+        "sparse_calls": 1,
+        "sparse_candidate_calls": 1,
+        "stride_aware_value_bytes": 548667392,
+        "stride_aware_value_calls": 1
+      }
+    },
+    "candidate_vs_current_sanity": {
+      "candidate_all_finite_valid": true,
+      "candidate_reference_exact_equal_valid": true,
+      "comparison_reference": "retained_current_prefix_skip_stride_aware_v_dense_prefix_overwrite_lane",
+      "full_prefix_block_rows_equal_reference": true,
+      "full_prefix_token_range": [
+        0,
+        896
+      ],
+      "max_abs_prefix": 0.0,
+      "max_abs_valid": 0.0,
+      "max_rel_valid": 0.0,
+      "mixed_boundary_block_rows_equal_reference": true,
+      "mixed_boundary_has_prefix_and_tail": true,
+      "mixed_boundary_tail_rows_equal_reference": true,
+      "mixed_boundary_token_range": [
+        896,
+        960
+      ],
+      "numel_valid": 274154496,
+      "padding_rows_zero_candidate": true,
+      "padding_rows_zero_reference": true,
+      "prefix_rows_equal_reference": true,
+      "reference_all_finite_valid": true,
+      "tail_rows_equal_reference": true,
+      "tail_token_range": [
+        951,
+        38247
+      ]
+    },
+    "claim_boundary": "Synthetic/model-free Sol-Attn kernel evidence only; no H3 E2E, long-video, BF16-fidelity, quality, product speedup, normal-PC, or SOTA claim.",
+    "cuda_memory": {
+      "after_all_lanes": {
+        "max_memory_allocated_bytes": 3321629696,
+        "max_memory_reserved_bytes": 4676648960,
+        "memory_allocated_bytes": 2753691648,
+        "memory_reserved_bytes": 4676648960
+      },
+      "after_input_allocation": {
+        "max_memory_allocated_bytes": 2745171968,
+        "max_memory_reserved_bytes": 2745171968,
+        "memory_allocated_bytes": 2745171968,
+        "memory_reserved_bytes": 2745171968
+      },
+      "after_preflight_sanity": {
+        "max_memory_allocated_bytes": 4427593216,
+        "max_memory_reserved_bytes": 4676648960,
+        "memory_allocated_bytes": 3851812864,
+        "memory_reserved_bytes": 4676648960
+      }
+    },
+    "current_phase_profile_ms": {
+      "bitmask_exact_scheduler": false,
+      "dominant_phase_by_median": "forward_pointer_kernel",
+      "dominant_phase_median_ms": 158.90328979492188,
+      "forward_autotune_cache": [
+        {
+          "key": [
+            38247,
+            "torch.bfloat16",
+            "torch.bfloat16",
+            "torch.bfloat16",
+            "torch.bfloat16",
+            "torch.bfloat16",
+            "torch.float32",
+            "torch.bfloat16"
+          ],
+          "kwargs": {
+            "BV": 64
+          },
+          "num_stages": 1,
+          "num_warps": 4
+        }
+      ],
+      "forward_config": "autotune_current",
+      "pair_value_halves": false,
+      "peak_cuda_memory": {
+        "max_memory_allocated_bytes": 3335476736,
+        "max_memory_reserved_bytes": 4676648960,
+        "memory_allocated_bytes": 2753691648,
+        "memory_reserved_bytes": 4676648960
+      },
+      "phase_latency_ms": {
+        "diag_threshold_preparation": {
+          "max_ms": 1.0393600463867188,
+          "mean_ms": 1.0165394033704485,
+          "median_ms": 1.0127359628677368,
+          "min_ms": 1.0117119550704956,
+          "n": 7,
+          "samples_ms": [
+            1.0127359628677368,
+            1.013759970664978,
+            1.0127359628677368,
+            1.0117119550704956,
+            1.013759970664978,
+            1.0117119550704956,
+            1.0393600463867188
+          ]
+        },
+        "forward_pointer_kernel": {
+          "max_ms": 160.1925048828125,
+          "mean_ms": 159.14876011439733,
+          "median_ms": 158.90328979492188,
+          "min_ms": 158.66368103027344,
+          "n": 7,
+          "samples_ms": [
+            158.90328979492188,
+            158.79986572265625,
+            158.84083557128906,
+            159.172607421875,
+            160.1925048828125,
+            158.66368103027344,
+            159.46853637695312
+          ]
+        },
+        "output_allocation_padding_zero": {
+          "max_ms": 0.07884799689054489,
+          "mean_ms": 0.055442285324846,
+          "median_ms": 0.050175998359918594,
+          "min_ms": 0.048128001391887665,
+          "n": 7,
+          "samples_ms": [
+            0.050175998359918594,
+            0.050175998359918594,
+            0.04915200173854828,
+            0.04915200173854828,
+            0.062463998794555664,
+            0.048128001391887665,
+            0.07884799689054489
+          ]
+        },
+        "prefix_dense_overwrite": {
+          "max_ms": 13.2925443649292,
+          "mean_ms": 12.907812663487025,
+          "median_ms": 12.697600364685059,
+          "min_ms": 12.686335563659668,
+          "n": 7,
+          "samples_ms": [
+            12.697600364685059,
+            12.696576118469238,
+            12.696576118469238,
+            13.235199928283691,
+            12.686335563659668,
+            13.049856185913086,
+            13.2925443649292
+          ]
+        },
+        "reduce_kv": {
+          "max_ms": 2.164736032485962,
+          "mean_ms": 1.9864137172698975,
+          "median_ms": 1.9568639993667603,
+          "min_ms": 1.9548159837722778,
+          "n": 7,
+          "samples_ms": [
+            1.9589120149612427,
+            1.9568639993667603,
+            1.955839991569519,
+            1.9568639993667603,
+            1.9568639993667603,
+            1.9548159837722778,
+            2.164736032485962
+          ]
+        },
+        "total_profiled_sum": {
+          "max_ms": 176.04402481764555,
+          "mean_ms": 175.11496818384953,
+          "median_ms": 174.72819315642118,
+          "min_ms": 174.51724180951715,
+          "n": 7,
+          "samples_ms": [
+            174.62271413579583,
+            174.51724180951715,
+            174.5551396459341,
+            175.4255353063345,
+            175.91192841529846,
+            174.72819315642118,
+            176.04402481764555
+          ]
+        }
+      },
+      "repeats": 7,
+      "skip_full_prefix_blocks": true,
+      "static_prefix_sink": false,
+      "warmup": 1
+    },
+    "current_preflight_telemetry": {
+      "_materialize_gpu_event_pairs": [],
+      "decline_reasons": {},
+      "dense_calls": 0,
+      "density_samples": [
+        {
+          "block_size": 64,
+          "blocks": 598,
+          "exact_block_pairs_lower_bound": 10718,
+          "exact_density_lower_bound": 0.02997170054026241,
+          "kind": "static_exact_block_lower_bound",
+          "prefix_tokens": 951,
+          "sink_end": 951,
+          "sink_end_block": 15,
+          "sink_start": 0,
+          "sink_start_block": 0,
+          "skip_full_prefix_blocks": true,
+          "skipped_full_prefix_query_blocks_estimate": 14,
+          "stride_aware_value": true,
+          "total_block_pairs": 357604,
+          "valid_tokens": 38247,
+          "video_tokens": 37296
+        }
+      ],
+      "exact_prefix_query_calls": 0,
+      "fallback_calls": 0,
+      "fallback_reasons": {},
+      "layout_samples": [
+        {
+          "stage": "pre_decline",
+          "tensors": [
+            {
+              "device_type": "cuda",
+              "dtype": "bfloat16",
+              "is_contiguous": true,
+              "name": "query",
+              "shape": [
+                1,
+                38272,
+                56,
+                128
+              ],
+              "storage_offset": 0,
+              "stride": [
+                274333696,
+                7168,
+                128,
+                1
+              ]
+            },
+            {
+              "device_type": "cuda",
+              "dtype": "bfloat16",
+              "is_contiguous": true,
+              "name": "key",
+              "shape": [
+                1,
+                38272,
+                56,
+                128
+              ],
+              "storage_offset": 0,
+              "stride": [
+                274333696,
+                7168,
+                128,
+                1
+              ]
+            },
+            {
+              "device_type": "cuda",
+              "dtype": "bfloat16",
+              "is_contiguous": false,
+              "name": "value",
+              "shape": [
+                1,
+                38272,
+                56,
+                128
+              ],
+              "storage_offset": 14336,
+              "stride": [
+                823001088,
+                21504,
+                128,
+                1
+              ]
+            }
+          ]
+        }
+      ],
+      "materialize_copy_by_tensor": {},
+      "materialize_copy_bytes": 0,
+      "materialize_copy_count": 0,
+      "materialize_gpu_copy_latency_ms": 0.0,
+      "materialize_gpu_timing_failures": 0,
+      "materialize_latency_ms": 0.0,
+      "prefix_query_dense_calls": 1,
+      "sink_ranges": [
+        [
+          0,
+          951
+        ]
+      ],
+      "sparse_calls": 1,
+      "sparse_candidate_calls": 1,
+      "stride_aware_value_bytes": 548667392,
+      "stride_aware_value_calls": 1
+    },
+    "current_timing_ms": {
+      "latency_ms": {
+        "max_ms": 177.38648986816406,
+        "mean_ms": 175.8386448451451,
+        "median_ms": 175.5668487548828,
+        "min_ms": 175.11013793945312,
+        "n": 7,
+        "samples_ms": [
+          175.5668487548828,
+          175.11013793945312,
+          175.18695068359375,
+          177.38648986816406,
+          175.53305053710938,
+          176.4700164794922,
+          175.6170196533203
+        ]
+      },
+      "peak_cuda_memory": {
+        "max_memory_allocated_bytes": 3321629696,
+        "max_memory_reserved_bytes": 4676648960,
+        "memory_allocated_bytes": 2753691648,
+        "memory_reserved_bytes": 4676648960
+      },
+      "repeats": 7,
+      "timed_telemetry_summary": {
+        "decline_reasons": {},
+        "dense_calls": 0,
+        "exact_prefix_query_calls": 0,
+        "fallback_calls": 0,
+        "fallback_reasons": {},
+        "first_density_samples": [
+          {
+            "block_size": 64,
+            "blocks": 598,
+            "exact_block_pairs_lower_bound": 10718,
+            "exact_density_lower_bound": 0.02997170054026241,
+            "kind": "static_exact_block_lower_bound",
+            "prefix_tokens": 951,
+            "sink_end": 951,
+            "sink_end_block": 15,
+            "sink_start": 0,
+            "sink_start_block": 0,
+            "skip_full_prefix_blocks": true,
+            "skipped_full_prefix_query_blocks_estimate": 14,
+            "stride_aware_value": true,
+            "total_block_pairs": 357604,
+            "valid_tokens": 38247,
+            "video_tokens": 37296
+          }
+        ],
+        "first_layout_samples": [
+          {
+            "stage": "pre_decline",
+            "tensors": [
+              {
+                "device_type": "cuda",
+                "dtype": "bfloat16",
+                "is_contiguous": true,
+                "name": "query",
+                "shape": [
+                  1,
+                  38272,
+                  56,
+                  128
+                ],
+                "storage_offset": 0,
+                "stride": [
+                  274333696,
+                  7168,
+                  128,
+                  1
+                ]
+              },
+              {
+                "device_type": "cuda",
+                "dtype": "bfloat16",
+                "is_contiguous": true,
+                "name": "key",
+                "shape": [
+                  1,
+                  38272,
+                  56,
+                  128
+                ],
+                "storage_offset": 0,
+                "stride": [
+                  274333696,
+                  7168,
+                  128,
+                  1
+                ]
+              },
+              {
+                "device_type": "cuda",
+                "dtype": "bfloat16",
+                "is_contiguous": false,
+                "name": "value",
+                "shape": [
+                  1,
+                  38272,
+                  56,
+                  128
+                ],
+                "storage_offset": 14336,
+                "stride": [
+                  823001088,
+                  21504,
+                  128,
+                  1
+                ]
+              }
+            ]
+          }
+        ],
+        "materialize_copy_by_tensor": {},
+        "materialize_copy_bytes": 0,
+        "materialize_copy_count": 0,
+        "materialize_gpu_copy_latency_ms": 0,
+        "materialize_gpu_timing_failures": 0,
+        "n_calls_recorded": 7,
+        "prefix_query_dense_calls": 7,
+        "sparse_calls": 7,
+        "sparse_candidate_calls": 7,
+        "stride_aware_value_bytes": 3840671744,
+        "stride_aware_value_calls": 7
+      },
+      "warmup": 1,
+      "warmup_telemetry_summary": {
+        "decline_reasons": {},
+        "dense_calls": 0,
+        "exact_prefix_query_calls": 0,
+        "fallback_calls": 0,
+        "fallback_reasons": {},
+        "first_density_samples": [
+          {
+            "block_size": 64,
+            "blocks": 598,
+            "exact_block_pairs_lower_bound": 10718,
+            "exact_density_lower_bound": 0.02997170054026241,
+            "kind": "static_exact_block_lower_bound",
+            "prefix_tokens": 951,
+            "sink_end": 951,
+            "sink_end_block": 15,
+            "sink_start": 0,
+            "sink_start_block": 0,
+            "skip_full_prefix_blocks": true,
+            "skipped_full_prefix_query_blocks_estimate": 14,
+            "stride_aware_value": true,
+            "total_block_pairs": 357604,
+            "valid_tokens": 38247,
+            "video_tokens": 37296
+          }
+        ],
+        "first_layout_samples": [
+          {
+            "stage": "pre_decline",
+            "tensors": [
+              {
+                "device_type": "cuda",
+                "dtype": "bfloat16",
+                "is_contiguous": true,
+                "name": "query",
+                "shape": [
+                  1,
+                  38272,
+                  56,
+                  128
+                ],
+                "storage_offset": 0,
+                "stride": [
+                  274333696,
+                  7168,
+                  128,
+                  1
+                ]
+              },
+              {
+                "device_type": "cuda",
+                "dtype": "bfloat16",
+                "is_contiguous": true,
+                "name": "key",
+                "shape": [
+                  1,
+                  38272,
+                  56,
+                  128
+                ],
+                "storage_offset": 0,
+                "stride": [
+                  274333696,
+                  7168,
+                  128,
+                  1
+                ]
+              },
+              {
+                "device_type": "cuda",
+                "dtype": "bfloat16",
+                "is_contiguous": false,
+                "name": "value",
+                "shape": [
+                  1,
+                  38272,
+                  56,
+                  128
+                ],
+                "storage_offset": 14336,
+                "stride": [
+                  823001088,
+                  21504,
+                  128,
+                  1
+                ]
+              }
+            ]
+          }
+        ],
+        "materialize_copy_by_tensor": {},
+        "materialize_copy_bytes": 0,
+        "materialize_copy_count": 0,
+        "materialize_gpu_copy_latency_ms": 0,
+        "materialize_gpu_timing_failures": 0,
+        "n_calls_recorded": 1,
+        "prefix_query_dense_calls": 1,
+        "sparse_calls": 1,
+        "sparse_candidate_calls": 1,
+        "stride_aware_value_bytes": 548667392,
+        "stride_aware_value_calls": 1
+      }
+    },
+    "elapsed_s": 21.69663977622986,
+    "expected_materialize_bytes_per_call": 548667392,
+    "forward_attribution_model": {
+      "attribution_boundary": "Counts use actual generated synthetic q/k routing for this seed and shape, but they are not a replacement for CUDA timing distributions.",
+      "block_head_counts_before_value_tile_multiplier": {
+        "all_possible_blocks": 19556992,
+        "approximate_summary_blocks": 15964916,
+        "dynamic_threshold_exact_outside_prefix_and_local": 3003628,
+        "local_exact_outside_prefix_sink": 97888,
+        "prefix_sink_exact": 490560
+      },
+      "kind": "forward_pointer_count_and_work_model_not_in_kernel_timer",
+      "program_visit_counts_after_value_tile_multiplier": {
+        "approximate_online_updates": 1242752,
+        "dynamic_exact_offset_scheduler_iterations_current": 7184152,
+        "dynamic_threshold_exact_outside_prefix_and_local": 6007256,
+        "local_exact_outside_prefix_sink": 195776,
+        "online_softmax_updates_total": 8426904,
+        "prefix_sink_exact": 981120,
+        "scheduler_iterations_static_prefix_sink_can_remove": 981120,
+        "total_exact_block_visits": 7184152
+      },
+      "shape": {
+        "blocks": 598,
+        "bv": 64,
+        "group": 32,
+        "head_dim": 128,
+        "heads": 56,
+        "q_blocks_launched": 584,
+        "v_tiles": 2
+      },
+      "shares": {
+        "dynamic_threshold_density_launched": 0.15358333224250437,
+        "dynamic_threshold_share_of_exact_block_visits": 0.8361816398094027,
+        "effective_exact_block_density_launched": 0.183672212986537,
+        "prefix_sink_share_of_exact_block_visits": 0.13656726639414088
+      },
+      "sink": {
+        "prefix_skip_blocks": 14,
+        "sink_end_block": 15,
+        "sink_start_block": 0
+      },
+      "work_estimate_fma_or_bytes": {
+        "approximate_summary_routing_dot_fma": 325779980288,
+        "approximate_value_summary_dot_fma": 162889990144,
+        "exact_probability_value_dot_fma": 1883282341888,
+        "exact_qk_dot_fma": 3766564683776,
+        "strided_exact_v_gather_bytes": 58852573184
+      }
+    },
+    "fused_qkv_layout": {
+      "device_type": "cuda",
+      "dtype": "bfloat16",
+      "is_contiguous": true,
+      "shape": [
+        1,
+        38272,
+        21504
+      ],
+      "storage_offset": 0,
+      "stride": [
+        823001088,
+        21504,
+        1
+      ]
+    },
+    "kernel_candidates_only_not_h3_e2e": true,
+    "metadata": {
+      "latent_grid": [
+        6,
+        56,
+        111
+      ],
+      "prefix_len": 951,
+      "total_length": 38272,
+      "valid_length": 38247
+    },
+    "mode": "pair-value-halves-bench",
+    "model_load": false,
+    "not_bf16_fidelity": true,
+    "not_h3_e2e": true,
+    "not_long_video": true,
+    "not_quality_or_product_speedup": true,
+    "pair_value_halves_performance_model": {
+      "candidate_forward_program_multiplier": 1,
+      "current_value_tiles": 2,
+      "estimated_reused_current_program_events": {
+        "approximate_summary_routing_dot_fma_current": 325779980288,
+        "approximate_summary_routing_dot_fma_if_reused_once_per_value_pair": 162889990144,
+        "exact_qk_dot_fma_current": 3766564683776,
+        "exact_qk_dot_fma_if_reused_once_per_value_pair": 1883282341888,
+        "online_softmax_updates_current": 8426904,
+        "online_softmax_updates_if_reused_once_per_value_pair": 4213452
+      },
+      "estimated_unchanged_current_events": {
+        "approximate_value_summary_dot_fma": 162889990144,
+        "exact_probability_value_dot_fma": 1883282341888,
+        "strided_exact_v_gather_bytes": 58852573184
+      },
+      "kind": "bv64_pair_value_halves_work_model_not_in_kernel_timer",
+      "risk_model": "One program carries two M64x64 FP32 O accumulators plus one shared score/probability tile; on SM86 the extra register pressure and occupancy loss can exceed the saved QK/probability work.",
+      "score_probability_work_reuse_claim": "Candidate should compute summary QK routing, exact QK scores, exp2 probabilities, row_max and row_sum once per query block/head instead of once per BV64 value tile.",
+      "unchanged_work_claim": "Probability-value FMAs, V/VC bytes, dense-prefix overwrite, reduction/threshold prep, tau/routing and exact-block online order are unchanged."
+    },
+    "route_decision": {
+      "claim_boundary": "Synthetic/model-free Sol-Attn kernel evidence only; no H3 E2E, long-video, BF16-fidelity, quality, product speedup, normal-PC, or SOTA claim.",
+      "decision": "retain_default_off_pair_value_halves_for_next_real_chain_gate",
+      "failed_gates": [],
+      "gates": {
+        "candidate_matches_current_valid": true,
+        "candidate_median_improves_by_min_gain": true,
+        "candidate_padding_zero": true,
+        "candidate_pair_value_marker_present": true,
+        "candidate_prefix_dense_calls_match_repeats": true,
+        "candidate_prefix_rows_equal_current": true,
+        "candidate_preflight_sparse_once": true,
+        "candidate_preflight_zero_fallback": true,
+        "candidate_preflight_zero_materialization": true,
+        "candidate_skip_marker_present": true,
+        "candidate_stride_aware_calls_match_repeats": true,
+        "candidate_tail_rows_equal_current": true,
+        "candidate_timed_zero_fallback": true,
+        "candidate_timed_zero_materialization": true,
+        "current_padding_zero": true,
+        "current_pair_value_marker_absent": true,
+        "current_prefix_dense_calls_match_repeats": true,
+        "current_preflight_sparse_once": true,
+        "current_preflight_zero_fallback": true,
+        "current_preflight_zero_materialization": true,
+        "current_skip_marker_present": true,
+        "current_timed_zero_fallback": true,
+        "current_timed_zero_materialization": true,
+        "full_target_shape": true,
+        "performance_model_identifies_duplicate_value_tile_score_work": true
+      },
+      "median_ms": {
+        "candidate_forward_pointer_kernel": 130.04287719726562,
+        "candidate_pair_value_halves_total": 145.3987274169922,
+        "current_forward_pointer_kernel": 158.90328979492188,
+        "current_prefix_skip_total": 175.5668487548828,
+        "forward_subphase_gain_pct": 18.162249903638276,
+        "whole_lane_gain_pct": 17.183267542729418
+      },
+      "min_required_gain_pct": 1.0,
+      "not_bf16_fidelity": true,
+      "not_h3_e2e": true,
+      "not_long_video": true,
+      "not_quality_or_product_speedup": true,
+      "principal_variable": "default-off SM86 BV64-pair value-halves kernel versus the retained current lane, with prefix-skip, tau/routing, exact-block order, stride-aware V, dense-prefix overwrite, cache-off, and padding semantics fixed"
+    },
+    "schema_version": "minimax_h3_a6000_sol_attn_sm86_pair_value_halves_bench_v1",
+    "shape": {
+      "B": 1,
+      "D": 128,
+      "H": 56,
+      "T_total": 38272,
+      "T_valid": 38247,
+      "prefix": 951
+    },
+    "synthetic_model_free": true,
+    "timing_policy": {
+      "cuda_event_distributions": true,
+      "min_required_gain_pct": 1.0,
+      "repeats": 7,
+      "warmup": 1
+    },
+    "upstream_semantics_grounding": {
+      "grounded_semantics": "Current upstream/local pointer kernels update row_max, row_sum, approximate summaries, and exact blocks in a fixed group/ascending-block order. Candidate preserves that online-softmax order and the BV64 PV dot shape, but shares the score/probability stream across the two D=128 value halves.",
+      "pinned_sources": [
+        "upstreams/Sana-sol-engine/techniques/sparse_backends/sol_attn/triton_ref/fwd.py",
+        "upstreams/Sana-sol-engine/techniques/sparse_backends/sol_attn/sm100/softmax.py",
+        "upstreams/Sana-sol-engine/techniques/sparse_backends/sol_attn/sm100/mainloop.py",
+        "ports/minimax_h3_a6000/src/minimax_h3_a6000/sol_attn_backend.py",
+        "ports/minimax_h3_a6000/src/minimax_h3_a6000/sol_attn_triton_sm86.py"
+      ]
+    },
+    "value_layout": {
+      "device_type": "cuda",
+      "dtype": "bfloat16",
+      "is_contiguous": false,
+      "shape": [
+        1,
+        38272,
+        56,
+        128
+      ],
+      "storage_offset": 14336,
+      "stride": [
+        823001088,
+        21504,
+        128,
+        1
+      ]
+    }
+  },
+  "schema_version": "minimax_h3_a6000_sol_attn_sm86_harness_v1",
+  "seed": 20260809,
+  "visible_cuda_device_count": 1,
+  "visible_device_name": "NVIDIA RTX A6000",
+  "visible_device_total_memory_bytes": 47695331328
+}

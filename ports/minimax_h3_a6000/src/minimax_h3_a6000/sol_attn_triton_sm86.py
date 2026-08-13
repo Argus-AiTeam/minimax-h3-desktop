@@ -21,7 +21,10 @@ wholly inside that overwritten prefix while leaving mixed prefix/tail blocks and
 the wrapper dense-prefix overwrite unchanged.  Another default-off scheduler
 candidate packs each GROUP=32 exact-route vector into a bitmask and consumes set
 bits in ascending order, mirroring the upstream SM90 route-mask stream while
-preserving the pointer path's online-softmax order.
+preserving the pointer path's online-softmax order.  A separate default-off
+pair-value candidate keeps the current BV64 probability/value-dot shape but
+computes the Q/K routing and online-softmax sequence once while updating both
+64-column value halves in one forward program.
 
 The module is intentionally not imported by :mod:`minimax_h3_a6000` package
 initialization.  Importing this file requires PyTorch+Triton, but no CUDA work is
@@ -472,6 +475,143 @@ def _forward_ptr_kernel(
     )
 
 
+@triton.jit
+def _forward_ptr_pair_v64_kernel(
+    q_ptr,
+    k_ptr,
+    v_ptr,
+    kc_ptr,
+    vc_ptr,
+    threshold_ptr,
+    o_ptr,
+    scale,
+    T,
+    TP,
+    NPAD,
+    sink_start_block,
+    sink_end_block,
+    prefix_exact_tokens,
+    q_block_offset,
+    V_STRIDE_B: tl.constexpr,
+    V_STRIDE_T: tl.constexpr,
+    V_STRIDE_H: tl.constexpr,
+    V_STRIDE_D: tl.constexpr,
+    HAS_SINK: tl.constexpr,
+    H: tl.constexpr,
+    D: tl.constexpr,
+    NT: tl.constexpr,
+    BLOCK: tl.constexpr,
+    GROUP: tl.constexpr,
+):
+    """BV64-pair candidate: reuse one score/probability stream for D=128.
+
+    This kernel intentionally mirrors the non-``PREFIX_EXACT`` current pointer
+    loop order and preserves the BV64 PV dot shape for each value half.  It is a
+    default-off SM86 experiment for the retained dense-prefix-overwrite lane,
+    not a replacement for the general autotuned forward kernel.
+    """
+
+    q_block_program, batch_head = tl.program_id(0), tl.program_id(1)
+    q_block = q_block_program + q_block_offset
+    batch, head = batch_head // H, batch_head % H
+    group_offsets = tl.max_contiguous(tl.arange(0, GROUP), GROUP)
+    token_offsets = tl.max_contiguous(tl.arange(0, BLOCK), BLOCK)
+    dims = tl.arange(0, D)
+    value_dims_lo = tl.arange(0, 64)
+    value_dims_hi = value_dims_lo + 64
+    q_tokens = q_block * BLOCK + token_offsets
+    q_valid = q_tokens < T
+    q_offsets = ((batch * TP + q_tokens[:, None]).to(tl.int64) * H + head) * D + dims[None, :]
+    q = tl.load(q_ptr + q_offsets, mask=q_valid[:, None], other=0.0)
+    q_len = tl.minimum(BLOCK, T - q_block * BLOCK).to(tl.float32)
+
+    output_lo = tl.zeros([BLOCK, 64], dtype=tl.float32)
+    output_hi = tl.zeros([BLOCK, 64], dtype=tl.float32)
+    row_sum = tl.zeros((BLOCK,), dtype=tl.float32)
+    row_max = tl.full((BLOCK,), -float("inf"), tl.float32)
+    scale_log2 = scale * 1.4426950408889634
+    route_threshold = tl.load(threshold_ptr + (batch * NT + q_block) * H + head)
+
+    for group_start in range(0, NT, GROUP):
+        block_indices = group_start + group_offsets
+        valid = block_indices < NT
+        kc_offsets = ((batch * NPAD + block_indices[:, None]) * H + head) * D + dims[None, :]
+        vc_lo_offsets = ((batch * NPAD + block_indices[:, None]) * H + head) * D + value_dims_lo[None, :]
+        vc_hi_offsets = ((batch * NPAD + block_indices[:, None]) * H + head) * D + value_dims_hi[None, :]
+        kc = tl.load(kc_ptr + kc_offsets)
+        vc_lo = tl.load(vc_ptr + vc_lo_offsets)
+        vc_hi = tl.load(vc_ptr + vc_hi_offsets)
+        scores = tl.dot(q, kc.T).to(tl.float32) * scale_log2
+        exact = (tl.sum(scores, axis=0) / q_len > route_threshold) | (tl.abs(q_block - block_indices) <= 1)
+        if HAS_SINK:
+            exact = exact | ((block_indices >= sink_start_block) & (block_indices < sink_end_block))
+        exact = exact & valid
+
+        approximate = valid & ~exact
+        has_approximate = tl.sum(approximate.to(tl.int32), axis=0) > 0
+        approximate_scores = tl.where(approximate[None, :], scores, -float("inf"))
+        safe_scores = tl.where(has_approximate, approximate_scores, 0.0)
+        candidate_max = tl.maximum(row_max, tl.max(safe_scores, axis=1))
+        new_max = tl.where(has_approximate, candidate_max, row_max)
+        alpha = tl.math.exp2(tl.where(has_approximate, row_max - new_max, 0.0))
+        probability = tl.math.exp2(safe_scores - tl.where(has_approximate, new_max, 0.0)[:, None])
+        probability = tl.where(has_approximate & approximate[None, :], probability, 0.0)
+        probability_bf16 = probability.to(vc_lo.dtype)
+        output_lo = output_lo * alpha[:, None] + tl.dot(probability_bf16, vc_lo)
+        output_hi = output_hi * alpha[:, None] + tl.dot(probability_bf16, vc_hi)
+        lengths = tl.minimum(BLOCK, tl.maximum(0, T - block_indices * BLOCK)).to(tl.float32)
+        row_sum = row_sum * alpha + tl.sum(probability * lengths[None, :], axis=1)
+        row_max = new_max
+
+        exact_offsets = tl.where(exact, group_offsets, GROUP)
+        num_exact = tl.sum(exact.to(tl.int32), axis=0)
+        for _ in range(num_exact):
+            offset = tl.min(exact_offsets)
+            block = group_start + offset
+            exact_offsets = tl.where(group_offsets == offset, GROUP, exact_offsets)
+            kv_tokens = block * BLOCK + token_offsets
+            kv_valid = kv_tokens < T
+            k_offsets = ((batch * TP + kv_tokens[:, None]).to(tl.int64) * H + head) * D + dims[None, :]
+            k = tl.load(k_ptr + k_offsets, mask=kv_valid[:, None], other=0.0)
+            exact_scores = tl.dot(q, k.T).to(tl.float32) * scale_log2
+            exact_scores += tl.where(kv_valid[None, :], 0.0, -float("inf"))
+            new_max = tl.maximum(row_max, tl.max(exact_scores, axis=1))
+            alpha = tl.math.exp2(row_max - new_max)
+            exact_probability = tl.math.exp2(exact_scores - new_max[:, None])
+            row_sum = row_sum * alpha + tl.sum(exact_probability, axis=1)
+            v_lo_offsets = (
+                batch * V_STRIDE_B
+                + kv_tokens[:, None].to(tl.int64) * V_STRIDE_T
+                + head * V_STRIDE_H
+                + value_dims_lo[None, :] * V_STRIDE_D
+            )
+            v_hi_offsets = (
+                batch * V_STRIDE_B
+                + kv_tokens[:, None].to(tl.int64) * V_STRIDE_T
+                + head * V_STRIDE_H
+                + value_dims_hi[None, :] * V_STRIDE_D
+            )
+            v_lo = tl.load(v_ptr + v_lo_offsets, mask=kv_valid[:, None], other=0.0)
+            v_hi = tl.load(v_ptr + v_hi_offsets, mask=kv_valid[:, None], other=0.0)
+            exact_probability_bf16 = exact_probability.to(v_lo.dtype)
+            output_lo = output_lo * alpha[:, None] + tl.dot(exact_probability_bf16, v_lo)
+            output_hi = output_hi * alpha[:, None] + tl.dot(exact_probability_bf16, v_hi)
+            row_max = new_max
+
+    output_offsets_lo = ((batch * TP + q_tokens[:, None]).to(tl.int64) * H + head) * D + value_dims_lo[None, :]
+    output_offsets_hi = ((batch * TP + q_tokens[:, None]).to(tl.int64) * H + head) * D + value_dims_hi[None, :]
+    tl.store(
+        o_ptr + output_offsets_lo,
+        (output_lo / row_sum[:, None]).to(tl.bfloat16),
+        mask=q_valid[:, None],
+    )
+    tl.store(
+        o_ptr + output_offsets_hi,
+        (output_hi / row_sum[:, None]).to(tl.bfloat16),
+        mask=q_valid[:, None],
+    )
+
+
 def _sink_block_range(tokens: int, sink_start: int | None, sink_tokens: int) -> tuple[int, int]:
     blocks = (tokens + BLOCK_SIZE - 1) // BLOCK_SIZE
     if not sink_tokens:
@@ -717,6 +857,7 @@ def _launch_forward_ptr(
     static_prefix_sink: bool = False,
     forward_config: str | None = None,
     bitmask_exact_scheduler: bool = False,
+    pair_value_halves: bool = False,
 ) -> None:
     """Launch the pointer forward kernel, optionally bypassing autotune.
 
@@ -725,7 +866,9 @@ def _launch_forward_ptr(
     configuration tests; they call the same JIT body with explicit meta/options.
     ``bitmask_exact_scheduler`` is a default-off GROUP<=32 exact-block scheduler
     probe that consumes exact offsets from a packed bitmask instead of repeated
-    vector min/update selection.
+    vector min/update selection. ``pair_value_halves`` is a narrower default-off
+    SM86 probe that keeps the BV64 PV dot shape while producing both D=128 value
+    halves from one shared Q/K route and online-softmax stream.
     """
 
     batch, _padded_tokens, heads, head_dim = q.shape
@@ -747,6 +890,47 @@ def _launch_forward_ptr(
     bitmask_exact_scheduler = bool(bitmask_exact_scheduler)
     if bitmask_exact_scheduler and GROUP_SIZE > 32:
         raise ValueError("bitmask_exact_scheduler requires GROUP_SIZE <= 32")
+    pair_value_halves = bool(pair_value_halves)
+    if pair_value_halves:
+        if head_dim != HEAD_DIM:
+            raise ValueError("pair_value_halves requires D=128")
+        if bool(exact_prefix_query):
+            raise ValueError("pair_value_halves is only supported with dense prefix-query overwrite")
+        if bool(static_prefix_sink) or bool(bitmask_exact_scheduler):
+            raise ValueError("pair_value_halves cannot be combined with scheduler probes")
+        if config_name not in ("", "autotune", "current"):
+            raise ValueError("pair_value_halves uses its fixed BV64-pair launch, not forward_config")
+        grid_pair = (launch_blocks, batch * heads)
+        _forward_ptr_pair_v64_kernel[grid_pair](
+            q,
+            k,
+            v,
+            kc,
+            vc,
+            threshold,
+            output,
+            scale,
+            int(active_tokens),
+            int(q.shape[1]),
+            kc.shape[1],
+            int(sink_start_block),
+            int(sink_end_block),
+            int(prefix_exact_tokens),
+            int(prefix_skip_blocks),
+            value_strides[0],
+            value_strides[1],
+            value_strides[2],
+            value_strides[3],
+            HAS_SINK=int(sink_end_block) > int(sink_start_block),
+            H=heads,
+            D=head_dim,
+            NT=blocks,
+            BLOCK=BLOCK_SIZE,
+            GROUP=GROUP_SIZE,
+            num_warps=4,
+            num_stages=1,
+        )
+        return
     if config_name in ("", "autotune", "current"):
         grid = lambda meta: (head_dim // meta["BV"], launch_blocks, batch * heads)
         _forward_ptr_kernel[grid](
@@ -846,6 +1030,7 @@ def sol_attn_sm86(
     static_prefix_sink: bool = False,
     forward_config: str | None = None,
     bitmask_exact_scheduler: bool = False,
+    pair_value_halves: bool = False,
 ) -> torch.Tensor:
     """Run the SM86 pointer path with packed Q/K and optional validated strided V.
 
@@ -866,6 +1051,9 @@ def sol_attn_sm86(
     ``bitmask_exact_scheduler`` is a default-off scheduler probe that packs the
     GROUP=32 exact vector into an int32 route mask and visits set bits in
     ascending order, preserving the current online-softmax update order.
+    ``pair_value_halves`` is a default-off retained-lane probe that computes the
+    route/probability stream once and emits both D=128 value halves via two
+    BV64-shaped PV dots in one forward program.
     """
 
     arch, value_strides, active_tokens = _validate_inputs(
@@ -917,6 +1105,7 @@ def sol_attn_sm86(
         static_prefix_sink=bool(static_prefix_sink),
         forward_config=forward_config,
         bitmask_exact_scheduler=bool(bitmask_exact_scheduler),
+        pair_value_halves=bool(pair_value_halves),
     )
     if active_tokens < padded_tokens:
         output[:, active_tokens:].zero_()

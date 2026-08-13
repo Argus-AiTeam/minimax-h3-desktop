@@ -1,0 +1,26 @@
+{
+  "checks": {
+    "bit_exact_valid_prefix_tail_padding": true,
+    "captured_layout_agreement": true,
+    "decision_retain": true,
+    "dense_prefix_overwrite_preserved": true,
+    "docker_inspect_recorded_no_launch": true,
+    "metadata_derivation": true,
+    "pair_marker_only_candidate": true,
+    "post_release_lease_and_compute_clear": true,
+    "preflight_lease_resource": true,
+    "summary_success": true,
+    "timing_distributions_present": true,
+    "zero_fallback_materialization": true
+  },
+  "created_utc": "2026-08-13T14:58:20Z",
+  "failed_checks": [],
+  "post_release": {
+    "active_leases_empty": true,
+    "checked_utc": "2026-08-13T14:58:36Z",
+    "compute_apps_post_release_empty": true
+  },
+  "schema_version": "minimax_h3_a6000_pair_value_halves_captured_replay_validation_v1",
+  "status": "pass",
+  "summary": "retain captured-metadata non-Docker pair-value-halves replay"
+}

@@ -11,7 +11,8 @@ candidate in :mod:`minimax_h3_a6000.sol_attn_triton_sm86`:
   by dense SDPA output unless the default-off exact-prefix-query experiment is
   explicitly selected; separate default-off scheduler probes may skip only query
   blocks wholly inside that overwritten prefix range, statically schedule the
-  prefix-sink exact blocks, or consume GROUP=32 exact-route masks via a bitmask;
+  prefix-sink exact blocks, consume GROUP=32 exact-route masks via a bitmask,
+  or pair the two BV64 value halves behind one shared score/probability stream;
   each probe must preserve exact-block order and dense-prefix overwrite;
 * cache stays disabled by contract;
 * unsupported inputs strictly fall back to dense reference attention unless the
@@ -237,6 +238,7 @@ class SolAttnPolicy:
     skip_full_prefix_blocks: bool = False
     static_prefix_sink: bool = False
     bitmask_exact_scheduler: bool = False
+    pair_value_halves: bool = False
     forward_config: str | None = None
     cache_enabled: bool = False
     strict: bool = False
@@ -270,6 +272,7 @@ class SolAttnPolicy:
             skip_full_prefix_blocks=env_enabled("MINIMAX_H3_A6000_SOL_ATTN_SKIP_FULL_PREFIX_BLOCKS", env),
             static_prefix_sink=env_enabled("MINIMAX_H3_A6000_SOL_ATTN_STATIC_PREFIX_SINK", env),
             bitmask_exact_scheduler=env_enabled("MINIMAX_H3_A6000_SOL_ATTN_BITMASK_SCHEDULER", env),
+            pair_value_halves=env_enabled("MINIMAX_H3_A6000_SOL_ATTN_PAIR_VALUE_HALVES", env),
             forward_config=_read_env_str_or_none(env, "MINIMAX_H3_A6000_SOL_ATTN_FORWARD_CONFIG"),
             diagnostic_materialize_noncontiguous=env_enabled(
                 "MINIMAX_H3_A6000_SOL_ATTN_DIAGNOSTIC_MATERIALIZE", env
@@ -761,6 +764,9 @@ def sol_attn_h3_sparse_candidate(
     bitmask_exact_scheduler = bool(policy.bitmask_exact_scheduler and not exact_prefix_query)
     if bitmask_exact_scheduler:
         density = {**density, "bitmask_exact_scheduler": True}
+    pair_value_halves = bool(policy.pair_value_halves and not exact_prefix_query)
+    if pair_value_halves:
+        density = {**density, "pair_value_halves": True}
     if policy.forward_config:
         density = {**density, "forward_config": str(policy.forward_config)}
     stride_aware_value = not candidate_value.is_contiguous()
@@ -794,6 +800,7 @@ def sol_attn_h3_sparse_candidate(
             static_prefix_sink=static_prefix_sink,
             forward_config=policy.forward_config,
             bitmask_exact_scheduler=bitmask_exact_scheduler,
+            pair_value_halves=pair_value_halves,
         )
         prefix_dense = bool(policy.prefix_query_dense and prefix > 0 and not exact_prefix_query)
         if prefix_dense:

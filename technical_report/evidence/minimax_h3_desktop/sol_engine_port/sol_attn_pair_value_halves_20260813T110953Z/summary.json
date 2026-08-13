@@ -1,0 +1,266 @@
+{
+  "claim_boundary": "Synthetic/model-free Sol-Attn kernel evidence only; no H3 E2E, long-video, BF16-fidelity, quality, product speedup, normal-PC, or SOTA claim.",
+  "correctness": {
+    "candidate_matches_current_valid": true,
+    "candidate_padding_zero": true,
+    "candidate_prefix_rows_equal_current": true,
+    "candidate_tail_rows_equal_current": true,
+    "current_padding_zero": true,
+    "max_abs_prefix": 0.0,
+    "max_abs_valid": 0.0
+  },
+  "created_utc": "2026-08-13T11:10:58Z",
+  "decision": "retain_default_off_pair_value_halves_for_next_real_chain_gate",
+  "docker_used_for_run": false,
+  "failed_gates": [],
+  "failure": null,
+  "gpu": {
+    "gpu_uuid": "GPU-b3425477-0877-24de-c5b8-1549ab47cd4b",
+    "harness_cuda_visible_devices": "0",
+    "harness_visible_cuda_device_count": 1,
+    "harness_visible_device_name": "NVIDIA RTX A6000",
+    "host_gpu_index": 0
+  },
+  "harness_json": "technical_report/evidence/minimax_h3_desktop/sol_engine_port/sol_attn_pair_value_halves_20260813T110953Z/harness.json",
+  "mode": "pair-value-halves-bench",
+  "model_load": false,
+  "performance_model": {
+    "candidate_forward_program_multiplier": 1,
+    "current_value_tiles": 2,
+    "estimated_reused_current_program_events": {
+      "approximate_summary_routing_dot_fma_current": 325779980288,
+      "approximate_summary_routing_dot_fma_if_reused_once_per_value_pair": 162889990144,
+      "exact_qk_dot_fma_current": 3766564683776,
+      "exact_qk_dot_fma_if_reused_once_per_value_pair": 1883282341888,
+      "online_softmax_updates_current": 8426904,
+      "online_softmax_updates_if_reused_once_per_value_pair": 4213452
+    },
+    "estimated_unchanged_current_events": {
+      "approximate_value_summary_dot_fma": 162889990144,
+      "exact_probability_value_dot_fma": 1883282341888,
+      "strided_exact_v_gather_bytes": 58852573184
+    },
+    "kind": "bv64_pair_value_halves_work_model_not_in_kernel_timer",
+    "risk_model": "One program carries two M64x64 FP32 O accumulators plus one shared score/probability tile; on SM86 the extra register pressure and occupancy loss can exceed the saved QK/probability work.",
+    "score_probability_work_reuse_claim": "Candidate should compute summary QK routing, exact QK scores, exp2 probabilities, row_max and row_sum once per query block/head instead of once per BV64 value tile.",
+    "unchanged_work_claim": "Probability-value FMAs, V/VC bytes, dense-prefix overwrite, reduction/threshold prep, tau/routing and exact-block online order are unchanged."
+  },
+  "phase_medians_ms": {
+    "candidate": {
+      "diag_threshold_preparation": 1.0076160430908203,
+      "forward_pointer_kernel": 130.04287719726562,
+      "output_allocation_padding_zero": 0.04915200173854828,
+      "prefix_dense_overwrite": 11.522047996520996,
+      "reduce_kv": 1.9537919759750366,
+      "total_profiled_sum": 144.68508534133434
+    },
+    "current": {
+      "diag_threshold_preparation": 1.0127359628677368,
+      "forward_pointer_kernel": 158.90328979492188,
+      "output_allocation_padding_zero": 0.050175998359918594,
+      "prefix_dense_overwrite": 12.697600364685059,
+      "reduce_kv": 1.9568639993667603,
+      "total_profiled_sum": 174.72819315642118
+    }
+  },
+  "run_dir": "technical_report/evidence/minimax_h3_desktop/sol_engine_port/sol_attn_pair_value_halves_20260813T110953Z",
+  "schema_version": "minimax_h3_a6000_pair_value_halves_summary_v1",
+  "shape": {
+    "B": 1,
+    "D": 128,
+    "H": 56,
+    "T_total": 38272,
+    "T_valid": 38247,
+    "prefix": 951
+  },
+  "source_grounding": {
+    "boundary": "Model-free synthetic SM86 kernel harness only; no Docker launch, no model load, no H3 E2E, no long-video, no BF16-fidelity, no quality/product, normal-PC, public comparison, SOTA, release, or public speedup claim.",
+    "created_utc": "2026-08-13T11:10:32Z",
+    "license_grounding": [
+      "Local Sol-Attn overlay files carry SPDX-License-Identifier: Apache-2.0.",
+      "Pinned Sana-sol-engine revision is recorded separately; no model weights or restricted assets are copied into this evidence."
+    ],
+    "primary_sources_read_this_cycle": [
+      "project-skill:kernel/sol-attn-stride-aware-v.md",
+      "../records/progress.md",
+      "../records/milestones.md",
+      "CHECKPOINT.md",
+      "upstreams/Sana-sol-engine/techniques/sparse_backends/sol_attn/triton_ref/fwd.py",
+      "upstreams/Sana-sol-engine/techniques/sparse_backends/sol_attn/sm100/softmax.py",
+      "upstreams/Sana-sol-engine/techniques/sparse_backends/sol_attn/sm100/mainloop.py",
+      "ports/minimax_h3_a6000/src/minimax_h3_a6000/sol_attn_backend.py",
+      "ports/minimax_h3_a6000/src/minimax_h3_a6000/sol_attn_triton_sm86.py"
+    ],
+    "source_grounding": [
+      "Current retained synthetic lane is stride-aware fused-QKV V plus full-prefix-block skip plus dense-prefix overwrite.",
+      "Upstream Triton pointer path and local SM86 path update approximate group then exact blocks in ascending block order with online row_max/row_sum.",
+      "Existing BV128 forced configs were rejected; this candidate is not BV128 and keeps two BV64-shaped PV dots while sharing QK/probability work."
+    ],
+    "source_revisions": {
+      "source_tree_status_short": "?? ports/minimax_h3_a6000/gpu_sol_attn_sm86_harness.py\n?? ports/minimax_h3_a6000/src/minimax_h3_a6000/sol_attn_backend.py\n?? ports/minimax_h3_a6000/src/minimax_h3_a6000/sol_attn_triton_sm86.py\n?? ports/minimax_h3_a6000/tests/test_sol_attn_backend.py",
+      "upstream_sana_sol_engine_git_revision": "d00eef311670a58deb2c323fe072738fcb945600",
+      "upstream_sana_sol_engine_status_short": ""
+    }
+  },
+  "status": "success",
+  "telemetry": {
+    "candidate_preflight": {
+      "density_samples": [
+        {
+          "block_size": 64,
+          "blocks": 598,
+          "exact_block_pairs_lower_bound": 10718,
+          "exact_density_lower_bound": 0.02997170054026241,
+          "kind": "static_exact_block_lower_bound",
+          "pair_value_halves": true,
+          "prefix_tokens": 951,
+          "sink_end": 951,
+          "sink_end_block": 15,
+          "sink_start": 0,
+          "sink_start_block": 0,
+          "skip_full_prefix_blocks": true,
+          "skipped_full_prefix_query_blocks_estimate": 14,
+          "stride_aware_value": true,
+          "total_block_pairs": 357604,
+          "valid_tokens": 38247,
+          "video_tokens": 37296
+        }
+      ],
+      "fallback_calls": 0,
+      "materialize_copy_bytes": 0,
+      "materialize_copy_count": 0,
+      "prefix_query_dense_calls": 1,
+      "sparse_calls": 1,
+      "stride_aware_value_calls": 1
+    },
+    "candidate_timed": {
+      "fallback_calls": 0,
+      "first_density_samples": [
+        {
+          "block_size": 64,
+          "blocks": 598,
+          "exact_block_pairs_lower_bound": 10718,
+          "exact_density_lower_bound": 0.02997170054026241,
+          "kind": "static_exact_block_lower_bound",
+          "pair_value_halves": true,
+          "prefix_tokens": 951,
+          "sink_end": 951,
+          "sink_end_block": 15,
+          "sink_start": 0,
+          "sink_start_block": 0,
+          "skip_full_prefix_blocks": true,
+          "skipped_full_prefix_query_blocks_estimate": 14,
+          "stride_aware_value": true,
+          "total_block_pairs": 357604,
+          "valid_tokens": 38247,
+          "video_tokens": 37296
+        }
+      ],
+      "materialize_copy_bytes": 0,
+      "materialize_copy_count": 0,
+      "n_calls_recorded": 7,
+      "prefix_query_dense_calls": 7,
+      "sparse_calls": 7,
+      "stride_aware_value_calls": 7
+    },
+    "current_preflight": {
+      "density_samples": [
+        {
+          "block_size": 64,
+          "blocks": 598,
+          "exact_block_pairs_lower_bound": 10718,
+          "exact_density_lower_bound": 0.02997170054026241,
+          "kind": "static_exact_block_lower_bound",
+          "prefix_tokens": 951,
+          "sink_end": 951,
+          "sink_end_block": 15,
+          "sink_start": 0,
+          "sink_start_block": 0,
+          "skip_full_prefix_blocks": true,
+          "skipped_full_prefix_query_blocks_estimate": 14,
+          "stride_aware_value": true,
+          "total_block_pairs": 357604,
+          "valid_tokens": 38247,
+          "video_tokens": 37296
+        }
+      ],
+      "fallback_calls": 0,
+      "materialize_copy_bytes": 0,
+      "materialize_copy_count": 0,
+      "prefix_query_dense_calls": 1,
+      "sparse_calls": 1,
+      "stride_aware_value_calls": 1
+    },
+    "current_timed": {
+      "fallback_calls": 0,
+      "first_density_samples": [
+        {
+          "block_size": 64,
+          "blocks": 598,
+          "exact_block_pairs_lower_bound": 10718,
+          "exact_density_lower_bound": 0.02997170054026241,
+          "kind": "static_exact_block_lower_bound",
+          "prefix_tokens": 951,
+          "sink_end": 951,
+          "sink_end_block": 15,
+          "sink_start": 0,
+          "sink_start_block": 0,
+          "skip_full_prefix_blocks": true,
+          "skipped_full_prefix_query_blocks_estimate": 14,
+          "stride_aware_value": true,
+          "total_block_pairs": 357604,
+          "valid_tokens": 38247,
+          "video_tokens": 37296
+        }
+      ],
+      "materialize_copy_bytes": 0,
+      "materialize_copy_count": 0,
+      "n_calls_recorded": 7,
+      "prefix_query_dense_calls": 7,
+      "sparse_calls": 7,
+      "stride_aware_value_calls": 7
+    }
+  },
+  "timing": {
+    "candidate_pair_value_halves_total_ms": {
+      "max_ms": 145.86778259277344,
+      "mean_ms": 145.32972281319755,
+      "median_ms": 145.3987274169922,
+      "min_ms": 144.9256591796875,
+      "n": 7,
+      "samples_ms": [
+        144.9256591796875,
+        144.95948791503906,
+        145.0741729736328,
+        145.3987274169922,
+        145.5257568359375,
+        145.86778259277344,
+        145.5564727783203
+      ]
+    },
+    "current_prefix_skip_total_ms": {
+      "max_ms": 177.38648986816406,
+      "mean_ms": 175.8386448451451,
+      "median_ms": 175.5668487548828,
+      "min_ms": 175.11013793945312,
+      "n": 7,
+      "samples_ms": [
+        175.5668487548828,
+        175.11013793945312,
+        175.18695068359375,
+        177.38648986816406,
+        175.53305053710938,
+        176.4700164794922,
+        175.6170196533203
+      ]
+    },
+    "route_decision_medians_ms": {
+      "candidate_forward_pointer_kernel": 130.04287719726562,
+      "candidate_pair_value_halves_total": 145.3987274169922,
+      "current_forward_pointer_kernel": 158.90328979492188,
+      "current_prefix_skip_total": 175.5668487548828,
+      "forward_subphase_gain_pct": 18.162249903638276,
+      "whole_lane_gain_pct": 17.183267542729418
+    }
+  }
+}

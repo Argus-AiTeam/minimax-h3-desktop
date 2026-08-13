@@ -1,0 +1,271 @@
+{
+  "captured_metadata_derivation_passed": true,
+  "captured_source_counts": {
+    "captured_real_density_sample": {
+      "block_size": 64,
+      "blocks": 598,
+      "diagnostic_materialized_qkv": true,
+      "exact_block_pairs_lower_bound": 10718,
+      "exact_density_lower_bound": 0.02997170054026241,
+      "kind": "static_exact_block_lower_bound",
+      "prefix_tokens": 951,
+      "sink_end": 951,
+      "sink_end_block": 15,
+      "sink_start": 0,
+      "sink_start_block": 0,
+      "total_block_pairs": 357604,
+      "valid_tokens": 38247,
+      "video_tokens": 37296
+    },
+    "captured_real_layout_sample": {
+      "stage": "pre_decline",
+      "tensors": [
+        {
+          "device_type": "cuda",
+          "dtype": "bfloat16",
+          "is_contiguous": true,
+          "name": "query",
+          "shape": [
+            1,
+            38272,
+            56,
+            128
+          ],
+          "storage_offset": 0,
+          "stride": [
+            274333696,
+            7168,
+            128,
+            1
+          ]
+        },
+        {
+          "device_type": "cuda",
+          "dtype": "bfloat16",
+          "is_contiguous": true,
+          "name": "key",
+          "shape": [
+            1,
+            38272,
+            56,
+            128
+          ],
+          "storage_offset": 0,
+          "stride": [
+            274333696,
+            7168,
+            128,
+            1
+          ]
+        },
+        {
+          "device_type": "cuda",
+          "dtype": "bfloat16",
+          "is_contiguous": false,
+          "name": "value",
+          "shape": [
+            1,
+            38272,
+            56,
+            128
+          ],
+          "storage_offset": 14336,
+          "stride": [
+            823001088,
+            21504,
+            128,
+            1
+          ]
+        }
+      ]
+    },
+    "fallback_calls": 0,
+    "materialize_copy_bytes": 105344139264,
+    "materialize_copy_count": 192,
+    "sparse_calls": 192,
+    "sparse_candidate_calls": 192,
+    "telemetry_json": "technical_report/evidence/minimax_h3_desktop/sol_engine_port/sol_attn_h3_gpu2_5step_r8_prompt0644_20260812T005600Z/sol_attn/sol_attn_telemetry.sol_attn.json"
+  },
+  "claim_boundary": "Captured-metadata/non-Docker full-shape SM86 replay only: exercises captured r8 H3 metadata derivation, SolAttnPolicy.from_env, current retained lane, and MINIMAX_H3_A6000_SOL_ATTN_PAIR_VALUE_HALVES. Not Docker H3 E2E, not long-video, not BF16 fidelity, not quality/product speedup, not normal-PC/public-comparison/SOTA evidence.",
+  "classification": "retain_default_off_pair_value_halves_captured_replay_for_next_real_chain_gate",
+  "correctness": {
+    "candidate_matches_current_valid": true,
+    "candidate_padding_zero": true,
+    "candidate_prefix_rows_equal_current": true,
+    "candidate_tail_rows_equal_current": true,
+    "current_padding_zero": true,
+    "max_abs_prefix": 0.0,
+    "max_abs_valid": 0.0
+  },
+  "created_utc": "2026-08-13T14:57:55Z",
+  "decision": "retain",
+  "failed_gates": [],
+  "gpu": {
+    "cuda_visible_devices": "0",
+    "peak_cuda_memory_from_bench": {
+      "after_all_lanes": {
+        "max_memory_allocated_bytes": 3322153984,
+        "max_memory_reserved_bytes": 4437573632,
+        "memory_allocated_bytes": 2753691648,
+        "memory_reserved_bytes": 4437573632
+      },
+      "after_input_allocation": {
+        "max_memory_allocated_bytes": 2745171968,
+        "max_memory_reserved_bytes": 2745171968,
+        "memory_allocated_bytes": 2745171968,
+        "memory_reserved_bytes": 2745171968
+      },
+      "after_preflight_sanity": {
+        "max_memory_allocated_bytes": 4427593216,
+        "max_memory_reserved_bytes": 4437573632,
+        "memory_allocated_bytes": 3851812864,
+        "memory_reserved_bytes": 4437573632
+      }
+    },
+    "visible_cuda_device_count": 1,
+    "visible_device_capability": [
+      8,
+      6
+    ],
+    "visible_device_name": "NVIDIA RTX A6000"
+  },
+  "observed_layout_checks": {
+    "captured_fallback_zero": true,
+    "captured_materialization_192_calls": true,
+    "captured_materialization_bytes_r8": true,
+    "captured_sparse_calls_192": true,
+    "key_matches_captured": true,
+    "metadata_helper_matches_derived": true,
+    "query_matches_captured": true,
+    "value_matches_captured": true
+  },
+  "phase_medians_ms": {
+    "candidate": {
+      "diag_threshold_preparation": 1.006592035293579,
+      "forward_pointer_kernel": 129.85037231445312,
+      "output_allocation_padding_zero": 0.04710400104522705,
+      "prefix_dense_overwrite": 11.509759902954102,
+      "reduce_kv": 1.9527679681777954,
+      "total_profiled_sum": 144.41676581650972
+    },
+    "current": {
+      "diag_threshold_preparation": 1.0096640586853027,
+      "forward_pointer_kernel": 158.160888671875,
+      "output_allocation_padding_zero": 0.04713600128889084,
+      "prefix_dense_overwrite": 12.559359550476074,
+      "reduce_kv": 1.950719952583313,
+      "total_profiled_sum": 173.74002526700497
+    }
+  },
+  "preflight": {
+    "compute_apps_selected": [],
+    "docker_image_inspect_records": {
+      "pinned_base_digest": {
+        "inspectable": false,
+        "stderr_excerpt": "Error response from daemon: No such image: vllm/vllm-openai@sha256:770fe65b2c73ee74a5c42165cf3433de4048cc2cd9c57a937ca4e35aba5aa87b"
+      },
+      "r2": {
+        "inspectable": false,
+        "stderr_excerpt": "Error response from daemon: No such image: argus/minimax-h3-vllm-omni:8e2e9b6b53e8-r2"
+      },
+      "r8": {
+        "inspectable": false,
+        "stderr_excerpt": "Error response from daemon: No such image: argus/minimax-h3-vllm-omni:8e2e9b6b53e8-r8-sol-attn-overlay"
+      },
+      "r9": {
+        "inspectable": false,
+        "stderr_excerpt": "Error response from daemon: No such image: argus/minimax-h3-vllm-omni:8e2e9b6b53e8-r9-sol-attn-overlay"
+      }
+    },
+    "docker_images_required_for_real_chain_all_inspectable": false,
+    "docker_launch_planned": false,
+    "gpu_idle_ok": true,
+    "model_load_planned": false,
+    "records": {
+      "compute_apps_before": "compute_apps_before.csv",
+      "docker_image_inspect_r2": "docker_image_inspect_r2.json",
+      "docker_image_inspect_r8": "docker_image_inspect_r8.json",
+      "docker_image_inspect_r9": "docker_image_inspect_r9.json",
+      "lease_run_stdout": "lease_run_stdout.log",
+      "lease_status_post_release": "lease_status_post_release.json",
+      "lease_status_pre_run": "lease_status_pre_run.json",
+      "nvidia_smi_before": "nvidia_smi_before.csv",
+      "resource_samples": "resource_samples.csv"
+    },
+    "selected_gpu": {
+      "index": 0,
+      "memory_total_mib": 46068.0,
+      "memory_used_mib": 1.0,
+      "name": "NVIDIA RTX A6000",
+      "power_draw_w": 17.93,
+      "power_limit_w": 300.0,
+      "temperature_c": 26.0,
+      "utilization_gpu_pct": 0.0,
+      "uuid": "GPU-b3425477-0877-24de-c5b8-1549ab47cd4b"
+    }
+  },
+  "schema_version": "minimax_h3_a6000_pair_value_halves_captured_replay_summary_v1",
+  "shape": {
+    "latent_grid": [
+      6,
+      56,
+      111
+    ],
+    "prefix_len": 951,
+    "total_length": 38272,
+    "valid_length": 38247,
+    "video_rows": 37296
+  },
+  "status": "success",
+  "telemetry_gates": {
+    "candidate_pair_value_marker_present": true,
+    "candidate_zero_fallback": true,
+    "candidate_zero_unintended_materialization": true,
+    "current_pair_value_marker_absent": true,
+    "current_zero_fallback": true,
+    "current_zero_unintended_materialization": true,
+    "dense_prefix_overwrite_preserved": true
+  },
+  "timing_phase_medians": {
+    "candidate_forward_pointer_kernel": 129.85037231445312,
+    "candidate_pair_value_halves_total": 144.65228271484375,
+    "current_forward_pointer_kernel": 158.160888671875,
+    "current_prefix_skip_total": 175.2156219482422,
+    "forward_subphase_gain_pct": 17.899821248574078,
+    "whole_lane_gain_pct": 17.443272976211386
+  },
+  "timing_samples_ms": {
+    "candidate_total": {
+      "max_ms": 145.3137969970703,
+      "mean_ms": 144.77019609723772,
+      "median_ms": 144.65228271484375,
+      "min_ms": 144.542724609375,
+      "n": 7,
+      "samples_ms": [
+        144.65228271484375,
+        144.542724609375,
+        144.77005004882812,
+        144.58982849121094,
+        144.54579162597656,
+        145.3137969970703,
+        144.97689819335938
+      ]
+    },
+    "current_total": {
+      "max_ms": 176.64306640625,
+      "mean_ms": 175.4239262172154,
+      "median_ms": 175.2156219482422,
+      "min_ms": 174.8869171142578,
+      "n": 7,
+      "samples_ms": [
+        175.2156219482422,
+        175.45216369628906,
+        175.5863037109375,
+        176.64306640625,
+        174.8869171142578,
+        175.11013793945312,
+        175.07327270507812
+      ]
+    }
+  }
+}

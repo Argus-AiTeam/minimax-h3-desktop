@@ -2,18 +2,18 @@
 
 [← 返回主 README](README.md) · [当前工作 / Current Work](CURRENT_WORK.md) · [Benchmark Contract v1](benchmark_contract/v1/README.md)
 
-> **更新时间（UTC）：2026-08-13 14:55 UTC**<br>
+> **更新时间（UTC）：2026-08-13 15:05 UTC**<br>
 > **页面定位：**本文件独立承载研究状态、量化门禁与流程图；主 README 保持原有项目展示版式。<br>
 > **进程状态：**Argus continuous/active 科研工作流快照；Sol-Attn pair-value-halves 候选保持默认关闭，真实链路仍受 Docker storage blocker 限制。<br>
-> **目前正在做什么：**完成看板独立化与主 README 美观恢复，审查链接、数字和 claim boundary 后发布；随后恢复 pair-value-halves 独立审查与真实链路 N=1 gate 准备。
+> **目前正在做什么：**将最新 pair-value-halves captured-metadata replay 作为独立、非 Docker、无模型 kernel milestone 进入 sanitized export/audit/Reviewer 门禁；不把它写成 H3 E2E、长视频、BF16 fidelity 或产品级 speedup。
 
 ## 一眼结论（所有数字均带快照时间与证据版本）
 
-- **证据加权总进度：45.00%**（权重表版本：`a6000-long-video-v2026-08-13-dashboard-1`；快照：2026-08-13 14:34 UTC）。该百分比只按已验收里程碑计分，未验收/被阻塞项目计 **0 进度信用**，不按文件数、commit 数、运行时长或主观感觉计分。
+- **证据加权总进度：45.00%**（权重表版本：`a6000-long-video-v2026-08-13-dashboard-1`；快照：2026-08-13 15:05 UTC）。该百分比只按已验收里程碑计分，未验收/被阻塞项目计 **0 进度信用**，不按文件数、commit 数、运行时长或主观感觉计分。
 - **30s/60s 当前目标：**单张 RTX A6000 上的 720p 级 MiniMax-H3 FL2VA 长视频生产，先 30 秒可复现音视频链路，再 60 秒。
 - **长视频产出：0/2 已验收目标**（30s：未验收；60s：未验收）。这是“验收计数为 0”，**不等于模型质量分为 0**；当前没有官方/hidden/held-out 长视频分数。
 - **短片 accepted baseline：**原生 1344×768、124 帧、24 FPS、5.166667 秒短片已验收；BF16 warm N=10 median **1792.202 s**，Turbo 8-step N=10 median **290.998 s**（**6.159×** vs BF16），Turbo 4-step N=10 median **149.619 s**（**11.978×** vs BF16，质量风险更高）。
-- **Sol-Attn 边界：**r8 真实 H3 5-step opt-in lane 已验收 **15.203%** median HTTP-time improvement（10/10 pairs，阈值 >3%），但不是 50-step BF16、长视频或语义质量结论。最新 pair-value-halves 仅为 **合成/无模型 kernel 证据**：total median **145.399 ms** vs current prefix-skip **175.567 ms**，`max_abs_valid=0`，仍默认关闭，尚无 H3 E2E/长视频/产品级 speedup。
+- **Sol-Attn 边界：**r8 真实 H3 5-step opt-in lane 已验收 **15.203%** median HTTP-time improvement（10/10 pairs，阈值 >3%），但不是 50-step BF16、长视频或语义质量结论。最新 pair-value-halves captured replay 仅为 **captured-metadata / 非 Docker / 无模型 kernel 证据**：replay total median **144.652 ms** vs current prefix-skip **175.216 ms**，`max_abs_valid=0`，仍默认关闭，尚无 H3 E2E/长视频/产品级 speedup。
 - **Docker blocker：**pinned r2 base image 与 r8/r9 overlay image 当前在本地 Docker daemon 不可 inspect；r2 restore/build 在 layerdb 注册阶段失败（`file exists`）。在 admin 修复或干净 daemon 提供 pinned image 前，不重复同一 Docker restore/build，不运行真实链路 H3 gate。
 - **下一真实链路 N=1 gate：**只改变 Q/K/V materialization；必须检查 dense fallback、输出/AV 正确性、copy bytes 和可比端到端时间。N=1 通过后才允许 N=3，再考虑 N≥10。
 - **当前门禁评分（研究主线）：34.00/100，状态：BLOCKED/观察。**硬门禁“30s/60s 真实链路尚无已验收输出、Docker gate 阻塞”未通过，不能用综合分掩盖。
@@ -25,11 +25,11 @@
 | M1 公开基准合同、Schema、证据规范化、CPU/static 与 publication hygiene 基础 | 15% | `benchmark_contract/v1`、公开报告和 sanitized audit/review 基础可复核 | 15% | `benchmark_contract/v1/README.md`; `CURRENT_WORK.md` | 已验收基础能力 |
 | M2 5.166667s 短片 BF16 fidelity denominator 与 Turbo practical accepted baseline | 20% | 同一物理 A6000，BF16/Turbo N=10；质量/结构边界公开 | 20% | `CURRENT_WORK.md`; `technical_report/minimax_h3_a6000_performance.md` | 已验收短片基线，不是长视频 |
 | M3 Sol-Attn r8 formal matched 5-step opt-in lane | 10% | 10/10 matched pairs，median HTTP-time improvement 超过 3% 阈值，fail-closed 边界公开 | 10% | `technical_report/evidence/minimax_h3_desktop/sol_engine_port/sol_attn_h3_formal_n10_r8_n10_20260812T031757Z/formal_n10_decision.json` | 已验收但仅限 5-step opt-in |
-| M4 pair-value-halves 去 materialization 假设进入真实链路 | 10% | 真实 H3 N=1 gate 通过；不是仅 synthetic/model-free harness | 0% | source evidence id `sol_attn_pair_value_halves_20260813T110953Z`; `CURRENT_WORK.md` | 合成证据保留，未验收真实链路 |
+| M4 pair-value-halves 去 materialization 假设进入真实链路 | 10% | 真实 H3 N=1 gate 通过；不是仅 synthetic/model-free replay/harness | 0% | `technical_report/evidence/minimax_h3_desktop/sol_engine_port/sol_attn_pair_value_halves_captured_replay_20260813T145731Z/summary.json`; `CURRENT_WORK.md` | captured-metadata 证据保留，未验收真实链路 |
 | M5 30 秒 720p 级可复现音视频链路 | 25% | 单 A6000 产生并验收 30s 输出；AV/质量/耗时边界通过 | 0% | `benchmark_contract/v1/lane-manifests/*30*`（extension/unmeasured）; `CURRENT_WORK.md` | 未测/被 Docker blocker 间接阻塞 |
 | M6 60 秒 720p 级可复现音视频链路 | 15% | 单 A6000 产生并验收 60s 输出；AV/质量/耗时边界通过 | 0% | `benchmark_contract/v1/lane-manifests/*60*`（extension/unmeasured）; `CURRENT_WORK.md` | 未测 |
 | M7 长视频重复性/泛化与最终发布边界 | 5% | 30/60s 通过后再做多 prompt/seed、N≥3/N≥10、人工质量与 claim 审查 | 0% | 待生成 | 未开始 |
-| **合计** | **100%** |  | **45.00%** | 快照：2026-08-13 14:34 UTC | 未验收项未给进度信用 |
+| **合计** | **100%** |  | **45.00%** | 快照：2026-08-13 15:05 UTC | 未验收项未给进度信用 |
 
 ## 当前量化效果（N/A/blocked 不写成 0）
 
@@ -42,12 +42,12 @@
 | Turbo 8-step practical | median **290.998 s** | BF16 1792.202 s | **6.159×** faster | N=10 | disclosed practical approximation，不是 BF16 fidelity | 好=结构/质量边界通过且 >5×；中=2–5×；差=<2×或质量失败 | 推荐 practical 默认短片路线 | `CURRENT_WORK.md`; `technical_report/minimax_h3_a6000_performance.md` |
 | Turbo 4-step experimental | median **149.619 s** | BF16 1792.202 s | **11.978×** faster | N=10 | 质量风险更高，24-case 中视觉 11/12 | 好=>10×且质量通过；中=>5×但质量风险；差=质量失败 | 快但非默认 | `CURRENT_WORK.md` |
 | Sol-Attn r8 formal 5-step opt-in | median HTTP-time improvement **15.203%** | matched dense 5-step lane | +15.203% | 10/10 pairs | 仅 5-step opt-in；非 BF16/长视频/语义质量 | 好=>3% 且 10/10 pairs/AV pass；中=1–3%；差≤1%或 fallback/AV fail | 已验收 bounded lane | `technical_report/evidence/minimax_h3_desktop/sol_engine_port/sol_attn_h3_formal_n10_r8_n10_20260812T031757Z/formal_n10_decision.json` |
-| Sol-Attn pair-value-halves synthetic harness | total **145.399 ms**；forward **130.043 ms**；`max_abs_valid=0` | current prefix-skip **175.567 ms**；forward **158.903 ms** | total **17.183%** local synthetic gain；forward **18.162%** | repeats=7, model_load=false | 合成/无模型 kernel only；默认关闭；无 H3 E2E、无长视频、无产品 speedup | 好=correctness exact 且进入真实链路 gate；中=synthetic clean but no E2E；差=correctness/fallback fail | 保留为下一真实链路假设，进度信用 0% | source evidence id `sol_attn_pair_value_halves_20260813T110953Z`; `CURRENT_WORK.md` |
+| Sol-Attn pair-value-halves captured replay | replay total **144.652 ms**；forward pointer **129.850 ms**；`max_abs_valid=0` | current prefix-skip **175.216 ms**；forward pointer **158.161 ms** | replay total **17.443%** local model-free gain；forward **17.900%** | repeats=7, model_load=false, docker_used_for_run=false | captured-metadata/非 Docker/无模型 kernel only；默认关闭；无 H3 E2E、无长视频、无产品 speedup | 好=correctness exact 且进入真实链路 gate；中=captured replay clean but no E2E；差=correctness/fallback fail | 保留为下一真实链路假设，进度信用 0% | `technical_report/evidence/minimax_h3_desktop/sol_engine_port/sol_attn_pair_value_halves_captured_replay_20260813T145731Z/summary.json`; `CURRENT_WORK.md` |
 | Docker pinned runtime 可用性 | BLOCKED | pinned r2/r8/r9 image 应可 inspect | N/A | preflight/build probe 1 blocker | layerdb `file exists` 属 admin/storage blocker；不重复相同 restore/build | 好=pinned image inspectable；中=clean daemon 可用；差=当前 blocker | 阻塞 N=1 real-chain | source evidence `technical_report/evidence/minimax_h3_desktop/packaging/minimax-h3-r2-restore-build-20260813T074702Z/r2_restore_docker_storage_blocker.json`; `CURRENT_WORK.md` |
 
 ## 怎样判断 Argus 当前工作好不好（100 分门禁式规则）
 
-**评分版本：**`argus-quality-gate-v2026-08-13-dashboard-1`；**快照：**2026-08-13 14:34 UTC。公式：
+**评分版本：**`argus-quality-gate-v2026-08-13-dashboard-1`；**快照：**2026-08-13 15:05 UTC。公式：
 
 `Score = 0.40 × 主指标/效果 + 0.20 × 泛化与统计 + 0.20 × 正确性与可复现 + 0.10 × 成本效率 + 0.10 × 安全/合规/证据完整性`
 
@@ -64,23 +64,21 @@
 
 ## 当前完成后做什么（顺序与验收标准）
 
-1. **当前项：看板独立化并恢复主 README 版式。**验收标准：主 README 以 `MiniMax-H3 on a Single RTX A6000` 开头，只在居中导航保留本页链接；完整状态只在本文件维护。
-2. **下一项：publication/safety/static audit + 文档审查 + non-force push。**验收标准：链接有效、核心数字不变、无凭据/权重/私有路径/raw log、只 stage 文档、`origin/main == HEAD`。
-3. **再下一项：恢复 Sol-Attn pair-value-halves candidate 的独立 Reviewer verdict。**验收标准：审查绑定候选 evidence/fingerprint；不能用本次排版审查替代科学审查。
-4. **Docker blocker 清除后执行真实链路 N=1 gate。**验收标准：只改变 Q/K/V materialization；记录 dense fallback、AV/输出正确性、copy bytes 与可比端到端时间；N=1 通过后才晋级 N=3/N≥10。
+1. **当前项：pair-value-halves captured replay sanitized milestone。**验收标准：只发布 captured-metadata / 非 Docker / 无模型 kernel 边界；不改写 BF16/Turbo/r8 formal 数字；候选保持默认关闭、fail-closed。
+2. **下一项：publication/safety/static audit + 独立 Reviewer + non-force push。**验收标准：fresh export fingerprint、private/export tests、publication audit、hygiene scans、Reviewer verdict 全部绑定同一候选；随后 `origin/main == HEAD`。
+3. **再下一项：Docker blocker 清除后执行真实链路 N=1 gate。**验收标准：只改变 Q/K/V materialization；记录 dense fallback、AV/输出正确性、copy bytes 与可比端到端时间；N=1 通过后才晋级 N=3/N≥10。
 
 ## GPT 辅助生成的中文流程图（草案/当前流程，非 Final/Locked）
 
 ```mermaid
 flowchart LR
-    A[当前任务：独立 RESEARCH_DASHBOARD.md]:::current --> B[主 README 恢复原有美观版式]:::current
-    B --> C[审查：链接、数字、claim boundary、安全]:::pending
+    A[当前任务：pair-value-halves captured replay]:::current --> B[sanitized export + static/audit/hygiene]:::pending
+    B --> C[独立 Reviewer 绑定 fingerprint]:::pending
     C --> D{数字门禁
 45.00% / 34.00分 / blocker 保留}:::pending
-    D -->|文档门通过| E[non-force commit/push
+    D -->|门禁通过| E[non-force commit/push
 核对 origin/main == HEAD]:::pending
-    E --> F[下一项：pair-value-halves 独立 Reviewer]:::pending
-    F -->|Docker 修复后| G[真实链路 N=1 gate]:::pending
+    E --> G[Docker 修复后：真实链路 N=1 gate]:::pending
     X[阻塞：Docker layerdb file exists]:::blocked -.约束.-> G
     H[未开始：30s/60s 长视频验收 0/2]:::notstart -.硬门禁.-> D
     S[已完成：短片 BF16/Turbo + Sol-Attn r8 bounded evidence]:::done -.证据.-> D
@@ -93,11 +91,11 @@ flowchart LR
 ```
 
 
-每条边映射到 `README.md` / 本文件、publication audit、Reviewer verdict、Git remote equality、Sol-Attn evidence、Docker blocker evidence 与后续 N=1 gate 记录。
+每条边映射到 `CURRENT_WORK.md` / 本文件、publication audit、Reviewer verdict、Git remote equality、Sol-Attn captured-replay evidence、Docker blocker evidence 与后续 N=1 gate 记录。
 
 ## 提交纪律 / Commit discipline
 
-- **最近一次已验证文档发布（本次独立化之前）：**2026-08-13 14:36:59 UTC，`c51f1eb`（`docs: repair dashboard publication status`），当时已核对 `origin/main == HEAD`。
+- **最近一次已验证公开发布（本次 captured-replay 候选之前）：**2026-08-13 14:58:30 UTC，`e964ffc`（`docs: include research dashboard in release manifest`），当时已核对 `origin/main == HEAD`。
 - **频率规则：**每个有意义且已审查的 milestone 立即非空 commit/push；有实质变化时最长每 3 个活跃小时同步一次；无变化不空提交。
 - **页面规则：**后续量化状态更新只改 `RESEARCH_DASHBOARD.md` 与必要的 `CURRENT_WORK.md`；不得再把完整看板放到主 README 标题之前。
 - **安全规则：**只 stage 当前里程碑文件；排除凭据、缓存、权重、原始日志、私有/受限材料；禁止 force push；推送后核对 `origin/main == HEAD`。

@@ -97,6 +97,7 @@ def test_env_switches_are_default_off():
     assert DEFAULT_ENV_SWITCHES.get("MINIMAX_H3_A6000_SOL_ATTN_SKIP_FULL_PREFIX_BLOCKS") == "0"
     assert DEFAULT_ENV_SWITCHES.get("MINIMAX_H3_A6000_SOL_ATTN_STATIC_PREFIX_SINK") == "0"
     assert DEFAULT_ENV_SWITCHES.get("MINIMAX_H3_A6000_SOL_ATTN_BITMASK_SCHEDULER") == "0"
+    assert DEFAULT_ENV_SWITCHES.get("MINIMAX_H3_A6000_SOL_ATTN_PAIR_VALUE_HALVES") == "0"
     assert DEFAULT_ENV_SWITCHES.get("MINIMAX_H3_A6000_SOL_ATTN_DIAGNOSTIC_MATERIALIZE") == "0"
     assert DEFAULT_ENV_SWITCHES.get("MINIMAX_H3_A6000_SOL_ATTN_MATERIALIZE_MAX_BYTES") == "67108864"
     assert DEFAULT_ENV_SWITCHES.get("MINIMAX_H3_A6000_SOL_ATTN_FORWARD_CONFIG") == ""
@@ -113,6 +114,7 @@ def test_sol_attn_policy_from_env_reads_diagnostic_dense_gate_override():
         "MINIMAX_H3_A6000_SOL_ATTN_SKIP_FULL_PREFIX_BLOCKS": "1",
         "MINIMAX_H3_A6000_SOL_ATTN_STATIC_PREFIX_SINK": "1",
         "MINIMAX_H3_A6000_SOL_ATTN_BITMASK_SCHEDULER": "1",
+        "MINIMAX_H3_A6000_SOL_ATTN_PAIR_VALUE_HALVES": "1",
     }
     policy = SolAttnPolicy.from_env(env)
     assert policy.allow_sparse is True
@@ -122,6 +124,7 @@ def test_sol_attn_policy_from_env_reads_diagnostic_dense_gate_override():
     assert policy.skip_full_prefix_blocks is True
     assert policy.static_prefix_sink is True
     assert policy.bitmask_exact_scheduler is True
+    assert policy.pair_value_halves is True
 
 
 def test_sol_attn_policy_from_env_reads_default_off_forward_config():
@@ -136,7 +139,10 @@ def test_sol_attn_forward_config_group_hook_is_default_off_static():
     assert '"g64_bv64_w4_s1": {"GROUP": 64, "BV": 64, "num_warps": 4, "num_stages": 1}' in source
     assert 'group = int(config.get("GROUP", GROUP_SIZE))' in source
     assert 'GROUP=group' in source
+    assert "_forward_ptr_pair_v64_kernel" in source
+    assert "pair_value_halves" in source
     assert DEFAULT_ENV_SWITCHES.get("MINIMAX_H3_A6000_SOL_ATTN_FORWARD_CONFIG") == ""
+    assert DEFAULT_ENV_SWITCHES.get("MINIMAX_H3_A6000_SOL_ATTN_PAIR_VALUE_HALVES") == "0"
 
 
 def test_h3_hook_metadata_derivation_uses_source_backed_layout_only():
@@ -438,6 +444,7 @@ def test_skip_full_prefix_blocks_and_static_prefix_sink_preserve_dense_prefix_ov
         assert kwargs["exact_prefix_query"] is False
         assert kwargs["skip_full_prefix_blocks"] is True
         assert kwargs["static_prefix_sink"] is True
+        assert kwargs["pair_value_halves"] is False
         assert kwargs["allow_strided_value"] is True
         out = torch.full(q_full.shape, -7.0, dtype=q_full.dtype)
         valid = int(kwargs["tokens"])
@@ -482,6 +489,58 @@ def test_skip_full_prefix_blocks_and_static_prefix_sink_preserve_dense_prefix_ov
     assert telemetry.density_samples[-1]["skipped_full_prefix_query_blocks_estimate"] == 1
     assert telemetry.density_samples[-1]["static_prefix_sink"] is True
     assert telemetry.density_samples[-1]["static_prefix_sink_blocks_estimate"] == 2
+
+
+
+def test_pair_value_halves_probe_preserves_dense_prefix_overwrite_contract(monkeypatch):
+    q, k, _ = _qkv(tokens=128)
+    value = _fused_value_view(tokens=128)
+    metadata = PackedH3Metadata(prefix_len=70, latent_grid=(1, 1, 40), valid_length=110, total_length=128)
+    telemetry = SolAttnTelemetry()
+
+    def fake_decline_reason(**kwargs):
+        reason = stride_aware_value_layout_reason(kwargs["value"])
+        return None if reason is None else f"unsupported_stride_aware_v_layout:{reason}"
+
+    def fake_kernel(q_full, k_full, v_full, **kwargs):
+        assert kwargs["pair_value_halves"] is True
+        assert kwargs["skip_full_prefix_blocks"] is True
+        assert kwargs["exact_prefix_query"] is False
+        assert kwargs["allow_strided_value"] is True
+        out = torch.zeros(q_full.shape, dtype=q_full.dtype)
+        valid = int(kwargs["tokens"])
+        out[:, :valid] = dense_attention_reference(
+            q_full[:, :valid], k_full[:, :valid], v_full[:, :valid], softmax_scale=kwargs.get("scale")
+        )
+        return out
+
+    monkeypatch.setattr(sol_backend, "decline_reason", fake_decline_reason)
+    monkeypatch.setattr(sol_backend, "_load_sol_attn_sm86", lambda: fake_kernel)
+    out = sol_attn_h3_reference_or_decline(
+        q,
+        k,
+        value,
+        metadata=metadata,
+        step_index=10,
+        layer_index=2,
+        policy=SolAttnPolicy(
+            allow_sparse=True,
+            stride_aware_value=True,
+            skip_full_prefix_blocks=True,
+            pair_value_halves=True,
+        ),
+        telemetry=telemetry,
+        device_capability=(8, 6),
+    )
+
+    reference = dense_attention_packed_reference(q, k, value.contiguous(), metadata=metadata)
+    assert torch.equal(out[:, :70], reference[:, :70])
+    assert torch.equal(out[:, 70:110], reference[:, 70:110])
+    assert torch.count_nonzero(out[:, 110:]) == 0
+    assert telemetry.sparse_calls == 1 and telemetry.fallback_calls == 0
+    assert telemetry.prefix_query_dense_calls == 1
+    assert telemetry.density_samples[-1]["pair_value_halves"] is True
+    assert telemetry.materialize_copy_count == 0 and telemetry.materialize_copy_bytes == 0
 
 
 

@@ -211,6 +211,8 @@ Formal matched N=10:
 
 This result is limited to the **5-step Sol-Attn opt-in matched lane**. It is not a 50-step BF16 fidelity speedup and not a Turbo, DLO, or semantic-quality-equivalence claim. The implementation defaults off and fails closed to dense when metadata is unsuitable.
 
+The later `MINIMAX_H3_A6000_SOL_ATTN_PAIR_VALUE_HALVES` path remains default-off and is retained only by a captured-metadata, non-Docker, model-free SM86 replay: candidate total median **144.652 ms** vs current prefix-skip **175.216 ms**, forward pointer subphase **129.850 ms** vs **158.161 ms**, `max_abs_valid=0`, and zero unintended materialized copy events/bytes in the replay lanes. This shows a captured-metadata kernel mechanism, not an H3 end-to-end, long-video, BF16-fidelity, normal-PC, product-speedup, public-comparison, or SOTA result.
+
 ---
 
 ## Rejected or paused routes

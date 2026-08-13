@@ -239,7 +239,7 @@ Formal N=10 matched-workload 结果：
 
 该结论只适用于 **5-step Sol-Attn opt-in matched lane**。它不是 50-step BF16 fidelity speedup，也不代表 Turbo、DLO 或完整语义质量等价。实现默认关闭、metadata 缺失时 fail-closed 到 dense。
 
-后续 `MINIMAX_H3_A6000_SOL_ATTN_PAIR_VALUE_HALVES` 路线仍默认关闭，只在非 Docker、无模型 SM86 harness 中得到保留：candidate total median **145.399 ms** vs current prefix-skip **175.567 ms**，forward subphase **130.043 ms** vs **158.903 ms**，`max_abs_valid=0`，且 materialized copy 次数/字节为 0。这个结果只说明合成 kernel 机制可运行；没有加载 H3 模型，不是 H3 端到端、长视频、BF16 保真、普通电脑、产品加速、公开对比或 SOTA 声明。
+后续 `MINIMAX_H3_A6000_SOL_ATTN_PAIR_VALUE_HALVES` 路线仍默认关闭，只在 captured-metadata、非 Docker、无模型 SM86 replay 中得到保留：candidate total median **144.652 ms** vs current prefix-skip **175.216 ms**，forward pointer subphase **129.850 ms** vs **158.161 ms**，`max_abs_valid=0`，且 replay lanes 中无非预期 materialized copy 次数/字节。这个结果只说明 captured metadata kernel 机制可运行；没有加载 H3 模型、没有启动 Docker，不是 H3 端到端、长视频、BF16 保真、普通电脑、产品加速、公开对比或 SOTA 声明。
 
 ---
 
