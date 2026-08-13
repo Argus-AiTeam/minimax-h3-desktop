@@ -1,12 +1,12 @@
 # 研究实时看板 / Live Research Dashboard（中文优先）
 
-> **更新时间（UTC）：2026-08-13 14:11 UTC**<br>
-> **进程状态：Argus continuous/active 科研工作流快照；当前阶段是 GitHub README 首屏看板实现、审计与独立审查，Sol-Attn pair-value-halves 候选发布线暂停但未拒绝。**<br>
-> **目前正在做什么：**把公开 README 顶部改为证据驱动看板，同步 `CURRENT_WORK.md` 时间与边界；审查通过后才允许非 force commit/push。瞬时 PID、私有 provider、凭据和隐藏推理不是科学证据，不在公共 README 展示。
+> **更新时间（UTC）：2026-08-13 14:34 UTC**<br>
+> **进程状态：Argus continuous/active 科研工作流快照；当前阶段是已发布 `c5690f1f...` 看板后的真实性修复、审计和同步验证，Sol-Attn pair-value-halves 候选发布线仍暂停但未拒绝。**<br>
+> **目前正在做什么：**修复已发布 GitHub README/CURRENT_WORK 中残留的 pre-publication wording，保持 30s/60s、短片 baseline、Sol-Attn 与 Docker blocker 边界不变；瞬时 PID、私有 provider、凭据和隐藏推理不是科学证据，不在公共 README 展示。
 
 ## 一眼结论（所有数字均带快照时间与证据版本）
 
-- **证据加权总进度：45.00%**（权重表版本：`a6000-long-video-v2026-08-13-dashboard-1`；快照：2026-08-13 14:11 UTC）。该百分比只按已验收里程碑计分，未验收/被阻塞项目计 **0 进度信用**，不按文件数、commit 数、运行时长或主观感觉计分。
+- **证据加权总进度：45.00%**（权重表版本：`a6000-long-video-v2026-08-13-dashboard-1`；快照：2026-08-13 14:34 UTC）。该百分比只按已验收里程碑计分，未验收/被阻塞项目计 **0 进度信用**，不按文件数、commit 数、运行时长或主观感觉计分。
 - **30s/60s 当前目标：**单张 RTX A6000 上的 720p 级 MiniMax-H3 FL2VA 长视频生产，先 30 秒可复现音视频链路，再 60 秒。
 - **长视频产出：0/2 已验收目标**（30s：未验收；60s：未验收）。这是“验收计数为 0”，**不等于模型质量分为 0**；当前没有官方/hidden/held-out 长视频分数。
 - **短片 accepted baseline：**原生 1344×768、124 帧、24 FPS、5.166667 秒短片已验收；BF16 warm N=10 median **1792.202 s**，Turbo 8-step N=10 median **290.998 s**（**6.159×** vs BF16），Turbo 4-step N=10 median **149.619 s**（**11.978×** vs BF16，质量风险更高）。
@@ -26,7 +26,7 @@
 | M5 30 秒 720p 级可复现音视频链路 | 25% | 单 A6000 产生并验收 30s 输出；AV/质量/耗时边界通过 | 0% | `benchmark_contract/v1/lane-manifests/*30*`（extension/unmeasured）; `CURRENT_WORK.md` | 未测/被 Docker blocker 间接阻塞 |
 | M6 60 秒 720p 级可复现音视频链路 | 15% | 单 A6000 产生并验收 60s 输出；AV/质量/耗时边界通过 | 0% | `benchmark_contract/v1/lane-manifests/*60*`（extension/unmeasured）; `CURRENT_WORK.md` | 未测 |
 | M7 长视频重复性/泛化与最终发布边界 | 5% | 30/60s 通过后再做多 prompt/seed、N≥3/N≥10、人工质量与 claim 审查 | 0% | 待生成 | 未开始 |
-| **合计** | **100%** |  | **45.00%** | 快照：2026-08-13 14:11 UTC | 未验收项未给进度信用 |
+| **合计** | **100%** |  | **45.00%** | 快照：2026-08-13 14:34 UTC | 未验收项未给进度信用 |
 
 ## 当前量化效果（N/A/blocked 不写成 0）
 
@@ -44,7 +44,7 @@
 
 ## 怎样判断 Argus 当前工作好不好（100 分门禁式规则）
 
-**评分版本：**`argus-quality-gate-v2026-08-13-dashboard-1`；**快照：**2026-08-13 14:11 UTC。公式：
+**评分版本：**`argus-quality-gate-v2026-08-13-dashboard-1`；**快照：**2026-08-13 14:34 UTC。公式：
 
 `Score = 0.40 × 主指标/效果 + 0.20 × 泛化与统计 + 0.20 × 正确性与可复现 + 0.10 × 成本效率 + 0.10 × 安全/合规/证据完整性`
 
@@ -54,16 +54,16 @@
 | 泛化与统计 | 20 | 100=长视频 N≥10、多 prompt/seed、人审/结构均过；60=长视频 N≥3；30=只有短片 N=10 与质量套件；0=无可复核样本 | **30** |
 | 正确性与可复现 | 20 | 100=真实链路、fallback、AV、测试、sanitized audit 均过；80=短片/contract/static 与 bounded Sol-Attn 证据可复核但真实链路被阻塞；50=只有局部测试；0=正确性失败或不可复现 | **80** |
 | 成本效率 | 10 | 100=长视频达到预设成本/时间阈值；60=短片 practical speedup 已验收且长视频待测；40=短片 speedup 有效但 Docker blocker 阻止当前 gate；0=无效率证据 | **40** |
-| 安全/合规/证据完整性 | 10 | 100=无凭据/权重/私有路径/raw log 泄漏，claim boundary、audit、Reviewer、remote sync 全过；80=上一公开树干净，本看板候选仍需独立审查/发布；0=泄漏或夸大 claim | **80** |
+| 安全/合规/证据完整性 | 10 | 100=无凭据/权重/私有路径/raw log 泄漏，claim boundary、audit、Reviewer、remote sync 全过；80=最新已发布公开树干净，且本快照采用非自指提交记录，未把 synthetic/blocked 工作写成结果；0=泄漏或夸大 claim | **80** |
 | **综合** | **100** | A/通过 ≥85 且所有硬门禁通过；B/观察 70–84；C/阻塞 50–69；D/失败 <50；任一硬门禁失败时不得用综合分掩盖 | **34.00/100；BLOCKED/观察** |
 
-**硬门禁：**(1) 不把 N/A/blocked 写成 0 分数；(2) 不从 synthetic/model-free harness 推导产品/长视频 speedup；(3) 不泄漏凭据、私有 provider、模型权重、Docker 层、raw log 或 held-out；(4) 真实链路 N=1 未过时，不得宣称 30/60s 达成；(5) 发布前必须 sanitized audit + 独立 Reviewer + 非 force push + `origin/main == HEAD`。当前硬门禁 (4) 仍阻塞，所以综合分只作诊断，不是通过结论。
+**硬门禁：**(1) 不把 N/A/blocked 写成 0 分数；(2) 不从 synthetic/model-free harness 推导产品/长视频 speedup；(3) 不泄漏凭据、私有 provider、模型权重、Docker 层、raw log 或 held-out；(4) 真实链路 N=1 未过时，不得宣称 30/60s 达成；(5) 每次发布必须 sanitized audit + 独立 Reviewer + 非 force push + `origin/main == HEAD`。当前硬门禁 (4) 仍阻塞，所以综合分只作诊断，不是通过结论。
 
 ## 当前完成后做什么（顺序与验收标准）
 
-1. **当前项：README 首屏中文证据看板。**验收标准：README 首屏直接展示更新时间、状态、证据加权进度、核心量化数字、评分门禁、流程图、提交纪律；`CURRENT_WORK.md` UTC 时间同步；claim boundary 不扩大。
-2. **下一项：sanitized export/publication audit + 独立 Reviewer 审查。**验收标准：audit issue_count=0；Reviewer 明确接受 README 可见性、数字可追溯性、阈值合理性、claim 边界、中文流程图、提交时间/频率与 stage discipline。
-3. **再下一项：仅 stage 本看板 milestone 允许文件，非 force commit/push 到 `../github-release` `main`。**验收标准：无无关脏文件；不提交凭据/缓存/权重/raw log/私有材料；push 后核对 remote `main == local HEAD`。
+1. **当前项：post-`c5690f1f...` 看板真实性修复。**验收标准：README/CURRENT_WORK 的 UTC 时间一致；不再使用发布前状态描述已发布的 c5690f1 dashboard；提交纪律采用非自指记录；claim boundary 不扩大。
+2. **下一项：sanitized export/publication audit + 独立 Reviewer 审查本小修订。**验收标准：audit issue_count=0；Reviewer 明确接受 README 可见性、数字可追溯性、阈值合理性、claim 边界、中文流程图、提交时间/频率与 stage discipline。
+3. **再下一项：仅 stage 本 dashboard-repair milestone 文件，非 force commit/push 到 `../github-release` `main`。**验收标准：无无关脏文件；不提交凭据、缓存、权重、raw log、私有材料；push 后核对 remote `main == local HEAD`。
 4. **随后恢复原研究主线：Sol-Attn pair-value-halves candidate 的独立 Reviewer verdict。**验收标准：不要把本 README review 当作 Sol-Attn candidate fingerprint 的 verdict；Sol-Attn 仍需自己的 fingerprint-bound review/audit。
 5. **Docker blocker 清除后执行下一真实链路 N=1 gate。**验收标准：只改变 Q/K/V materialization；dense fallback、AV/输出正确性、copy bytes 与可比端到端时间均记录；N=1 通过后才晋级 N=3/N≥10。
 
@@ -71,10 +71,11 @@
 
 ```mermaid
 flowchart LR
-    A[当前任务：README 首屏中文证据看板\n更新时间/进度/量化效果/评分门禁] -->|编辑 README.md + CURRENT_WORK.md| B[实验/实现：同步 UTC 时间与 claim boundary\n证据：CURRENT_WORK.md、公开报告、source evidence id]
+    P[已完成：c5690f1 dashboard publication\nREADME 首屏看板已在 main 发布] -->|post-publication repair| A[当前任务：修复残留 pre-publication wording\n同步 README.md + CURRENT_WORK.md UTC]
+    A -->|只改 dashboard truthfulness| B[实验/实现：保持 claim boundary 与核心数字不变\n证据：CURRENT_WORK.md、公开报告、source evidence id]
     B -->|sanitized export + publication audit| C[独立审查：README 可见性、数字追溯、阈值、边界、流程图、提交纪律]
     C -->|Reviewer 接受后| D[数字门禁：45.00% 进度；34.00/100 诊断分\n硬门禁未过则不得掩盖]
-    D -->|只 stage 本 milestone 文件；非 force| E[commit/push 到 github-release main\n核对 origin/main == HEAD]
+    D -->|只 stage 本 dashboard-repair 文件；非 force| E[commit/push 到 github-release main\n核对 origin/main == HEAD]
     E -->|不等同于 Sol-Attn verdict| F[下一项：恢复 pair-value-halves candidate fingerprint 审查]
     F -->|Docker 修复后| G[真实链路 N=1 gate：只改 Q/K/V materialization]
 
@@ -88,22 +89,23 @@ flowchart LR
     classDef blocked fill:#ffd6d6,stroke:#c92a2a,color:#5f0000;
     classDef notstart fill:#f1f3f5,stroke:#868e96,color:#343a40;
     classDef pending fill:#e7f5ff,stroke:#1971c2,color:#0b2e4a;
+    class P,S1,S2 done;
     class A,B current;
-    class S1,S2 done;
     class X blocked;
     class H notstart;
     class C,D,E,F,G pending;
 ```
 
-每条边均可映射到代码或证据：README/CURRENT_WORK 编辑、sanitized audit JSON、Reviewer verdict、数字门禁表、Git commit/push 校验、Sol-Attn candidate fingerprint、Docker blocker evidence、N=1 gate 记录。
+每条边均可映射到代码或证据：`c5690f1` dashboard publication、README/CURRENT_WORK 编辑、sanitized audit JSON、Reviewer verdict、数字门禁表、Git commit/push 校验、Sol-Attn candidate fingerprint、Docker blocker evidence、N=1 gate 记录。
 
 ## 提交纪律 / Commit discipline
 
-- **最近一次已发布提交：**2026-08-13 11:00:24 UTC，`58082213c1ecb8beae61e6a4e42e3dce3c9d71c8`（`chore: publish stride-aware Sol-Attn harness`）。
-- **最近一次远端同步/核对：**2026-08-13 11:21:01 UTC，`origin/main == 58082213c1ecb8beae61e6a4e42e3dce3c9d71c8`。
+- **记录方案（非自指）：**本节只记录“此快照生成前已完成并验证”的发布/同步；不预测包含本节的未来 commit SHA 或 push 时间。本轮发布后的 `origin/main == HEAD` 由 Git 验证命令确认，并在下一次实质性看板更新中滚动写入。
+- **最近一次已验证 dashboard 发布（快照前）：**2026-08-13 14:22:33 UTC，`c5690f1ffd0ffb71a8581ca51afe2366a7a32687`（`docs: publish live research dashboard`）。
+- **最近一次远端同步/核对（快照前）：**2026-08-13 14:34 UTC，`origin/main == c5690f1ffd0ffb71a8581ca51afe2366a7a32687`；远端未前进，发布前工作树仅保留本 dashboard-repair 的 `README.md`/`CURRENT_WORK.md` 意图内 diff。
 - **频率规则：**每个有意义且已审查的 milestone 立即非空 commit/push；有实质变化时最长每 3 个活跃小时同步一次；README 在阶段、核心数字、阻塞或下一步发生实质变化时更新；无变化不空提交。
 - **提交前纪律：**只 stage 本 milestone 允许文件；排除凭据、缓存、权重、原始日志、私有/受限材料与无关脏文件；禁止 force push；推送后核对 remote `main == local HEAD`。
-- **当前看板候选纪律：**完成 sanitized audit 与独立 Reviewer 前，不把 README 候选记为已发布，不写入 Sol-Attn candidate 的 reviewed fingerprint，也不把 README review 替代 Sol-Attn review。
+- **当前边界：**`c5690f1...` dashboard 已经发布；本次只是 post-publication 文字/时间/纪律修复，不写入 Sol-Attn candidate 的 reviewed fingerprint，也不把 README review 替代 Sol-Attn review。
 
 ---
 
