@@ -6,6 +6,7 @@
 
 <p align="center">
   <a href="CURRENT_WORK.md"><strong>Current Work / 当前工作</strong></a> ·
+  <a href="RESEARCH_DASHBOARD.md"><strong>Live Dashboard / 研究实时看板</strong></a> ·
   <a href="benchmark_contract/v1/README.md"><strong>Benchmark Contract v1</strong></a> ·
   <a href="README.md">中文</a> ·
   <a href="#generated-result">Generated result</a> ·
