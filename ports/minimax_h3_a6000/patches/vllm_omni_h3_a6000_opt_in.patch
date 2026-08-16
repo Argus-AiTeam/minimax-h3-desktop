@@ -15,7 +15,7 @@ new file mode 100644
 index 00000000..6ad785a2
 --- /dev/null
 +++ b/vllm_omni/diffusion/attention/backends/sol_attn_h3_a6000.py
-@@ -0,0 +1,581 @@
+@@ -0,0 +1,609 @@
 +# SPDX-License-Identifier: Apache-2.0
 +# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
 +"""Opt-in MiniMax-H3 A6000 Sol-Attn backend.
@@ -59,6 +59,12 @@ index 00000000..6ad785a2
 +    "MINIMAX_H3_A6000_SOL_ATTN_DENSE_FIRST_STEPS": "10",
 +    "MINIMAX_H3_A6000_SOL_ATTN_DENSE_FIRST_LAYERS": "2",
 +    "MINIMAX_H3_A6000_SOL_ATTN_STRIDE_AWARE_V": "0",
++    "MINIMAX_H3_A6000_SOL_ATTN_PAIR_VALUE_HALVES": "0",
++    "MINIMAX_H3_A6000_SOL_ATTN_SHADOW_PAIR_VALUE_HALVES": "0",
++    "MINIMAX_H3_A6000_SOL_ATTN_SHADOW_ROW_STATE_PROBE": "0",
++    "MINIMAX_H3_A6000_SOL_ATTN_SHADOW_MAX_MISMATCHES": "8",
++    "MINIMAX_H3_A6000_SOL_ATTN_DIAGNOSTIC_OUTPUT_DIGEST": "0",
++    "MINIMAX_H3_A6000_SOL_ATTN_DIAGNOSTIC_MAX_CALLS": "256",
 +    "MINIMAX_H3_A6000_SOL_ATTN_DIAGNOSTIC_MATERIALIZE": "0",
 +    "MINIMAX_H3_A6000_SOL_ATTN_MATERIALIZE_MAX_BYTES": "67108864",
 +    "MINIMAX_H3_A6000_SOL_ATTN_TELEMETRY_JSON": "",
@@ -93,6 +99,8 @@ index 00000000..6ad785a2
 +    sink_ranges: list[tuple[int, int]] = field(default_factory=list)
 +    density_samples: list[dict[str, Any]] = field(default_factory=list)
 +    layout_samples: list[dict[str, Any]] = field(default_factory=list)
++    diagnostic_output_records: list[dict[str, Any]] = field(default_factory=list)
++    diagnostic_output_digest_failures: int = 0
 +    materialize_copy_count: int = 0
 +    materialize_copy_bytes: int = 0
 +    materialize_copy_by_tensor: dict[str, int] = field(default_factory=dict)
@@ -101,6 +109,11 @@ index 00000000..6ad785a2
 +    materialize_gpu_timing_failures: int = 0
 +    stride_aware_value_calls: int = 0
 +    stride_aware_value_bytes: int = 0
++    shadow_pair_value_halves_calls: int = 0
++    shadow_pair_value_halves_equal_calls: int = 0
++    shadow_pair_value_halves_mismatch_count: int = 0
++    shadow_pair_value_halves_record_failures: int = 0
++    shadow_pair_value_halves_records: list[dict[str, Any]] = field(default_factory=list)
 +    sparse_attention_gpu_latency_ms: float = 0.0
 +    sparse_attention_timed_calls: int = 0
 +    sparse_attention_gpu_timing_failures: int = 0
@@ -139,11 +152,18 @@ index 00000000..6ad785a2
 +        self.sink_ranges.extend(list(getattr(wrapper_telemetry, "sink_ranges", [])))
 +        self.density_samples.extend(list(getattr(wrapper_telemetry, "density_samples", [])))
 +        self.layout_samples.extend(list(getattr(wrapper_telemetry, "layout_samples", [])))
++        self.diagnostic_output_records.extend(list(getattr(wrapper_telemetry, "diagnostic_output_records", [])))
++        self.diagnostic_output_digest_failures += int(getattr(wrapper_telemetry, "diagnostic_output_digest_failures", 0))
 +        self.materialize_copy_count += int(getattr(wrapper_telemetry, "materialize_copy_count", 0))
 +        self.materialize_copy_bytes += int(getattr(wrapper_telemetry, "materialize_copy_bytes", 0))
 +        self.materialize_latency_ms += float(getattr(wrapper_telemetry, "materialize_latency_ms", 0.0))
 +        self.stride_aware_value_calls += int(getattr(wrapper_telemetry, "stride_aware_value_calls", 0))
 +        self.stride_aware_value_bytes += int(getattr(wrapper_telemetry, "stride_aware_value_bytes", 0))
++        self.shadow_pair_value_halves_calls += int(getattr(wrapper_telemetry, "shadow_pair_value_halves_calls", 0))
++        self.shadow_pair_value_halves_equal_calls += int(getattr(wrapper_telemetry, "shadow_pair_value_halves_equal_calls", 0))
++        self.shadow_pair_value_halves_mismatch_count += int(getattr(wrapper_telemetry, "shadow_pair_value_halves_mismatch_count", 0))
++        self.shadow_pair_value_halves_record_failures += int(getattr(wrapper_telemetry, "shadow_pair_value_halves_record_failures", 0))
++        self.shadow_pair_value_halves_records.extend(list(getattr(wrapper_telemetry, "shadow_pair_value_halves_records", [])))
 +        self._materialize_gpu_event_pairs.extend(
 +            list(getattr(wrapper_telemetry, "_materialize_gpu_event_pairs", []))
 +        )
@@ -225,6 +245,9 @@ index 00000000..6ad785a2
 +        "sink_ranges": list(_TELEMETRY.sink_ranges),
 +        "density_samples": list(_TELEMETRY.density_samples),
 +        "layout_samples": list(_TELEMETRY.layout_samples),
++        "diagnostic_output_records": list(_TELEMETRY.diagnostic_output_records),
++        "diagnostic_output_digest_failures": _TELEMETRY.diagnostic_output_digest_failures,
++        "diagnostic_raw_tensor_exported": False,
 +        "materialize_copy_count": _TELEMETRY.materialize_copy_count,
 +        "materialize_copy_bytes": _TELEMETRY.materialize_copy_bytes,
 +        "materialize_copy_by_tensor": dict(_TELEMETRY.materialize_copy_by_tensor),
@@ -237,6 +260,11 @@ index 00000000..6ad785a2
 +        "input_copy_by_tensor": dict(_TELEMETRY.materialize_copy_by_tensor),
 +        "stride_aware_value_calls": _TELEMETRY.stride_aware_value_calls,
 +        "stride_aware_value_bytes": _TELEMETRY.stride_aware_value_bytes,
++        "shadow_pair_value_halves_calls": _TELEMETRY.shadow_pair_value_halves_calls,
++        "shadow_pair_value_halves_equal_calls": _TELEMETRY.shadow_pair_value_halves_equal_calls,
++        "shadow_pair_value_halves_mismatch_count": _TELEMETRY.shadow_pair_value_halves_mismatch_count,
++        "shadow_pair_value_halves_record_failures": _TELEMETRY.shadow_pair_value_halves_record_failures,
++        "shadow_pair_value_halves_records": list(_TELEMETRY.shadow_pair_value_halves_records),
 +        "sparse_attention_gpu_latency_ms": _TELEMETRY.sparse_attention_gpu_latency_ms,
 +        "sparse_attention_timed_calls": _TELEMETRY.sparse_attention_timed_calls,
 +        "sparse_attention_gpu_timing_failures": _TELEMETRY.sparse_attention_gpu_timing_failures,
@@ -618,7 +646,7 @@ index 610c20d1..ff04942b 100644
  from vllm_omni.diffusion.distributed.sp_plan import (
      SequenceParallelInput,
      SequenceParallelOutput,
-@@ -46,6 +49,132 @@ if TYPE_CHECKING:
+@@ -46,6 +49,138 @@ if TYPE_CHECKING:
  logger = init_logger(__name__)
 
 
@@ -634,6 +662,12 @@ index 610c20d1..ff04942b 100644
 +    "MINIMAX_H3_A6000_ENABLE_SOL_ATTN": "0",
 +    "MINIMAX_H3_A6000_SOL_ATTN_CACHE": "0",
 +    "MINIMAX_H3_A6000_SOL_ATTN_STRIDE_AWARE_V": "0",
++    "MINIMAX_H3_A6000_SOL_ATTN_PAIR_VALUE_HALVES": "0",
++    "MINIMAX_H3_A6000_SOL_ATTN_SHADOW_PAIR_VALUE_HALVES": "0",
++    "MINIMAX_H3_A6000_SOL_ATTN_SHADOW_ROW_STATE_PROBE": "0",
++    "MINIMAX_H3_A6000_SOL_ATTN_SHADOW_MAX_MISMATCHES": "8",
++    "MINIMAX_H3_A6000_SOL_ATTN_DIAGNOSTIC_OUTPUT_DIGEST": "0",
++    "MINIMAX_H3_A6000_SOL_ATTN_DIAGNOSTIC_MAX_CALLS": "256",
 +    "MINIMAX_H3_A6000_SOL_ATTN_DIAGNOSTIC_MATERIALIZE": "0",
 +    "MINIMAX_H3_A6000_SOL_ATTN_MATERIALIZE_MAX_BYTES": "67108864",
 +    "MINIMAX_H3_A6000_ENABLE_TELEMETRY": "0",
@@ -751,7 +785,7 @@ index 610c20d1..ff04942b 100644
  @dataclass
  class MiniMaxH3DiTArchConfig:
      num_layers: int = 50
-@@ -187,6 +316,17 @@ def _modulate_scale_shift(
+@@ -187,6 +321,17 @@ def _modulate_scale_shift(
      dtype: torch.dtype,
  ) -> torch.Tensor:
      # Apply per-index affine modulation: x * (1 + scale[idx]) + shift[idx].
@@ -769,7 +803,7 @@ index 610c20d1..ff04942b 100644
      return (x * (1.0 + scale.index_select(0, indices)) + shift.index_select(0, indices)).to(dtype)
 
 
-@@ -199,6 +339,17 @@ def _modulate_gate(
+@@ -199,6 +344,17 @@ def _modulate_gate(
      dtype: torch.dtype,
  ) -> torch.Tensor:
      # Apply the per-index gated residual: x + gate[idx] * other.
@@ -787,7 +821,7 @@ index 610c20d1..ff04942b 100644
      return (x + gate.index_select(0, indices) * other).to(dtype)
 
 
-@@ -358,6 +509,7 @@ class MiniMaxH3Attention(nn.Module):
+@@ -358,6 +514,7 @@ class MiniMaxH3Attention(nn.Module):
              skip_sequence_parallel=skip_sequence_parallel,
              prefix=prefix,
          )
@@ -795,7 +829,7 @@ index 610c20d1..ff04942b 100644
 
      def _apply_rope(self, x: torch.Tensor, freqs: torch.Tensor) -> torch.Tensor:
          """Rotate the first rot_dim head dims; pass the rest through.
-@@ -365,6 +517,14 @@ class MiniMaxH3Attention(nn.Module):
+@@ -365,6 +522,14 @@ class MiniMaxH3Attention(nn.Module):
          x: [T, heads, head_dim]; freqs: [T, rot_dim]. In the unfused path, cos/sin
          are cast to the activation dtype before the elementwise math.
          """
@@ -810,7 +844,7 @@ index 610c20d1..ff04942b 100644
          rot_dim = freqs.shape[-1]
          x_rot, x_pass = x[..., :rot_dim], x[..., rot_dim:]
          cos = torch.cos(freqs).to(x.dtype)  # [T, rot_dim]
-@@ -407,15 +567,25 @@ class MiniMaxH3Attention(nn.Module):
+@@ -407,15 +572,25 @@ class MiniMaxH3Attention(nn.Module):
          )
          if used < packed_total and not prefix_slice:
              attn_mask = torch.arange(packed_total, device=q.device)[None] < used
@@ -843,7 +877,7 @@ index 610c20d1..ff04942b 100644
              video_layout=video_layout,
          )
          return self.attention(
-@@ -513,8 +683,17 @@ class MiniMaxH3MLP(nn.Module):
+@@ -513,8 +688,17 @@ class MiniMaxH3MLP(nn.Module):
 
      def forward(self, x: torch.Tensor) -> torch.Tensor:
          hidden, _ = self.fc1(x)
@@ -863,7 +897,7 @@ index 610c20d1..ff04942b 100644
          out, _ = self.fc2(hidden)
          return out
 
-@@ -1092,6 +1271,7 @@ class MiniMaxH3DiTModel(nn.Module):
+@@ -1092,6 +1276,7 @@ class MiniMaxH3DiTModel(nn.Module):
              )
 
          x = _required_kwarg(kwargs, "x")
@@ -871,7 +905,7 @@ index 610c20d1..ff04942b 100644
          audio_x = _required_kwarg(kwargs, "audio_x")
          img_position_ids = _required_kwarg(kwargs, "img_position_ids")
          unique_timesteps = _required_kwarg(kwargs, "unique_timesteps")
-@@ -1193,4 +1373,5 @@ class MiniMaxH3DiTModel(nn.Module):
+@@ -1193,4 +1378,5 @@ class MiniMaxH3DiTModel(nn.Module):
              update_audio_mask = kwargs.get("update_audio_mask")
              if update_audio_mask is not None:
                  audio_logits = audio_logits * update_audio_mask.view(-1).unsqueeze(-1)

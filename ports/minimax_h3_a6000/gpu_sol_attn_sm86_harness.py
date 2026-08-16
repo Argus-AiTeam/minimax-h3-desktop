@@ -74,6 +74,7 @@ def _parse_args() -> argparse.Namespace:
             "prefix-skip-bench",
             "static-prefix-sink-bench",
             "bitmask-scheduler-bench",
+            "adaptive-routing-bench",
             "pair-value-halves-bench",
             "both",
         ),
@@ -129,6 +130,23 @@ def _parse_args() -> argparse.Namespace:
         type=float,
         default=1.0,
         help="minimum whole-lane or forward-subphase median improvement required to retain the BV64-pair value-halves candidate",
+    )
+    parser.add_argument(
+        "--adaptive-routing-candidates",
+        default="1.25:diag,1.5:diag,2.0:diag,1.0:exact",
+        help="comma-separated tau:threshold candidates for the default-off adaptive-routing gate",
+    )
+    parser.add_argument(
+        "--adaptive-routing-min-exact-work-reduction-pct",
+        type=float,
+        default=10.0,
+        help="minimum exact QK+PV work reduction required before considering a real-chain adaptive-routing N=1 gate",
+    )
+    parser.add_argument(
+        "--adaptive-routing-min-forward-gain-pct",
+        type=float,
+        default=1.0,
+        help="minimum forward-pointer median gain required before considering a real-chain adaptive-routing N=1 gate",
     )
     return parser.parse_args()
 
@@ -406,13 +424,20 @@ def _new_large_policy(
     bitmask_exact_scheduler: bool = False,
     pair_value_halves: bool = False,
     forward_config: str | None = None,
+    adaptive_routing: bool = False,
+    adaptive_profile: str | None = None,
+    adaptive_step_min: int | None = None,
+    adaptive_step_max: int | None = None,
+    adaptive_layer_min: int | None = None,
+    adaptive_layer_max: int | None = None,
+    dense_first_steps: int = 10,
 ) -> SolAttnPolicy:
     return SolAttnPolicy(
         allow_sparse=True,
         strict=True,
         stride_aware_value=bool(stride_aware_value),
         diagnostic_materialize_noncontiguous=False,
-        dense_first_steps=10,
+        dense_first_steps=int(dense_first_steps),
         dense_first_layers=2,
         prefix_query_dense=bool(prefix_query_dense),
         exact_prefix_query=bool(exact_prefix_query),
@@ -423,6 +448,12 @@ def _new_large_policy(
         forward_config=forward_config,
         tau=float(tau),
         thresh_type=str(thresh_type),
+        adaptive_routing=bool(adaptive_routing),
+        adaptive_profile=adaptive_profile,
+        adaptive_step_min=adaptive_step_min,
+        adaptive_step_max=adaptive_step_max,
+        adaptive_layer_min=adaptive_layer_min,
+        adaptive_layer_max=adaptive_layer_max,
     )
 
 
@@ -2016,6 +2047,349 @@ def _routing_attribution_profile(
     }
 
 
+def _parse_adaptive_routing_candidates(spec: str) -> list[dict[str, Any]]:
+    candidates: list[dict[str, Any]] = []
+    for raw in str(spec).split(","):
+        item = raw.strip()
+        if not item:
+            continue
+        parts = item.split(":")
+        tau_raw = parts[0]
+        thresh_raw = parts[1] if len(parts) >= 2 else "diag"
+        tau = float(tau_raw.strip())
+        thresh = thresh_raw.strip() or "diag"
+        if thresh not in ("diag", "exact"):
+            raise ValueError(f"unsupported adaptive-routing threshold type {thresh!r}")
+        candidate: dict[str, Any] = {"name": f"tau_{tau:g}_{thresh}", "tau": tau, "thresh_type": thresh}
+        for opt in parts[2:]:
+            key, sep, value = opt.partition("=")
+            if not sep:
+                raise ValueError(f"adaptive-routing candidate option must be key=value, got {opt!r}")
+            key = key.strip()
+            value = value.strip()
+            if key in {"step_min", "step_max", "layer_min", "layer_max", "total_steps"}:
+                candidate[key] = int(value)
+                candidate["name"] += f"_{key}_{int(value)}"
+            elif key == "profile":
+                candidate[key] = value
+                candidate["name"] += f"_{value}"
+            else:
+                raise ValueError(f"unsupported adaptive-routing candidate option {key!r}")
+        if any(key in candidate for key in ("step_min", "step_max", "layer_min", "layer_max")):
+            candidate.setdefault("profile", candidate["name"])
+        candidates.append(candidate)
+    if not candidates:
+        raise ValueError("adaptive-routing candidate list is empty")
+    return candidates
+
+
+def _exact_work_total(model: dict[str, Any]) -> int:
+    work = model.get("work_estimate_fma_or_bytes", {})
+    return int(work.get("exact_qk_dot_fma", 0)) + int(work.get("exact_probability_value_dot_fma", 0))
+
+
+def _adaptive_candidate_decision(
+    record: dict[str, Any],
+    *,
+    min_exact_work_reduction_pct: float,
+    min_forward_gain_pct: float,
+) -> dict[str, Any]:
+    current = record["current"]
+    current_work = _exact_work_total(current["forward_attribution_model"])
+    survivors: list[dict[str, Any]] = []
+    evaluated: list[dict[str, Any]] = []
+    for candidate in record["candidates"]:
+        cand_work = _exact_work_total(candidate["forward_attribution_model"])
+        exact_work_reduction_pct = 100.0 * (current_work - cand_work) / current_work if current_work else 0.0
+        current_forward = float(current["phase_profile_ms"]["phase_latency_ms"]["forward_pointer_kernel"].get("median_ms", 0.0))
+        candidate_forward = float(candidate["phase_profile_ms"]["phase_latency_ms"]["forward_pointer_kernel"].get("median_ms", 0.0))
+        forward_gain_pct = 100.0 * (current_forward - candidate_forward) / current_forward if current_forward else 0.0
+        current_total = float(current["timing_ms"]["latency_ms"].get("median_ms", 0.0))
+        candidate_total = float(candidate["timing_ms"]["latency_ms"].get("median_ms", 0.0))
+        whole_gain_pct = 100.0 * (current_total - candidate_total) / current_total if current_total else 0.0
+        sanity = candidate["candidate_vs_current_sanity"]
+        guarded = bool(candidate["candidate"].get("guarded_profile", False))
+        inactive_sanity = candidate.get("guard_inactive_vs_current_sanity") or {}
+        active_density = (candidate["preflight_telemetry"].get("density_samples") or [{}])[-1]
+        inactive_preflight = candidate.get("guard_inactive_preflight_telemetry") or {}
+        inactive_density = (inactive_preflight.get("density_samples") or [{}])[-1]
+        gates = {
+            "full_target_shape": int(record["shape"]["T_total"]) == TARGET_H3_TOTAL and int(record["shape"]["T_valid"]) == TARGET_H3_VALID,
+            "current_sparse_once": int(current["preflight_telemetry"].get("sparse_calls", 0)) == 1,
+            "candidate_sparse_once": int(candidate["preflight_telemetry"].get("sparse_calls", 0)) == 1,
+            "current_zero_fallback": int(current["timing_ms"]["timed_telemetry_summary"].get("fallback_calls", -1)) == 0,
+            "candidate_zero_fallback": int(candidate["timing_ms"]["timed_telemetry_summary"].get("fallback_calls", -1)) == 0,
+            "current_zero_materialization": int(current["timing_ms"]["timed_telemetry_summary"].get("materialize_copy_count", -1)) == 0 and int(current["timing_ms"]["timed_telemetry_summary"].get("materialize_copy_bytes", -1)) == 0,
+            "candidate_zero_materialization": int(candidate["timing_ms"]["timed_telemetry_summary"].get("materialize_copy_count", -1)) == 0 and int(candidate["timing_ms"]["timed_telemetry_summary"].get("materialize_copy_bytes", -1)) == 0,
+            "candidate_finite_valid": bool(sanity.get("candidate_all_finite_valid")) and bool(sanity.get("reference_all_finite_valid")),
+            "candidate_padding_zero": bool(sanity.get("padding_rows_zero_candidate")),
+            "current_padding_zero": bool(sanity.get("padding_rows_zero_reference")),
+            "guard_active_preflight_seen": (not guarded) or active_density.get("adaptive_guard_active") is True,
+            "guard_inactive_preflight_seen": (not guarded) or inactive_density.get("adaptive_guard_active") is False,
+            "guard_inactive_matches_current": (not guarded) or bool(inactive_sanity.get("candidate_reference_exact_equal_valid")),
+            "exact_work_reduction_exceeds_threshold": exact_work_reduction_pct >= float(min_exact_work_reduction_pct),
+            "forward_pointer_median_improves": forward_gain_pct >= float(min_forward_gain_pct),
+        }
+        failed = [key for key, value in gates.items() if not value]
+        guarded_projection = candidate.get("guarded_projection")
+        if isinstance(guarded_projection, dict):
+            guarded_projection = {
+                **guarded_projection,
+                "projected_exact_work_reduction_pct_if_uniform_calls": exact_work_reduction_pct
+                * float(guarded_projection.get("active_sparse_call_fraction", 0.0)),
+                "projected_forward_gain_pct_if_uniform_calls": forward_gain_pct
+                * float(guarded_projection.get("active_sparse_call_fraction", 0.0)),
+                "projected_whole_lane_gain_pct_if_uniform_calls": whole_gain_pct
+                * float(guarded_projection.get("active_sparse_call_fraction", 0.0)),
+            }
+        summary = {
+            "name": candidate["candidate"].get("name"),
+            "tau": float(candidate["candidate"].get("tau")),
+            "thresh_type": str(candidate["candidate"].get("thresh_type")),
+            "guarded_profile": bool(candidate["candidate"].get("guarded_profile", False)),
+            "guarded_projection": guarded_projection,
+            "exact_work_reduction_pct": exact_work_reduction_pct,
+            "forward_pointer_gain_pct": forward_gain_pct,
+            "whole_lane_gain_pct": whole_gain_pct,
+            "current_exact_work_qk_plus_pv": current_work,
+            "candidate_exact_work_qk_plus_pv": cand_work,
+            "max_abs_valid_vs_current": sanity.get("max_abs_valid"),
+            "candidate_exact_equal_to_current_valid": sanity.get("candidate_reference_exact_equal_valid"),
+            "gates": gates,
+            "failed_gates": failed,
+        }
+        evaluated.append(summary)
+        if not failed:
+            survivors.append(summary)
+    if survivors:
+        best = max(survivors, key=lambda item: (float(item["exact_work_reduction_pct"]), float(item["forward_pointer_gain_pct"])))
+        decision = "promote_default_off_adaptive_routing_to_matched_real_chain_n1"
+        classification = "candidate_survived_full_shape_gate"
+        promote = True
+    else:
+        best = None
+        decision = "reject_adaptive_routing_no_full_shape_candidate_for_real_chain"
+        classification = "reject_no_real_chain_launch"
+        promote = False
+    return {
+        "decision": decision,
+        "classification": classification,
+        "promote_to_real_chain_n1": promote,
+        "best_candidate": best,
+        "evaluated_candidates": evaluated,
+        "thresholds": {
+            "min_exact_work_reduction_pct": float(min_exact_work_reduction_pct),
+            "min_forward_gain_pct": float(min_forward_gain_pct),
+        },
+        "principal_variable": "default-off adaptive Sol-Attn routing policy: tau/threshold type change while preserving stride-aware V, full-prefix-block skip, exact prefix KV sink, dense-prefix overwrite, cache-off, padding, and dense-first gates",
+        "claim_boundary": "Synthetic/model-free full-shape Sol-Attn evidence only; candidate output may differ from current and requires matched real-chain AV/objective proxy validation before any promotion.",
+    }
+
+
+def run_adaptive_routing_bench(
+    device: torch.device,
+    *,
+    seed: int,
+    warmup: int,
+    repeats: int,
+    target_total: int,
+    target_valid: int,
+    prefix: int,
+    heads: int,
+    candidate_spec: str,
+    step_index: int,
+    layer_index: int,
+    min_exact_work_reduction_pct: float,
+    min_forward_gain_pct: float,
+) -> dict[str, Any]:
+    if heads != TARGET_H3_HEADS:
+        raise RuntimeError(f"adaptive-routing-bench requires H={TARGET_H3_HEADS}, got {heads}")
+    if int(target_total) != TARGET_H3_TOTAL or int(target_valid) != TARGET_H3_VALID or int(prefix) != TARGET_H3_PREFIX:
+        raise RuntimeError("adaptive-routing-bench is intentionally fixed to the full observed r8/r9 shape")
+    started = time.time()
+    torch.cuda.empty_cache()
+    torch.cuda.reset_peak_memory_stats()
+    q, k, fused_qkv, v, metadata = _large_case_tensors(
+        device,
+        total=int(target_total),
+        valid=int(target_valid),
+        heads=int(heads),
+        prefix=int(prefix),
+        seed=seed,
+        target_total=target_total,
+        target_valid=target_valid,
+    )
+    allocation_memory = _cuda_memory_snapshot()
+    current_policy = _new_large_policy(
+        stride_aware_value=True,
+        tau=1.0,
+        thresh_type="diag",
+        prefix_query_dense=True,
+        exact_prefix_query=False,
+        skip_full_prefix_blocks=True,
+        adaptive_routing=False,
+        dense_first_steps=0,
+    )
+    current_out, current_preflight = _checked_sparse_call(
+        q, k, v, metadata, policy=current_policy, step_index=step_index, layer_index=layer_index
+    )
+    current_attr = _routing_attribution_profile(
+        q, k, v, metadata, tau=1.0, thresh_type="diag", skip_full_prefix_blocks=True
+    )
+    current_phase = _phase_profile_distribution(
+        q, k, v, metadata, warmup=warmup, repeats=repeats, tau=1.0, thresh_type="diag", forward_config=None, skip_full_prefix_blocks=True
+    )
+    current_timing = _time_cuda_distribution(
+        lambda: _checked_sparse_call(q, k, v, metadata, policy=current_policy, step_index=step_index, layer_index=layer_index),
+        warmup=warmup,
+        repeats=repeats,
+    )
+    candidate_records: list[dict[str, Any]] = []
+    for candidate in _parse_adaptive_routing_candidates(candidate_spec):
+        cand_tau = float(candidate["tau"])
+        cand_thresh = str(candidate["thresh_type"])
+        candidate_policy = _new_large_policy(
+            stride_aware_value=True,
+            tau=cand_tau,
+            thresh_type=cand_thresh,
+            prefix_query_dense=True,
+            exact_prefix_query=False,
+            skip_full_prefix_blocks=True,
+            adaptive_routing=True,
+            adaptive_profile=candidate.get("profile"),
+            adaptive_step_min=candidate.get("step_min"),
+            adaptive_step_max=candidate.get("step_max"),
+            adaptive_layer_min=candidate.get("layer_min"),
+            adaptive_layer_max=candidate.get("layer_max"),
+            dense_first_steps=0,
+        )
+        active_step_index = int(candidate.get("step_min", step_index))
+        candidate_out, candidate_preflight = _checked_sparse_call(
+            q, k, v, metadata, policy=candidate_policy, step_index=active_step_index, layer_index=layer_index
+        )
+        candidate_vs_current = _large_output_sanity(candidate_out, current_out, prefix=prefix, valid=target_valid)
+        inactive_preflight = None
+        inactive_vs_current = None
+        inactive_step_index = None
+        if candidate.get("step_min") is not None and int(candidate["step_min"]) > 0:
+            inactive_step_index = int(candidate["step_min"]) - 1
+            inactive_out, inactive_preflight = _checked_sparse_call(
+                q, k, v, metadata, policy=candidate_policy, step_index=inactive_step_index, layer_index=layer_index
+            )
+            inactive_vs_current = _large_output_sanity(inactive_out, current_out, prefix=prefix, valid=target_valid)
+            del inactive_out
+        total_steps = int(candidate.get("total_steps", 7))
+        guarded_projection = None
+        if candidate.get("step_min") is not None:
+            step_min = int(candidate["step_min"])
+            step_max = int(candidate.get("step_max", total_steps - 1))
+            active_steps = max(0, min(total_steps - 1, step_max) - step_min + 1)
+            guarded_projection = {
+                "total_steps_per_request": total_steps,
+                "active_step_count": active_steps,
+                "inactive_step_count": max(0, total_steps - active_steps),
+                "active_sparse_call_fraction": (active_steps / total_steps) if total_steps else 0.0,
+                "active_step_index_used_for_timing": active_step_index,
+                "inactive_step_index_used_for_guard_preflight": inactive_step_index,
+            }
+        candidate_vs_current["comparison_reference"] = "current_tau_1_diag_stride_aware_prefix_skip_lane"
+        candidate_attr = _routing_attribution_profile(
+            q, k, v, metadata, tau=cand_tau, thresh_type=cand_thresh, skip_full_prefix_blocks=True
+        )
+        candidate_phase = _phase_profile_distribution(
+            q, k, v, metadata, warmup=warmup, repeats=repeats, tau=cand_tau, thresh_type=cand_thresh, forward_config=None, skip_full_prefix_blocks=True
+        )
+        candidate_timing = _time_cuda_distribution(
+            lambda p=candidate_policy, s=active_step_index: _checked_sparse_call(q, k, v, metadata, policy=p, step_index=s, layer_index=layer_index),
+            warmup=warmup,
+            repeats=repeats,
+        )
+        candidate_records.append(
+            {
+                "candidate": {
+                    "name": candidate["name"],
+                    "tau": cand_tau,
+                    "thresh_type": cand_thresh,
+                    "env_switches": {
+                        "MINIMAX_H3_A6000_SOL_ATTN_ADAPTIVE_ROUTING": "1",
+                        "MINIMAX_H3_A6000_SOL_ATTN_TAU": f"{cand_tau:g}",
+                        "MINIMAX_H3_A6000_SOL_ATTN_THRESH_TYPE": cand_thresh,
+                        "MINIMAX_H3_A6000_SOL_ATTN_ADAPTIVE_PROFILE": str(candidate.get("profile") or ""),
+                        "MINIMAX_H3_A6000_SOL_ATTN_ADAPTIVE_STEP_MIN": "" if candidate.get("step_min") is None else str(candidate.get("step_min")),
+                        "MINIMAX_H3_A6000_SOL_ATTN_ADAPTIVE_STEP_MAX": "" if candidate.get("step_max") is None else str(candidate.get("step_max")),
+                        "MINIMAX_H3_A6000_SOL_ATTN_ADAPTIVE_LAYER_MIN": "" if candidate.get("layer_min") is None else str(candidate.get("layer_min")),
+                        "MINIMAX_H3_A6000_SOL_ATTN_ADAPTIVE_LAYER_MAX": "" if candidate.get("layer_max") is None else str(candidate.get("layer_max")),
+                    },
+                    "default_off": True,
+                    "guarded_profile": any(key in candidate for key in ("step_min", "step_max", "layer_min", "layer_max")),
+                },
+                "active_step_index": active_step_index,
+                "guard_inactive_preflight_step_index": inactive_step_index,
+                "guard_inactive_preflight_telemetry": _jsonable(inactive_preflight.__dict__) if inactive_preflight is not None else None,
+                "guard_inactive_vs_current_sanity": inactive_vs_current,
+                "guarded_projection": guarded_projection,
+                "preflight_telemetry": _jsonable(candidate_preflight.__dict__),
+                "forward_attribution_model": candidate_attr,
+                "phase_profile_ms": candidate_phase,
+                "timing_ms": candidate_timing,
+                "candidate_vs_current_sanity": candidate_vs_current,
+            }
+        )
+        del candidate_out
+        gc.collect()
+        torch.cuda.synchronize()
+    record: dict[str, Any] = {
+        "mode": "adaptive-routing-bench",
+        "schema_version": "minimax_h3_a6000_sol_attn_sm86_adaptive_routing_bench_v1",
+        "kernel_candidates_only_not_h3_e2e": True,
+        "synthetic_model_free": True,
+        "model_load": False,
+        "not_h3_e2e": True,
+        "not_long_video": True,
+        "not_bf16_fidelity": True,
+        "not_quality_or_product_speedup": True,
+        "shape": {"B": 1, "T_total": int(target_total), "T_valid": int(target_valid), "H": int(heads), "D": TARGET_H3_D, "prefix": int(prefix)},
+        "metadata": {"prefix_len": metadata.prefix_len, "latent_grid": list(metadata.latent_grid), "valid_length": metadata.valid_length, "total_length": metadata.total_length},
+        "upstream_semantics_grounding": {
+            "pinned_sources": [
+                "upstreams/Sana-sol-engine/techniques/sparse_backends/sol_attn/triton_ref/preprocess.py",
+                "upstreams/Sana-sol-engine/techniques/sparse_backends/sol_attn/triton_ref/fwd.py",
+                "upstreams/Sana-sol-engine/models/minimax_h3/gb200/optimized/sol_attn_h3.py",
+                "ports/minimax_h3_a6000/src/minimax_h3_a6000/sol_attn_backend.py",
+                "ports/minimax_h3_a6000/src/minimax_h3_a6000/sol_attn_triton_sm86.py",
+            ],
+            "grounded_semantics": (
+                "Upstream Sol-Attn exposes tau and thresh_type; the H3 first-party integration states tau=1.0/diag is the validated policy and warns that prior per-shape calibration returned an empty route set. "
+                "This bench keeps the retained A6000 r9 mechanics fixed and only evaluates default-off adaptive tau/threshold controls."
+            ),
+        },
+        "value_layout": _tensor_layout(v),
+        "fused_qkv_layout": _tensor_layout(fused_qkv),
+        "timing_policy": {"warmup": int(warmup), "repeats": int(repeats), "cuda_event_distributions": True},
+        "current": {
+            "candidate": {"name": "current_tau_1_diag", "tau": 1.0, "thresh_type": "diag", "default_off_adaptive_routing": False},
+            "preflight_telemetry": _jsonable(current_preflight.__dict__),
+            "forward_attribution_model": current_attr,
+            "phase_profile_ms": current_phase,
+            "timing_ms": current_timing,
+        },
+        "candidates": candidate_records,
+        "cuda_memory": {"after_input_allocation": allocation_memory, "after_all_lanes": _cuda_memory_snapshot()},
+        "elapsed_s": time.time() - started,
+        "claim_boundary": "Synthetic/model-free full-shape Sol-Attn adaptive-routing evidence only; no H3 E2E, long-video, BF16 fidelity, quality, product, public, or SOTA claim.",
+    }
+    record["route_decision"] = _adaptive_candidate_decision(
+        record,
+        min_exact_work_reduction_pct=min_exact_work_reduction_pct,
+        min_forward_gain_pct=min_forward_gain_pct,
+    )
+    del q, k, fused_qkv, v, current_out
+    gc.collect()
+    torch.cuda.empty_cache()
+    torch.cuda.synchronize()
+    return record
+
+
 def _static_prefix_sink_route_decision(record: dict[str, Any], *, min_gain_pct: float) -> dict[str, Any]:
     current_pre = record["current_preflight_telemetry"]
     candidate_pre = record["candidate_preflight_telemetry"]
@@ -2594,6 +2968,8 @@ def run_pair_value_halves_bench(
         gc.collect()
         torch.cuda.empty_cache()
         torch.cuda.synchronize()
+
+
 
 
 def run_bitmask_scheduler_bench(
@@ -3574,6 +3950,22 @@ def main() -> int:
             step_index=args.large_step_index,
             layer_index=args.large_layer_index,
             min_gain_pct=args.bitmask_scheduler_min_gain_pct,
+        )
+    if args.mode == "adaptive-routing-bench":
+        results["adaptive_routing_bench"] = run_adaptive_routing_bench(
+            device,
+            seed=args.seed,
+            warmup=args.large_warmup,
+            repeats=args.large_repeats,
+            target_total=args.large_target_total,
+            target_valid=args.large_target_valid,
+            prefix=args.large_prefix,
+            heads=args.large_heads,
+            candidate_spec=args.adaptive_routing_candidates,
+            step_index=args.large_step_index,
+            layer_index=args.large_layer_index,
+            min_exact_work_reduction_pct=args.adaptive_routing_min_exact_work_reduction_pct,
+            min_forward_gain_pct=args.adaptive_routing_min_forward_gain_pct,
         )
     if args.mode == "pair-value-halves-bench":
         results["pair_value_halves_bench"] = run_pair_value_halves_bench(

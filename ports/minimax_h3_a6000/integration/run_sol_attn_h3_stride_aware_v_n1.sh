@@ -18,6 +18,12 @@ PORT=${PORT:-8000}
 GPU_IDLE_MAX_MEMORY_MIB=${GPU_IDLE_MAX_MEMORY_MIB:-512}
 GPU_IDLE_MAX_UTIL_PCT=${GPU_IDLE_MAX_UTIL_PCT:-5}
 GPU_RESOURCE_SAMPLE_INTERVAL_S=${GPU_RESOURCE_SAMPLE_INTERVAL_S:-5}
+VLLM_OMNI_INIT_TIMEOUT_S=${VLLM_OMNI_INIT_TIMEOUT_S:-2400}
+VLLM_OMNI_STAGE_INIT_TIMEOUT_S=${VLLM_OMNI_STAGE_INIT_TIMEOUT_S:-1800}
+SERVER_READY_POLL_INTERVAL_S=${SERVER_READY_POLL_INTERVAL_S:-5}
+SERVER_READY_TIMEOUT_S=${SERVER_READY_TIMEOUT_S:-$((VLLM_OMNI_INIT_TIMEOUT_S + 600))}
+VIDEO_SYNC_TIMEOUT_S=${VIDEO_SYNC_TIMEOUT_S:-3600}
+REQUEST_TIMEOUT_S=${REQUEST_TIMEOUT_S:-3000}
 if [[ "$OUT_DIR" != /* ]]; then
   OUT_DIR="$ROOT/$OUT_DIR"
 fi
@@ -35,13 +41,22 @@ version/base/title label checks, a fresh GPU-hygiene preflight showing a truly
 idle selected A6000, and is outside CPU/static stages.
 
 The gate compares two 5-step runs through the same opt-in H3_A6000_SOL_ATTN
-backend and unchanged r8 sparse policy:
-  1. r8_materialized_reference: source-backed V is materialized exactly as in r8;
-  2. stride_aware_v: source-backed V strides are consumed directly by Triton.
-Each mode receives one excluded warmup request and then arms per-call CUDA-event
-telemetry for the measured request. The N=1 gate is promoted only if the E2E
-signal exceeds max(2*0.5072177176%, 1.5%) and all correctness, copy,
-sparse/fallback, resource, and stability gates pass.
+backend and retained r9 sparse policy:
+  1. materialized_reference: stride-aware V disabled and diagnostic materialization enabled;
+  2. current_retained: retained r9 stride-aware V, no diagnostic materialization.
+Both modes keep cache off, full-prefix-block skip on, pair-value-halves off,
+dense-prefix overwrite preserved, dense-first settings fixed, and all prompt,
+seed, 1344x768, 124-frame, 24-FPS, 5-step timing boundaries fixed. Each mode
+receives one excluded warmup request and then arms per-call CUDA-event telemetry
+for the measured request. The N=1 gate is promoted only if the E2E signal
+exceeds max(2*0.5072177176%, 1.5%) and all correctness, copy, sparse/fallback,
+resource, and stability gates pass.
+
+Startup budgets are env-controlled and passed to vllm-omni itself, not only the
+outer readiness loop: VLLM_OMNI_INIT_TIMEOUT_S (default 2400),
+VLLM_OMNI_STAGE_INIT_TIMEOUT_S (default 1800), SERVER_READY_TIMEOUT_S (default
+init+600), SERVER_READY_POLL_INTERVAL_S (default 5), VIDEO_SYNC_TIMEOUT_S
+(default 3600), and REQUEST_TIMEOUT_S (default 3000).
 EOF_USAGE
 }
 
@@ -75,11 +90,17 @@ network=none
 one_visible_gpu_guard=container asserts torch.cuda.device_count()==1 and SM86 A6000
 gpu_hygiene_preflight=non-dry records nvidia_smi_full.txt,nvidia_smi_compute_apps.csv,gpu_lease_status.txt,disk_preflight.txt,gpu_hygiene_preflight.json and writes gpu_hygiene_blocker.json instead of running if the selected A6000 is not idle
 resource_telemetry=non-dry records per-mode host_resource_before.json,host_resource_after.json,gpu_resource_samples.csv,wall_time.json plus root resource_monitor.csv and overall_wall_time.json
+vllm_omni_init_timeout_s=$VLLM_OMNI_INIT_TIMEOUT_S
+vllm_omni_stage_init_timeout_s=$VLLM_OMNI_STAGE_INIT_TIMEOUT_S
+server_ready_timeout_s=$SERVER_READY_TIMEOUT_S
+server_ready_poll_interval_s=$SERVER_READY_POLL_INTERVAL_S
+video_sync_timeout_s=$VIDEO_SYNC_TIMEOUT_S
+request_timeout_s=$REQUEST_TIMEOUT_S
 warm_lifecycle=one excluded warmup per mode in the same server process as its measured request
-principal_variable=MINIMAX_H3_A6000_SOL_ATTN_STRIDE_AWARE_V with diagnostic materialization disabled only for candidate
-policy=r8 unchanged; cache off; dense_first_steps=0; dense_first_layers=2
+principal_variable=MINIMAX_H3_A6000_SOL_ATTN_STRIDE_AWARE_V=1 vs 0; diagnostic materialization enabled only for the materialized reference
+policy=retained r9 sparse lane; cache off; full-prefix-block skip on; pair-value-halves off; dense-prefix overwrite preserved; dense_first_steps=0; dense_first_layers=2
 materialized_reference=diagnostic materialization on, stride-aware V off
-stride_aware_candidate=diagnostic materialization off, stride-aware V on
+current_retained=diagnostic materialization off, stride-aware V on
 telemetry_arm_file=/evidence/<mode>/measure.arm
 actual_gpu_copy_time=CUDA events resolved after measured request; host enqueue is reported separately
 promotion_threshold_pct=max(1.5,2*0.5072177175606011)=1.5
@@ -99,6 +120,35 @@ if [[ "${ARGUS_ALLOW_A6000_SOL_ATTN_STRIDE_AWARE_V_N1:-0}" != "1" ]]; then
   echo "ERROR: refusing non-dry Sol-Attn A6000 diagnostic without ARGUS_ALLOW_A6000_SOL_ATTN_STRIDE_AWARE_V_N1=1" >&2
   exit 11
 fi
+
+write_empty_docker_ps_sentinel() {
+  local path=$1
+  local phase=$2
+  if [[ ! -s "$path" ]]; then
+    printf '{"argus_no_running_containers":true,"phase":"%s","timestamp_utc":"%s","command":"docker ps --format {{json .}}"}\n' \
+      "$phase" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$path"
+  fi
+}
+
+record_docker_hygiene_preflight() {
+  {
+    echo "docker_host=${DOCKER_HOST:-default}"
+    docker info --format 'DockerRootDir={{.DockerRootDir}} Driver={{.Driver}} ServerVersion={{.ServerVersion}} CgroupDriver={{.CgroupDriver}}'
+  } > "$OUT_DIR/docker_info_summary.txt"
+  docker ps --format '{{json .}}' > "$OUT_DIR/docker_ps_before.jsonl"
+  write_empty_docker_ps_sentinel "$OUT_DIR/docker_ps_before.jsonl" before
+  docker image inspect "$IMAGE" > "$OUT_DIR/r9_image_inspect.json"
+}
+
+record_docker_hygiene_after() {
+  local docker_ps_rc=0
+  docker ps --format '{{json .}}' > "$OUT_DIR/docker_ps_after.jsonl" 2> "$OUT_DIR/docker_ps_after.stderr" || docker_ps_rc=$?
+  if [[ "$docker_ps_rc" -eq 0 ]]; then
+    write_empty_docker_ps_sentinel "$OUT_DIR/docker_ps_after.jsonl" after
+  else
+    : > "$OUT_DIR/docker_ps_after.jsonl"
+  fi
+}
 
 verify_r9_readable_image_provenance() {
   local version_label base_label title_label
@@ -358,7 +408,134 @@ out.write_text(json.dumps(record, indent=2, sort_keys=True) + '\n', encoding='ut
 PY
 }
 
+write_runtime_failure_decision() {
+  local materialized_rc=$1
+  local current_rc=$2
+  python3 - "$OUT_DIR" "$materialized_rc" "$current_rc" "$VLLM_OMNI_INIT_TIMEOUT_S" "$VLLM_OMNI_STAGE_INIT_TIMEOUT_S" "$SERVER_READY_TIMEOUT_S" "$SERVER_READY_POLL_INTERVAL_S" "$VIDEO_SYNC_TIMEOUT_S" "$REQUEST_TIMEOUT_S" <<'PY'
+from __future__ import annotations
+
+import json
+import pathlib
+import sys
+import time
+
+root = pathlib.Path(sys.argv[1])
+return_codes = {'materialized_reference': int(sys.argv[2]), 'current_retained': int(sys.argv[3])}
+timeout_values = {
+    'vllm_omni_init_timeout_s': int(sys.argv[4]),
+    'vllm_omni_stage_init_timeout_s': int(sys.argv[5]),
+    'server_ready_timeout_s': int(sys.argv[6]),
+    'server_ready_poll_interval_s': int(sys.argv[7]),
+    'video_sync_timeout_s': int(sys.argv[8]),
+    'request_timeout_s': int(sys.argv[9]),
+}
+
+
+def read_text(path: pathlib.Path, limit_bytes: int = 120_000) -> str:
+    try:
+        data = path.read_bytes()
+    except FileNotFoundError:
+        return ''
+    if len(data) > limit_bytes:
+        data = data[-limit_bytes:]
+    return data.decode('utf-8', errors='replace')
+
+
+def read_json_if_present(path: pathlib.Path) -> dict | None:
+    try:
+        return json.loads(path.read_text(encoding='utf-8'))
+    except Exception:
+        return None
+
+
+def rel(path: pathlib.Path) -> str:
+    try:
+        return str(path.relative_to(root))
+    except ValueError:
+        return str(path)
+
+first_failed_mode = None
+for mode in ('materialized_reference', 'current_retained'):
+    if return_codes[mode] != 0:
+        first_failed_mode = mode
+        break
+
+server_logs: dict[str, dict] = {}
+startup_failure_seen = False
+for mode in ('materialized_reference', 'current_retained'):
+    log_path = root / mode / 'server.log'
+    text = read_text(log_path)
+    application_ready = 'Application startup complete.' in text
+    timeout_seen = (
+        'Orchestrator startup timed out' in text
+        or 'did not become ready within' in text
+        or return_codes[mode] == 62
+        or (return_codes[mode] != 0 and not application_ready)
+    )
+    if return_codes[mode] != 0 and timeout_seen:
+        startup_failure_seen = True
+    server_logs[mode] = {
+        'path': rel(log_path),
+        'exists': log_path.exists(),
+        'bytes': log_path.stat().st_size if log_path.exists() else 0,
+        'application_startup_complete': application_ready,
+        'orchestrator_startup_timeout_seen': 'Orchestrator startup timed out' in text,
+        'did_not_become_ready_seen': 'did not become ready within' in text,
+        'tail_last_200_lines': '\n'.join(text.splitlines()[-200:]),
+    }
+
+wall_time = {'overall': read_json_if_present(root / 'overall_wall_time.json')}
+for mode in ('materialized_reference', 'current_retained'):
+    wall_time[mode] = read_json_if_present(root / mode / 'wall_time.json')
+
+resource_paths = [
+    'gpu_hygiene_preflight.json', 'nvidia_smi_full.txt', 'nvidia_smi_L.txt',
+    'nvidia_smi_compute_apps.csv', 'gpu_lease_status.txt', 'disk_preflight.txt',
+    'resource_monitor.csv', 'overall_wall_time.json', 'r9_image_identity.env', 'workload.env',
+    'docker_info_summary.txt', 'docker_ps_before.jsonl', 'docker_ps_after.jsonl', 'r9_image_inspect.json',
+]
+for mode in ('materialized_reference', 'current_retained'):
+    resource_paths.extend([
+        f'{mode}/startup_timeout_config.env', f'{mode}/gpu_preflight.json',
+        f'{mode}/host_resource_before.json', f'{mode}/host_resource_after.json',
+        f'{mode}/gpu_resource_samples.csv', f'{mode}/wall_time.json', f'{mode}/server.log',
+    ])
+resource_evidence = {
+    item: {'exists': (root / item).exists(), 'bytes': (root / item).stat().st_size if (root / item).exists() else 0}
+    for item in resource_paths
+}
+reason = 'extended_startup_failure' if startup_failure_seen else 'runtime_failure_no_promotion'
+decision = {
+    'schema_version': 'minimax_h3_a6000_sol_attn_stride_aware_v_n1_runtime_failure_v1',
+    'classification': 'blocked',
+    'reason': reason,
+    'promote_to_matched_n3': False,
+    'promote_to_n3': False,
+    'not_speedup_claim': True,
+    'no_product_speedup_claim': True,
+    'timestamp_unix': time.time(),
+    'lane': 'matched_n1_5step_sol_attn_opt_in_not_bf16_fidelity',
+    'workload': {'width': 1344, 'height': 768, 'frames': 124, 'fps': 24, 'duration_s': 5.166667, 'steps': 5, 'seed': 0},
+    'principal_variable': 'MINIMAX_H3_A6000_SOL_ATTN_STRIDE_AWARE_V=1 vs 0 with diagnostic materialization only in the reference',
+    'fixed_variables': {
+        'cache': 'off', 'skip_full_prefix_blocks': 'on', 'pair_value_halves': 'off',
+        'dense_prefix_overwrite': 'preserved', 'dense_first_steps': 0, 'dense_first_layers': 2,
+    },
+    'timeout_values': timeout_values,
+    'return_codes': return_codes,
+    'first_failed_mode': first_failed_mode,
+    'server_logs': server_logs,
+    'wall_time': wall_time,
+    'resource_evidence': resource_evidence,
+    'claim_boundary': 'Startup/runtime failure artifact only; no product speedup, BF16-fidelity, long-video, quality-equivalence, or promotion claim.',
+}
+(root / 'decision.json').write_text(json.dumps(decision, indent=2, sort_keys=True) + '\n', encoding='utf-8')
+print(json.dumps({'classification': 'blocked', 'reason': reason, 'decision': str(root / 'decision.json'), 'promote_to_matched_n3': False}, sort_keys=True))
+PY
+}
+
 mkdir -p "$OUT_DIR"
+record_docker_hygiene_preflight
 verify_r9_readable_image_provenance > "$OUT_DIR/r9_image_identity.env"
 install -m 0644 "$PROMPT_FILE" "$OUT_DIR/prompt.txt"
 cat > "$OUT_DIR/workload.env" <<EOF_WORKLOAD
@@ -373,15 +550,28 @@ height=768
 fps=24
 duration=5.166667
 attention_backend=H3_A6000_SOL_ATTN
-comparison=r8_materialized_reference_vs_stride_aware_v
+comparison=materialized_reference_vs_current_retained_stride_aware_v
 lane=matched_n1_5step_sol_attn_opt_in_not_bf16_fidelity
 sol_attn_cache=off
+sol_attn_skip_full_prefix_blocks=on
+sol_attn_pair_value_halves=off
+sol_attn_dense_prefix_overwrite=preserved
 sol_attn_dense_first_steps=0
 sol_attn_dense_first_layers=2
+materialized_reference_stride_aware_v=off
+materialized_reference_diagnostic_materialize=on
+current_retained_stride_aware_v=on
+current_retained_diagnostic_materialize=off
 warm_lifecycle=one_excluded_warmup_then_one_measured_request_per_mode
 promotion_threshold_pct=1.5
 network=none
 resource_telemetry=cuda_event_copy_attention_denoise+http_e2e+host_gpu_memory_temperature_power_wall_time
+vllm_omni_init_timeout_s=$VLLM_OMNI_INIT_TIMEOUT_S
+vllm_omni_stage_init_timeout_s=$VLLM_OMNI_STAGE_INIT_TIMEOUT_S
+server_ready_timeout_s=$SERVER_READY_TIMEOUT_S
+server_ready_poll_interval_s=$SERVER_READY_POLL_INTERVAL_S
+video_sync_timeout_s=$VIDEO_SYNC_TIMEOUT_S
+request_timeout_s=$REQUEST_TIMEOUT_S
 EOF_WORKLOAD
 record_gpu_hygiene_preflight
 
@@ -419,7 +609,7 @@ PY
     --cap-drop=ALL \
     -e CUDA_VISIBLE_DEVICES=0 \
     -e VLLM_WORKER_MULTIPROC_METHOD=spawn \
-    -e VLLM_OMNI_VIDEO_SYNC_TIMEOUT=3600 \
+    -e VLLM_OMNI_VIDEO_SYNC_TIMEOUT="$VIDEO_SYNC_TIMEOUT_S" \
     -e VLLM_DISABLE_COMPILE_CACHE=1 \
     -e HF_HOME=/tmp/minimax_h3_sol_attn_no_cache/hf \
     -e TRANSFORMERS_CACHE=/tmp/minimax_h3_sol_attn_no_cache/hf \
@@ -431,6 +621,14 @@ PY
     "$IMAGE" bash -lc "
 set -euo pipefail
 mkdir -p '$evidence'
+cat > '$evidence/startup_timeout_config.env' <<'EOF_STARTUP_TIMEOUTS'
+vllm_omni_init_timeout_s=$VLLM_OMNI_INIT_TIMEOUT_S
+vllm_omni_stage_init_timeout_s=$VLLM_OMNI_STAGE_INIT_TIMEOUT_S
+server_ready_timeout_s=$SERVER_READY_TIMEOUT_S
+server_ready_poll_interval_s=$SERVER_READY_POLL_INTERVAL_S
+video_sync_timeout_s=$VIDEO_SYNC_TIMEOUT_S
+request_timeout_s=$REQUEST_TIMEOUT_S
+EOF_STARTUP_TIMEOUTS
 python3 - <<'PY' > '$evidence/gpu_preflight.json'
 import json, torch
 assert torch.cuda.is_available(), 'cuda unavailable'
@@ -446,20 +644,25 @@ vllm-omni serve /models/MiniMax-H3/FL2VA \
   --vae-patch-parallel-size 1 --vae-parallel-mode tile --vae-use-tiling \
   --enable-distributed-layerwise-offload --dlo-no-use-allgather --dlo-resident-layers 12 \
   --enforce-eager --diffusion-attention-backend H3_A6000_SOL_ATTN \
+  --init-timeout '$VLLM_OMNI_INIT_TIMEOUT_S' --stage-init-timeout '$VLLM_OMNI_STAGE_INIT_TIMEOUT_S' \
   > '$evidence/server.log' 2>&1 &
 server_pid=\$!
 trap 'kill \$server_pid 2>/dev/null || true' EXIT
-for i in \$(seq 1 540); do
+ready_deadline=\$((SECONDS + $SERVER_READY_TIMEOUT_S))
+while true; do
   if grep -q 'Application startup complete\.' '$evidence/server.log' && curl --fail --silent http://127.0.0.1:'$PORT'/health >/dev/null; then
     break
   fi
   kill -0 \$server_pid 2>/dev/null || { tail -300 '$evidence/server.log'; exit 61; }
-  test \$i -lt 540 || exit 62
-  sleep 5
+  if (( SECONDS >= ready_deadline )); then
+    tail -300 '$evidence/server.log'
+    exit 62
+  fi
+  sleep '$SERVER_READY_POLL_INTERVAL_S'
 done
 request() {
   local stem=\$1
-  curl --fail-with-body --silent --show-error --max-time 3000 \
+  curl --fail-with-body --silent --show-error --max-time '$REQUEST_TIMEOUT_S' \
     --dump-header \"$evidence/\${stem}_headers.txt\" \
     --write-out 'http_code=%{http_code}\ntime_total_s=%{time_total}\nsize_download=%{size_download}\n' \
     -X POST http://127.0.0.1:'$PORT'/v1/videos/sync \
@@ -554,30 +757,32 @@ common_sol_env=(
   -e MINIMAX_H3_A6000_SOL_ATTN_STRICT=0
   -e MINIMAX_H3_A6000_SOL_ATTN_DENSE_FIRST_STEPS=0
   -e MINIMAX_H3_A6000_SOL_ATTN_DENSE_FIRST_LAYERS=2
+  -e MINIMAX_H3_A6000_SOL_ATTN_SKIP_FULL_PREFIX_BLOCKS=1
+  -e MINIMAX_H3_A6000_SOL_ATTN_PAIR_VALUE_HALVES=0
   -e MINIMAX_H3_A6000_ENABLE_FUSED_ADALN=0
   -e MINIMAX_H3_A6000_ENABLE_FUSED_ROPE=0
   -e MINIMAX_H3_A6000_ENABLE_FUSED_SWIGLU=0
   -e MINIMAX_H3_A6000_ENABLE_TELEMETRY=1
   -e MINIMAX_H3_A6000_TELEMETRY_ATEXIT=1
 )
-run_one r8_materialized_reference \
+run_one materialized_reference \
   "${common_sol_env[@]}" \
   -e MINIMAX_H3_A6000_SOL_ATTN_STRIDE_AWARE_V=0 \
   -e MINIMAX_H3_A6000_SOL_ATTN_DIAGNOSTIC_MATERIALIZE=1 \
   -e MINIMAX_H3_A6000_SOL_ATTN_MATERIALIZE_MAX_BYTES=1073741824 \
-  -e MINIMAX_H3_A6000_SOL_ATTN_TELEMETRY_ARM_FILE=/evidence/r8_materialized_reference/measure.arm \
-  -e MINIMAX_H3_A6000_SOL_ATTN_TELEMETRY_JSON=/evidence/r8_materialized_reference/sol_attn_telemetry
+  -e MINIMAX_H3_A6000_SOL_ATTN_TELEMETRY_ARM_FILE=/evidence/materialized_reference/measure.arm \
+  -e MINIMAX_H3_A6000_SOL_ATTN_TELEMETRY_JSON=/evidence/materialized_reference/sol_attn_telemetry
 materialized_rc=$?
-stride_rc=0
+current_rc=0
 if [[ "$materialized_rc" -eq 0 ]]; then
-  run_one stride_aware_v \
+  run_one current_retained \
     "${common_sol_env[@]}" \
     -e MINIMAX_H3_A6000_SOL_ATTN_STRIDE_AWARE_V=1 \
     -e MINIMAX_H3_A6000_SOL_ATTN_DIAGNOSTIC_MATERIALIZE=0 \
     -e MINIMAX_H3_A6000_SOL_ATTN_MATERIALIZE_MAX_BYTES=1073741824 \
-    -e MINIMAX_H3_A6000_SOL_ATTN_TELEMETRY_ARM_FILE=/evidence/stride_aware_v/measure.arm \
-    -e MINIMAX_H3_A6000_SOL_ATTN_TELEMETRY_JSON=/evidence/stride_aware_v/sol_attn_telemetry
-  stride_rc=$?
+    -e MINIMAX_H3_A6000_SOL_ATTN_TELEMETRY_ARM_FILE=/evidence/current_retained/measure.arm \
+    -e MINIMAX_H3_A6000_SOL_ATTN_TELEMETRY_JSON=/evidence/current_retained/sol_attn_telemetry
+  current_rc=$?
 fi
 set -e
 stop_resource_sampler "$OVERALL_SAMPLER_PID"
@@ -590,25 +795,36 @@ PY
 overall_end_iso=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 combined_rc=$materialized_rc
 if [[ "$combined_rc" -eq 0 ]]; then
-  combined_rc=$stride_rc
+  combined_rc=$current_rc
 fi
 write_wall_time_json "$OUT_DIR/overall_wall_time.json" overall "$combined_rc" "$overall_start_ns" "$overall_end_ns" "$overall_start_iso" "$overall_end_iso"
+record_docker_hygiene_after
 
 if [[ "$materialized_rc" -ne 0 ]]; then
-  echo "ERROR: r8 materialized reference failed with rc=$materialized_rc; evidence in $OUT_DIR" >&2
+  write_runtime_failure_decision "$materialized_rc" "$current_rc"
+  echo "ERROR: materialized reference failed with rc=$materialized_rc; decision in $OUT_DIR/decision.json" >&2
   exit "$materialized_rc"
 fi
-if [[ "$stride_rc" -ne 0 ]]; then
-  echo "ERROR: stride-aware V candidate failed with rc=$stride_rc; evidence in $OUT_DIR" >&2
-  exit "$stride_rc"
+if [[ "$current_rc" -ne 0 ]]; then
+  write_runtime_failure_decision "$materialized_rc" "$current_rc"
+  echo "ERROR: current retained lane failed with rc=$current_rc; decision in $OUT_DIR/decision.json" >&2
+  exit "$current_rc"
 fi
 
-python3 - "$OUT_DIR" <<'PY'
+python3 - "$OUT_DIR" "$VLLM_OMNI_INIT_TIMEOUT_S" "$VLLM_OMNI_STAGE_INIT_TIMEOUT_S" "$SERVER_READY_TIMEOUT_S" "$SERVER_READY_POLL_INTERVAL_S" "$VIDEO_SYNC_TIMEOUT_S" "$REQUEST_TIMEOUT_S" <<'PY'
 from __future__ import annotations
 import csv, json, pathlib, sys
 root = pathlib.Path(sys.argv[1])
-reference_name = 'r8_materialized_reference'
-candidate_name = 'stride_aware_v'
+timeout_values = {
+    'vllm_omni_init_timeout_s': int(sys.argv[2]),
+    'vllm_omni_stage_init_timeout_s': int(sys.argv[3]),
+    'server_ready_timeout_s': int(sys.argv[4]),
+    'server_ready_poll_interval_s': int(sys.argv[5]),
+    'video_sync_timeout_s': int(sys.argv[6]),
+    'request_timeout_s': int(sys.argv[7]),
+}
+reference_name = 'materialized_reference'
+candidate_name = 'current_retained'
 reference_dir = root / reference_name
 candidate_dir = root / candidate_name
 
@@ -630,17 +846,39 @@ def parse_http(path: pathlib.Path) -> dict:
     return out
 
 
-def peak_memory(path: pathlib.Path) -> float | None:
+def _floatish(value: object) -> float | None:
+    if value is None:
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        cleaned = ''.join(ch for ch in str(value) if ch.isdigit() or ch in '.-')
+        try:
+            return float(cleaned) if cleaned else None
+        except ValueError:
+            return None
+
+
+def peak_csv_metric(path: pathlib.Path, needle: str) -> float | None:
     values = []
     with path.open(newline='', errors='replace') as f:
         for row in csv.DictReader(f):
             for key, value in row.items():
-                if key and 'memory.used' in key.lower():
-                    try:
-                        values.append(float(value))
-                    except (TypeError, ValueError):
-                        pass
+                if key and needle in key.lower():
+                    parsed = _floatish(value)
+                    if parsed is not None:
+                        values.append(parsed)
     return max(values) if values else None
+
+
+def host_mem_available_kib(path: pathlib.Path) -> int | None:
+    try:
+        record = read_json(path)
+        meminfo = record.get('host_meminfo', {})
+        raw = str(meminfo.get('MemAvailable', '')).split()[0]
+        return int(raw) if raw else None
+    except Exception:
+        return None
 
 
 def structural_av(av: dict) -> bool:
@@ -654,14 +892,54 @@ def structural_av(av: dict) -> bool:
     )
 
 
+def zero_copy_contract(tel: dict) -> bool:
+    return (
+        int(tel.get('materialize_copy_count', -1)) == 0
+        and int(tel.get('materialize_copy_bytes', -1)) == 0
+        and int(tel.get('input_copy_events', -1)) == 0
+        and int(tel.get('input_copy_bytes', -1)) == 0
+        and tel.get('materialize_copy_by_tensor') == {}
+        and tel.get('input_copy_by_tensor') == {}
+    )
+
+
+def density_has(tel: dict, key: str) -> bool:
+    samples = tel.get('density_samples', [])
+    return any(bool(sample.get(key)) for sample in samples if isinstance(sample, dict))
+
+
+def layout_has_value(tel: dict, *, stage: str | None, contiguous: bool) -> bool:
+    for sample in tel.get('layout_samples', []):
+        if stage is not None and sample.get('stage') != stage:
+            continue
+        for tensor in sample.get('tensors', []):
+            if tensor.get('name') != 'value':
+                continue
+            if tensor.get('shape') != [1, 38272, 56, 128]:
+                continue
+            if bool(tensor.get('is_contiguous')) != bool(contiguous):
+                continue
+            if contiguous:
+                if tensor.get('stride') == [274333696, 7168, 128, 1]:
+                    return True
+            else:
+                if (tensor.get('stride') == [823001088, 21504, 128, 1]
+                        and tensor.get('storage_offset') == 14336):
+                    return True
+    return False
+
+
 required = [
     root / 'gpu_hygiene_preflight.json', root / 'nvidia_smi_full.txt',
     root / 'nvidia_smi_compute_apps.csv', root / 'gpu_lease_status.txt',
     root / 'disk_preflight.txt', root / 'resource_monitor.csv', root / 'overall_wall_time.json',
+    root / 'r9_image_identity.env', root / 'workload.env',
+    root / 'docker_info_summary.txt', root / 'docker_ps_before.jsonl', root / 'docker_ps_after.jsonl',
+    root / 'r9_image_inspect.json',
 ]
 for mode_dir in (reference_dir, candidate_dir):
     required.extend([
-        mode_dir / 'warmup_http_metrics.txt', mode_dir / 'http_metrics.txt',
+        mode_dir / 'startup_timeout_config.env', mode_dir / 'warmup_http_metrics.txt', mode_dir / 'http_metrics.txt',
         mode_dir / 'av_validation.json', mode_dir / 'sol_attn_telemetry.sol_attn.json',
         mode_dir / 'host_resource_before.json', mode_dir / 'host_resource_after.json',
         mode_dir / 'gpu_resource_samples.csv', mode_dir / 'wall_time.json',
@@ -669,11 +947,15 @@ for mode_dir in (reference_dir, candidate_dir):
 missing = [str(path.relative_to(root)) for path in required if not path.exists() or path.stat().st_size == 0]
 if missing:
     decision = {
-        'schema_version': 'minimax_h3_a6000_sol_attn_stride_aware_v_n1_v1',
-        'classification': 'blocked_incomplete_artifacts',
+        'schema_version': 'minimax_h3_a6000_sol_attn_stride_aware_v_n1_v2',
+        'classification': 'blocked',
+        'reason': 'incomplete_artifacts',
         'missing_paths': missing,
+        'promote_to_matched_n3': False,
         'promote_to_n3': False,
         'not_speedup_claim': True,
+        'no_product_speedup_claim': True,
+        'timeout_values': timeout_values,
     }
 else:
     ref_av, cand_av = read_json(reference_dir / 'av_validation.json'), read_json(candidate_dir / 'av_validation.json')
@@ -681,21 +963,19 @@ else:
     cand_tel = read_json(candidate_dir / 'sol_attn_telemetry.sol_attn.json')
     ref_http, cand_http = parse_http(reference_dir / 'http_metrics.txt'), parse_http(candidate_dir / 'http_metrics.txt')
     ref_warm, cand_warm = parse_http(reference_dir / 'warmup_http_metrics.txt'), parse_http(candidate_dir / 'warmup_http_metrics.txt')
-    ref_memory = peak_memory(reference_dir / 'gpu_resource_samples.csv')
-    cand_memory = peak_memory(candidate_dir / 'gpu_resource_samples.csv')
+    ref_memory = peak_csv_metric(reference_dir / 'gpu_resource_samples.csv', 'memory.used')
+    cand_memory = peak_csv_metric(candidate_dir / 'gpu_resource_samples.csv', 'memory.used')
+    ref_power = peak_csv_metric(reference_dir / 'gpu_resource_samples.csv', 'power.draw')
+    cand_power = peak_csv_metric(candidate_dir / 'gpu_resource_samples.csv', 'power.draw')
+    ref_temp = peak_csv_metric(reference_dir / 'gpu_resource_samples.csv', 'temperature.gpu')
+    cand_temp = peak_csv_metric(candidate_dir / 'gpu_resource_samples.csv', 'temperature.gpu')
+    ref_host_avail_before = host_mem_available_kib(reference_dir / 'host_resource_before.json')
+    cand_host_avail_before = host_mem_available_kib(candidate_dir / 'host_resource_before.json')
+    ref_host_avail_after = host_mem_available_kib(reference_dir / 'host_resource_after.json')
+    cand_host_avail_after = host_mem_available_kib(candidate_dir / 'host_resource_after.json')
     improvement_pct = (ref_http['time_total_s'] - cand_http['time_total_s']) / ref_http['time_total_s'] * 100.0
     observed_r8_cv_pct = 0.5072177175606011
     promotion_threshold_pct = max(1.5, 2.0 * observed_r8_cv_pct)
-    layout_samples = cand_tel.get('layout_samples', [])
-    real_h3_v_layout_seen = any(
-        any(
-            t.get('name') == 'value' and t.get('shape') == [1, 38272, 56, 128]
-            and t.get('stride') == [823001088, 21504, 128, 1]
-            and t.get('storage_offset') == 14336 and t.get('is_contiguous') is False
-            for t in sample.get('tensors', [])
-        )
-        for sample in layout_samples
-    )
     av_fields = ('width', 'height', 'average_rate', 'decoded_video_frames', 'audio_sample_rate',
                  'audio_channels', 'decoded_audio_frames', 'decoded_audio_samples')
     av_metadata_equal = all(ref_av.get(key) == cand_av.get(key) for key in av_fields)
@@ -704,30 +984,27 @@ else:
         'both_http_200': ref_http.get('http_code') == 200 and cand_http.get('http_code') == 200,
         'both_warmups_http_200': ref_warm.get('http_code') == 200 and cand_warm.get('http_code') == 200,
         'both_structural_av_valid': structural_av(ref_av) and structural_av(cand_av),
-        'measured_output_hash_equal': output_exact,
         'measured_av_metadata_equal': av_metadata_equal,
         'both_sparse_calls_192': int(ref_tel.get('sparse_calls', 0)) == 192 and int(cand_tel.get('sparse_calls', 0)) == 192,
         'both_sparse_candidates_192': int(ref_tel.get('sparse_candidate_calls', 0)) == 192 and int(cand_tel.get('sparse_candidate_calls', 0)) == 192,
         'both_fallback_calls_zero': int(ref_tel.get('fallback_calls', -1)) == 0 and int(cand_tel.get('fallback_calls', -1)) == 0,
-        'reference_only_materialized_v': (
+        'materialized_lane_actually_materialized_v': (
             int(ref_tel.get('materialize_copy_count', 0)) == 192
             and int(ref_tel.get('materialize_copy_bytes', 0)) == 105344139264
             and ref_tel.get('materialize_copy_by_tensor') == {'value': 105344139264}
         ),
-        'candidate_zero_input_copy_events_bytes': (
-            int(cand_tel.get('materialize_copy_count', -1)) == 0
-            and int(cand_tel.get('materialize_copy_bytes', -1)) == 0
-            and int(cand_tel.get('input_copy_events', -1)) == 0
-            and int(cand_tel.get('input_copy_bytes', -1)) == 0
-            and cand_tel.get('input_copy_by_tensor') == {}
-        ),
-        'candidate_stride_aware_value_calls_192': int(cand_tel.get('stride_aware_value_calls', 0)) == 192,
-        'real_h3_fused_value_layout_seen': real_h3_v_layout_seen,
-        'reference_actual_gpu_copy_time_present': (
+        'materialized_lane_stride_aware_value_calls_zero': int(ref_tel.get('stride_aware_value_calls', -1)) == 0,
+        'retained_zero_materialization_and_input_copies': zero_copy_contract(cand_tel),
+        'retained_stride_aware_value_calls_192': int(cand_tel.get('stride_aware_value_calls', 0)) == 192,
+        'both_skip_full_prefix_blocks_seen': density_has(ref_tel, 'skip_full_prefix_blocks') and density_has(cand_tel, 'skip_full_prefix_blocks'),
+        'both_pair_value_halves_absent': not density_has(ref_tel, 'pair_value_halves') and not density_has(cand_tel, 'pair_value_halves'),
+        'real_h3_fused_value_layout_seen_in_retained': layout_has_value(cand_tel, stage='pre_decline', contiguous=False),
+        'materialized_contiguous_value_layout_seen': layout_has_value(ref_tel, stage='post_diagnostic_materialize', contiguous=True),
+        'materialized_actual_gpu_copy_time_present': (
             float(ref_tel.get('materialize_gpu_copy_latency_ms', 0.0)) > 0.0
             and int(ref_tel.get('materialize_gpu_timing_failures', -1)) == 0
         ),
-        'candidate_gpu_copy_time_zero': float(cand_tel.get('materialize_gpu_copy_latency_ms', -1.0)) == 0.0,
+        'retained_gpu_copy_time_zero': float(cand_tel.get('materialize_gpu_copy_latency_ms', -1.0)) == 0.0,
         'attention_gpu_timing_complete': (
             int(ref_tel.get('sparse_attention_timed_calls', 0)) == 192
             and int(cand_tel.get('sparse_attention_timed_calls', 0)) == 192
@@ -741,47 +1018,88 @@ else:
         ),
         'no_gpu_timing_failures': all(int(t.get(key, -1)) == 0 for t in (ref_tel, cand_tel) for key in (
             'materialize_gpu_timing_failures', 'sparse_attention_gpu_timing_failures', 'denoise_gpu_timing_failures')),
-        'candidate_peak_memory_not_higher': (
-            ref_memory is not None and cand_memory is not None and cand_memory <= ref_memory
-        ),
+        'resource_samples_present': all(value is not None for value in (ref_memory, cand_memory, ref_power, cand_power, ref_temp, cand_temp)),
+        'retained_peak_memory_not_higher': (ref_memory is not None and cand_memory is not None and cand_memory <= ref_memory),
         'e2e_signal_exceeds_predeclared_threshold': improvement_pct > promotion_threshold_pct,
     }
     correctness_gate_names = [key for key in gates if key != 'e2e_signal_exceeds_predeclared_threshold']
     correctness_ok = all(gates[key] for key in correctness_gate_names)
     if not correctness_ok:
-        classification = 'rejected_stride_aware_correctness_or_contract'
+        classification = 'reject'
+        reason = 'correctness_or_contract'
     elif not gates['e2e_signal_exceeds_predeclared_threshold']:
-        classification = 'rejected_no_above_noise_product_signal'
+        classification = 'reject'
+        reason = 'no_above_noise_n1_signal'
     else:
         classification = 'promote_to_matched_n3'
+        reason = 'n1_gate_passed_requires_independent_reviewer_before_n3'
     decision = {
-        'schema_version': 'minimax_h3_a6000_sol_attn_stride_aware_v_n1_v1',
+        'schema_version': 'minimax_h3_a6000_sol_attn_stride_aware_v_n1_v2',
         'classification': classification,
+        'reason': reason,
+        'promote_to_matched_n3': classification == 'promote_to_matched_n3',
         'promote_to_n3': classification == 'promote_to_matched_n3',
+        'reviewer_acceptance_required_before_promotion': True,
+        'reviewer_acceptance_status': 'pending_external_reviewer_not_authored_by_runner',
         'not_speedup_claim': True,
+        'no_product_speedup_claim': True,
         'lane': 'matched_n1_5step_sol_attn_opt_in_not_bf16_fidelity',
-        'principal_variable': 'stride-aware direct V loads instead of r8 V materialization',
+        'workload': {'width': 1344, 'height': 768, 'frames': 124, 'fps': 24, 'duration_s': 5.166667, 'steps': 5, 'seed': 0},
+        'principal_variable': 'MINIMAX_H3_A6000_SOL_ATTN_STRIDE_AWARE_V=1 vs 0 with diagnostic materialization only in the reference',
+        'fixed_variables': {
+            'cache': 'off',
+            'skip_full_prefix_blocks': 'on',
+            'pair_value_halves': 'off',
+            'dense_prefix_overwrite': 'preserved',
+            'diagnostic_materialization': {'materialized_reference': 'on', 'current_retained': 'off'},
+            'dense_first_steps': 0,
+            'dense_first_layers': 2,
+        },
+        'timeout_values': timeout_values,
         'observed_r8_cv_pct': observed_r8_cv_pct,
         'promotion_threshold_pct': promotion_threshold_pct,
-        'http_e2e_seconds': {'r8_materialized_reference': ref_http['time_total_s'], 'stride_aware_v': cand_http['time_total_s']},
-        'excluded_warmup_http_seconds': {'r8_materialized_reference': ref_warm['time_total_s'], 'stride_aware_v': cand_warm['time_total_s']},
-        'n1_http_e2e_improvement_pct': improvement_pct,
+        'http_e2e_seconds': {reference_name: ref_http['time_total_s'], candidate_name: cand_http['time_total_s']},
+        'excluded_warmup_http_seconds': {reference_name: ref_warm['time_total_s'], candidate_name: cand_warm['time_total_s']},
+        'n1_http_e2e_improvement_pct_current_vs_materialized': improvement_pct,
         'gpu_component_ms': {
             mode: {key: tel.get(key) for key in ('materialize_gpu_copy_latency_ms', 'materialize_host_enqueue_latency_ms',
                     'sparse_attention_gpu_latency_ms', 'denoise_gpu_latency_ms')}
             for mode, tel in ((reference_name, ref_tel), (candidate_name, cand_tel))
         },
-        'peak_gpu_memory_mib': {reference_name: ref_memory, candidate_name: cand_memory},
+        'resource_summary': {
+            'peak_gpu_memory_mib': {reference_name: ref_memory, candidate_name: cand_memory},
+            'peak_gpu_power_w': {reference_name: ref_power, candidate_name: cand_power},
+            'peak_gpu_temperature_c': {reference_name: ref_temp, candidate_name: cand_temp},
+            'host_mem_available_kib_before': {reference_name: ref_host_avail_before, candidate_name: cand_host_avail_before},
+            'host_mem_available_kib_after': {reference_name: ref_host_avail_after, candidate_name: cand_host_avail_after},
+            'resource_sample_files': {
+                reference_name: str((reference_dir / 'gpu_resource_samples.csv').relative_to(root)),
+                candidate_name: str((candidate_dir / 'gpu_resource_samples.csv').relative_to(root)),
+                'overall': 'resource_monitor.csv',
+            },
+        },
         'telemetry_counts': {
             mode: {key: tel.get(key) for key in ('sparse_candidate_calls', 'sparse_calls', 'fallback_calls',
-                    'materialize_copy_count', 'materialize_copy_bytes', 'stride_aware_value_calls')}
+                    'materialize_copy_count', 'materialize_copy_bytes', 'input_copy_events', 'input_copy_bytes',
+                    'stride_aware_value_calls')}
             for mode, tel in ((reference_name, ref_tel), (candidate_name, cand_tel))
         },
-        'output_checks': {'structural_av': True, 'av_metadata_equal': av_metadata_equal, 'sha256_equal': output_exact},
+        'output_checks': {
+            'structural_av': True,
+            'av_metadata_equal': av_metadata_equal,
+            'sha256_equal_recorded_not_gate': output_exact,
+            'materialized_reference_sha256': ref_av.get('sha256'),
+            'current_retained_sha256': cand_av.get('sha256'),
+        },
+        'output_identifier_policy': {
+            'mp4_sha256_is_opaque_identifier': True,
+            'hash_equality_used_for_decision': False,
+            'justification': 'Same prompt/seed can produce byte-different MP4 containers under identical structural AV metadata; the preceding r9 pair-value-halves gate observed this. This N=1 copy-ablation gates structural AV plus Sol-Attn telemetry/counters, not product quality or decoded-content equivalence.',
+        },
         'gates': gates,
         'failed_gates': [key for key, passed in gates.items() if not passed],
-        'claim_boundary': 'N=1 promotion gate only; no acceleration, BF16-fidelity, long-video, or quality-equivalence claim.',
+        'claim_boundary': 'N=1 stride-aware-V materialization ablation only; no product speedup, BF16-fidelity, long-video, quality-equivalence, public-comparison, or SOTA claim.',
     }
 (root / 'decision.json').write_text(json.dumps(decision, indent=2, sort_keys=True) + '\n')
-print(json.dumps({'classification': decision['classification'], 'promote_to_n3': decision.get('promote_to_n3', False), 'decision': str(root / 'decision.json')}, sort_keys=True))
+print(json.dumps({'classification': decision['classification'], 'reason': decision.get('reason'), 'promote_to_matched_n3': decision.get('promote_to_matched_n3', False), 'decision': str(root / 'decision.json')}, sort_keys=True))
 PY

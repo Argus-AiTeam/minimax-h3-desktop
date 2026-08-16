@@ -1,0 +1,11 @@
+{
+  "claim_boundary": "If accepted, only bounded formal N>=10 matched 30-second extension/chunked r10 guarded-adaptive step-min=3 speedup versus retained r9 current Sol-Attn on one A6000; no BF16 fidelity/native long context/human or product quality/public comparison/SOTA claim.",
+  "created_utc": "2026-08-16T16:13:33Z",
+  "evidence_root": "${PWD}/technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z",
+  "reviewer_output_markdown": "${PWD}/technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/reviewer_verdict.md",
+  "schema_version": "minimax-h3-final-av-30s-r10-guarded-adaptive-step3-formal-n10-reviewer-verdict-v1",
+  "scope": "Formal N>=10 matched 30-second final-AV extension-lane r10 guarded-adaptive step-min=3 candidate artifact-only review",
+  "source_reviewer_run_id": "final-av-30s-r10-formal-n10-artifact-reviewer-20260816T161054Z",
+  "source_reviewer_status_path": "${PWD}/.argus_subagents/final-av-30s-r10-formal-n10-artifact-reviewer-20260816T161054Z/status.json",
+  "verdict": "accept"
+}

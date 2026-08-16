@@ -1,0 +1,555 @@
+{
+  "pairs": [
+    {
+      "benchmark_record_paths": {
+        "candidate": "${PWD}/technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/pair01/r10_adaptive_tau1_5_step3_diag/benchmark_record.json",
+        "reference": "${PWD}/technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/pair01/r9_current_sol_attn/benchmark_record.json"
+      },
+      "benchmark_validation_paths": {
+        "candidate": "${PWD}/technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/pair01/candidate_benchmark_record_validation.json",
+        "reference": "${PWD}/technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/pair01/reference_benchmark_record_validation.json"
+      },
+      "candidate": {
+        "audio": {
+          "channels": 2,
+          "decoded_samples_per_channel": 960000,
+          "effective_samples_per_channel": 960000,
+          "encoder_priming_samples": 0,
+          "end_padding_samples": 0,
+          "full_decode": true,
+          "present": true,
+          "sample_rate_hz": 32000
+        },
+        "final_accounting_complete": true,
+        "status": "complete",
+        "video": {
+          "fps": 24,
+          "frames": 720,
+          "full_decode": true,
+          "height": 768,
+          "present": true,
+          "width": 1344
+        }
+      },
+      "pair": "pair01",
+      "reference": {
+        "audio": {
+          "channels": 2,
+          "decoded_samples_per_channel": 960000,
+          "effective_samples_per_channel": 960000,
+          "encoder_priming_samples": 0,
+          "end_padding_samples": 0,
+          "full_decode": true,
+          "present": true,
+          "sample_rate_hz": 32000
+        },
+        "final_accounting_complete": true,
+        "status": "complete",
+        "video": {
+          "fps": 24,
+          "frames": 720,
+          "full_decode": true,
+          "height": 768,
+          "present": true,
+          "width": 1344
+        }
+      }
+    },
+    {
+      "benchmark_record_paths": {
+        "candidate": "${PWD}/technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/pair02/r10_adaptive_tau1_5_step3_diag/benchmark_record.json",
+        "reference": "${PWD}/technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/pair02/r9_current_sol_attn/benchmark_record.json"
+      },
+      "benchmark_validation_paths": {
+        "candidate": "${PWD}/technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/pair02/candidate_benchmark_record_validation.json",
+        "reference": "${PWD}/technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/pair02/reference_benchmark_record_validation.json"
+      },
+      "candidate": {
+        "audio": {
+          "channels": 2,
+          "decoded_samples_per_channel": 960000,
+          "effective_samples_per_channel": 960000,
+          "encoder_priming_samples": 0,
+          "end_padding_samples": 0,
+          "full_decode": true,
+          "present": true,
+          "sample_rate_hz": 32000
+        },
+        "final_accounting_complete": true,
+        "status": "complete",
+        "video": {
+          "fps": 24,
+          "frames": 720,
+          "full_decode": true,
+          "height": 768,
+          "present": true,
+          "width": 1344
+        }
+      },
+      "pair": "pair02",
+      "reference": {
+        "audio": {
+          "channels": 2,
+          "decoded_samples_per_channel": 960000,
+          "effective_samples_per_channel": 960000,
+          "encoder_priming_samples": 0,
+          "end_padding_samples": 0,
+          "full_decode": true,
+          "present": true,
+          "sample_rate_hz": 32000
+        },
+        "final_accounting_complete": true,
+        "status": "complete",
+        "video": {
+          "fps": 24,
+          "frames": 720,
+          "full_decode": true,
+          "height": 768,
+          "present": true,
+          "width": 1344
+        }
+      }
+    },
+    {
+      "benchmark_record_paths": {
+        "candidate": "${PWD}/technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/pair03/r10_adaptive_tau1_5_step3_diag/benchmark_record.json",
+        "reference": "${PWD}/technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/pair03/r9_current_sol_attn/benchmark_record.json"
+      },
+      "benchmark_validation_paths": {
+        "candidate": "${PWD}/technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/pair03/candidate_benchmark_record_validation.json",
+        "reference": "${PWD}/technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/pair03/reference_benchmark_record_validation.json"
+      },
+      "candidate": {
+        "audio": {
+          "channels": 2,
+          "decoded_samples_per_channel": 960000,
+          "effective_samples_per_channel": 960000,
+          "encoder_priming_samples": 0,
+          "end_padding_samples": 0,
+          "full_decode": true,
+          "present": true,
+          "sample_rate_hz": 32000
+        },
+        "final_accounting_complete": true,
+        "status": "complete",
+        "video": {
+          "fps": 24,
+          "frames": 720,
+          "full_decode": true,
+          "height": 768,
+          "present": true,
+          "width": 1344
+        }
+      },
+      "pair": "pair03",
+      "reference": {
+        "audio": {
+          "channels": 2,
+          "decoded_samples_per_channel": 960000,
+          "effective_samples_per_channel": 960000,
+          "encoder_priming_samples": 0,
+          "end_padding_samples": 0,
+          "full_decode": true,
+          "present": true,
+          "sample_rate_hz": 32000
+        },
+        "final_accounting_complete": true,
+        "status": "complete",
+        "video": {
+          "fps": 24,
+          "frames": 720,
+          "full_decode": true,
+          "height": 768,
+          "present": true,
+          "width": 1344
+        }
+      }
+    },
+    {
+      "benchmark_record_paths": {
+        "candidate": "${PWD}/technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/pair04/r10_adaptive_tau1_5_step3_diag/benchmark_record.json",
+        "reference": "${PWD}/technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/pair04/r9_current_sol_attn/benchmark_record.json"
+      },
+      "benchmark_validation_paths": {
+        "candidate": "${PWD}/technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/pair04/candidate_benchmark_record_validation.json",
+        "reference": "${PWD}/technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/pair04/reference_benchmark_record_validation.json"
+      },
+      "candidate": {
+        "audio": {
+          "channels": 2,
+          "decoded_samples_per_channel": 960000,
+          "effective_samples_per_channel": 960000,
+          "encoder_priming_samples": 0,
+          "end_padding_samples": 0,
+          "full_decode": true,
+          "present": true,
+          "sample_rate_hz": 32000
+        },
+        "final_accounting_complete": true,
+        "status": "complete",
+        "video": {
+          "fps": 24,
+          "frames": 720,
+          "full_decode": true,
+          "height": 768,
+          "present": true,
+          "width": 1344
+        }
+      },
+      "pair": "pair04",
+      "reference": {
+        "audio": {
+          "channels": 2,
+          "decoded_samples_per_channel": 960000,
+          "effective_samples_per_channel": 960000,
+          "encoder_priming_samples": 0,
+          "end_padding_samples": 0,
+          "full_decode": true,
+          "present": true,
+          "sample_rate_hz": 32000
+        },
+        "final_accounting_complete": true,
+        "status": "complete",
+        "video": {
+          "fps": 24,
+          "frames": 720,
+          "full_decode": true,
+          "height": 768,
+          "present": true,
+          "width": 1344
+        }
+      }
+    },
+    {
+      "benchmark_record_paths": {
+        "candidate": "${PWD}/technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/pair05/r10_adaptive_tau1_5_step3_diag/benchmark_record.json",
+        "reference": "${PWD}/technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/pair05/r9_current_sol_attn/benchmark_record.json"
+      },
+      "benchmark_validation_paths": {
+        "candidate": "${PWD}/technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/pair05/candidate_benchmark_record_validation.json",
+        "reference": "${PWD}/technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/pair05/reference_benchmark_record_validation.json"
+      },
+      "candidate": {
+        "audio": {
+          "channels": 2,
+          "decoded_samples_per_channel": 960000,
+          "effective_samples_per_channel": 960000,
+          "encoder_priming_samples": 0,
+          "end_padding_samples": 0,
+          "full_decode": true,
+          "present": true,
+          "sample_rate_hz": 32000
+        },
+        "final_accounting_complete": true,
+        "status": "complete",
+        "video": {
+          "fps": 24,
+          "frames": 720,
+          "full_decode": true,
+          "height": 768,
+          "present": true,
+          "width": 1344
+        }
+      },
+      "pair": "pair05",
+      "reference": {
+        "audio": {
+          "channels": 2,
+          "decoded_samples_per_channel": 960000,
+          "effective_samples_per_channel": 960000,
+          "encoder_priming_samples": 0,
+          "end_padding_samples": 0,
+          "full_decode": true,
+          "present": true,
+          "sample_rate_hz": 32000
+        },
+        "final_accounting_complete": true,
+        "status": "complete",
+        "video": {
+          "fps": 24,
+          "frames": 720,
+          "full_decode": true,
+          "height": 768,
+          "present": true,
+          "width": 1344
+        }
+      }
+    },
+    {
+      "benchmark_record_paths": {
+        "candidate": "${PWD}/technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/pair06/r10_adaptive_tau1_5_step3_diag/benchmark_record.json",
+        "reference": "${PWD}/technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/pair06/r9_current_sol_attn/benchmark_record.json"
+      },
+      "benchmark_validation_paths": {
+        "candidate": "${PWD}/technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/pair06/candidate_benchmark_record_validation.json",
+        "reference": "${PWD}/technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/pair06/reference_benchmark_record_validation.json"
+      },
+      "candidate": {
+        "audio": {
+          "channels": 2,
+          "decoded_samples_per_channel": 960000,
+          "effective_samples_per_channel": 960000,
+          "encoder_priming_samples": 0,
+          "end_padding_samples": 0,
+          "full_decode": true,
+          "present": true,
+          "sample_rate_hz": 32000
+        },
+        "final_accounting_complete": true,
+        "status": "complete",
+        "video": {
+          "fps": 24,
+          "frames": 720,
+          "full_decode": true,
+          "height": 768,
+          "present": true,
+          "width": 1344
+        }
+      },
+      "pair": "pair06",
+      "reference": {
+        "audio": {
+          "channels": 2,
+          "decoded_samples_per_channel": 960000,
+          "effective_samples_per_channel": 960000,
+          "encoder_priming_samples": 0,
+          "end_padding_samples": 0,
+          "full_decode": true,
+          "present": true,
+          "sample_rate_hz": 32000
+        },
+        "final_accounting_complete": true,
+        "status": "complete",
+        "video": {
+          "fps": 24,
+          "frames": 720,
+          "full_decode": true,
+          "height": 768,
+          "present": true,
+          "width": 1344
+        }
+      }
+    },
+    {
+      "benchmark_record_paths": {
+        "candidate": "${PWD}/technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/pair07/r10_adaptive_tau1_5_step3_diag/benchmark_record.json",
+        "reference": "${PWD}/technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/pair07/r9_current_sol_attn/benchmark_record.json"
+      },
+      "benchmark_validation_paths": {
+        "candidate": "${PWD}/technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/pair07/candidate_benchmark_record_validation.json",
+        "reference": "${PWD}/technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/pair07/reference_benchmark_record_validation.json"
+      },
+      "candidate": {
+        "audio": {
+          "channels": 2,
+          "decoded_samples_per_channel": 960000,
+          "effective_samples_per_channel": 960000,
+          "encoder_priming_samples": 0,
+          "end_padding_samples": 0,
+          "full_decode": true,
+          "present": true,
+          "sample_rate_hz": 32000
+        },
+        "final_accounting_complete": true,
+        "status": "complete",
+        "video": {
+          "fps": 24,
+          "frames": 720,
+          "full_decode": true,
+          "height": 768,
+          "present": true,
+          "width": 1344
+        }
+      },
+      "pair": "pair07",
+      "reference": {
+        "audio": {
+          "channels": 2,
+          "decoded_samples_per_channel": 960000,
+          "effective_samples_per_channel": 960000,
+          "encoder_priming_samples": 0,
+          "end_padding_samples": 0,
+          "full_decode": true,
+          "present": true,
+          "sample_rate_hz": 32000
+        },
+        "final_accounting_complete": true,
+        "status": "complete",
+        "video": {
+          "fps": 24,
+          "frames": 720,
+          "full_decode": true,
+          "height": 768,
+          "present": true,
+          "width": 1344
+        }
+      }
+    },
+    {
+      "benchmark_record_paths": {
+        "candidate": "${PWD}/technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/pair08/r10_adaptive_tau1_5_step3_diag/benchmark_record.json",
+        "reference": "${PWD}/technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/pair08/r9_current_sol_attn/benchmark_record.json"
+      },
+      "benchmark_validation_paths": {
+        "candidate": "${PWD}/technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/pair08/candidate_benchmark_record_validation.json",
+        "reference": "${PWD}/technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/pair08/reference_benchmark_record_validation.json"
+      },
+      "candidate": {
+        "audio": {
+          "channels": 2,
+          "decoded_samples_per_channel": 960000,
+          "effective_samples_per_channel": 960000,
+          "encoder_priming_samples": 0,
+          "end_padding_samples": 0,
+          "full_decode": true,
+          "present": true,
+          "sample_rate_hz": 32000
+        },
+        "final_accounting_complete": true,
+        "status": "complete",
+        "video": {
+          "fps": 24,
+          "frames": 720,
+          "full_decode": true,
+          "height": 768,
+          "present": true,
+          "width": 1344
+        }
+      },
+      "pair": "pair08",
+      "reference": {
+        "audio": {
+          "channels": 2,
+          "decoded_samples_per_channel": 960000,
+          "effective_samples_per_channel": 960000,
+          "encoder_priming_samples": 0,
+          "end_padding_samples": 0,
+          "full_decode": true,
+          "present": true,
+          "sample_rate_hz": 32000
+        },
+        "final_accounting_complete": true,
+        "status": "complete",
+        "video": {
+          "fps": 24,
+          "frames": 720,
+          "full_decode": true,
+          "height": 768,
+          "present": true,
+          "width": 1344
+        }
+      }
+    },
+    {
+      "benchmark_record_paths": {
+        "candidate": "${PWD}/technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/pair09/r10_adaptive_tau1_5_step3_diag/benchmark_record.json",
+        "reference": "${PWD}/technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/pair09/r9_current_sol_attn/benchmark_record.json"
+      },
+      "benchmark_validation_paths": {
+        "candidate": "${PWD}/technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/pair09/candidate_benchmark_record_validation.json",
+        "reference": "${PWD}/technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/pair09/reference_benchmark_record_validation.json"
+      },
+      "candidate": {
+        "audio": {
+          "channels": 2,
+          "decoded_samples_per_channel": 960000,
+          "effective_samples_per_channel": 960000,
+          "encoder_priming_samples": 0,
+          "end_padding_samples": 0,
+          "full_decode": true,
+          "present": true,
+          "sample_rate_hz": 32000
+        },
+        "final_accounting_complete": true,
+        "status": "complete",
+        "video": {
+          "fps": 24,
+          "frames": 720,
+          "full_decode": true,
+          "height": 768,
+          "present": true,
+          "width": 1344
+        }
+      },
+      "pair": "pair09",
+      "reference": {
+        "audio": {
+          "channels": 2,
+          "decoded_samples_per_channel": 960000,
+          "effective_samples_per_channel": 960000,
+          "encoder_priming_samples": 0,
+          "end_padding_samples": 0,
+          "full_decode": true,
+          "present": true,
+          "sample_rate_hz": 32000
+        },
+        "final_accounting_complete": true,
+        "status": "complete",
+        "video": {
+          "fps": 24,
+          "frames": 720,
+          "full_decode": true,
+          "height": 768,
+          "present": true,
+          "width": 1344
+        }
+      }
+    },
+    {
+      "benchmark_record_paths": {
+        "candidate": "${PWD}/technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/pair10/r10_adaptive_tau1_5_step3_diag/benchmark_record.json",
+        "reference": "${PWD}/technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/pair10/r9_current_sol_attn/benchmark_record.json"
+      },
+      "benchmark_validation_paths": {
+        "candidate": "${PWD}/technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/pair10/candidate_benchmark_record_validation.json",
+        "reference": "${PWD}/technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/pair10/reference_benchmark_record_validation.json"
+      },
+      "candidate": {
+        "audio": {
+          "channels": 2,
+          "decoded_samples_per_channel": 960000,
+          "effective_samples_per_channel": 960000,
+          "encoder_priming_samples": 0,
+          "end_padding_samples": 0,
+          "full_decode": true,
+          "present": true,
+          "sample_rate_hz": 32000
+        },
+        "final_accounting_complete": true,
+        "status": "complete",
+        "video": {
+          "fps": 24,
+          "frames": 720,
+          "full_decode": true,
+          "height": 768,
+          "present": true,
+          "width": 1344
+        }
+      },
+      "pair": "pair10",
+      "reference": {
+        "audio": {
+          "channels": 2,
+          "decoded_samples_per_channel": 960000,
+          "effective_samples_per_channel": 960000,
+          "encoder_priming_samples": 0,
+          "end_padding_samples": 0,
+          "full_decode": true,
+          "present": true,
+          "sample_rate_hz": 32000
+        },
+        "final_accounting_complete": true,
+        "status": "complete",
+        "video": {
+          "fps": 24,
+          "frames": 720,
+          "full_decode": true,
+          "height": 768,
+          "present": true,
+          "width": 1344
+        }
+      }
+    }
+  ],
+  "scope": "Final AV decode/accounting copied from each lane benchmark record; complete means 720 video frames and 960000 effective audio samples/channel for this 30-second lane."
+}

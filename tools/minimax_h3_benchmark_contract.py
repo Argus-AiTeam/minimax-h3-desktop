@@ -286,8 +286,8 @@ def validate_lane_manifest(manifest: Mapping[str, Any]) -> dict[str, Any]:
                 errors.append("every long lane must declare one of the four long-production modes")
             if mode == "native_long_context" and production.get("native_context_supported") is not True:
                 errors.append("unsupported native long context cannot be selected")
-            if manifest.get("measurement_status") != "unmeasured":
-                errors.append("30/60-second manifests must remain unmeasured until real final AV exists")
+            if manifest.get("measurement_status") not in {"unmeasured", "dry_run_no_new_measurement"}:
+                errors.append("long-lane manifests are workload specifications and must not masquerade as measurement records")
         elif mode != "native_short_clip":
             errors.append("the short lane must use generation_mode=native_short_clip")
     required_metrics = set(_list(manifest, "required_metrics", errors))

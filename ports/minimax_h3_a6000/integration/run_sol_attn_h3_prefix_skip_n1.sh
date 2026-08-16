@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: Apache-2.0
-# External single-A6000 r9 current-vs-pair-value-halves matched N=1 gate.
+# External single-A6000 r9 full-prefix-block-skip matched N=1 gate.
 # Default is --dry-run: no GPU execution, Docker execution, nvidia-smi, CUDA,
 # network access, downloads, model loading, inference, cache enablement, or publication.
 set -euo pipefail
@@ -13,7 +13,7 @@ IMAGE=${IMAGE:-argus/minimax-h3-vllm-omni:8e2e9b6b53e8-r9-sol-attn-overlay}
 REQUIRED_IMAGE_VERSION_LABEL=${REQUIRED_IMAGE_VERSION_LABEL:-r9}
 MODEL_ROOT=${MODEL_ROOT:-$ROOT/models/MiniMax-H3}
 PROMPT_FILE=${PROMPT_FILE:-$ROOT/technical_report/evidence/minimax_h3_desktop/baseline_a6000/t2va_example_1.prompt.txt}
-OUT_DIR=${OUT_DIR:-$ROOT/technical_report/evidence/minimax_h3_desktop/sol_engine_port/sol_attn_h3_pair_value_halves_r9_n1_$(date -u +%Y%m%dT%H%M%SZ)}
+OUT_DIR=${OUT_DIR:-$ROOT/technical_report/evidence/minimax_h3_desktop/sol_engine_port/sol_attn_h3_prefix_skip_r9_n1_$(date -u +%Y%m%dT%H%M%SZ)}
 PORT=${PORT:-8000}
 GPU_IDLE_MAX_MEMORY_MIB=${GPU_IDLE_MAX_MEMORY_MIB:-512}
 GPU_IDLE_MAX_UTIL_PCT=${GPU_IDLE_MAX_UTIL_PCT:-5}
@@ -35,34 +35,28 @@ DRY_RUN=1
 
 usage() {
   cat <<'EOF_USAGE'
-Usage: run_sol_attn_h3_pair_value_halves_n1.sh [--dry-run|--execute]
+Usage: run_sol_attn_h3_prefix_skip_n1.sh [--dry-run|--execute]
 
 Dry-run is the default and prints the exact external A6000 plan without GPU
 execution, Docker execution, CUDA, nvidia-smi, network access, downloads, model
 loading, inference, cache enablement, or publication. Non-dry execution requires
-ARGUS_ALLOW_A6000_SOL_ATTN_PAIR_VALUE_HALVES_N1=1 plus readable fresh r9 image
+ARGUS_ALLOW_A6000_SOL_ATTN_PREFIX_SKIP_N1=1 plus readable fresh r9 image
 version/base/title label checks, a fresh GPU-hygiene preflight showing a truly
 idle selected A6000, and is outside CPU/static stages.
 
-The gate compares two 5-step runs through the same opt-in H3_A6000_SOL_ATTN
-backend and unchanged retained r8/r9 sparse policy:
-  1. current_retained_a: stride-aware V + full-prefix-block skip + dense-prefix overwrite;
-  2. current_retained_b: same retained-current lane for decoded-AV and attention-output determinism;
-  3. pair_value_halves: same lane with MINIMAX_H3_A6000_SOL_ATTN_SHADOW_PAIR_VALUE_HALVES=1
-     and MINIMAX_H3_A6000_SOL_ATTN_SHADOW_ROW_STATE_PROBE=1; each shadowed sparse call runs
-     retained-current and pair-value-halves on the same live Q/K/V, returns retained-current
-     output, and records bounded scalar/layout/row-state mismatch metadata.
-All modes keep cache off and diagnostic materialization off. Each mode receives
-one excluded warmup request and then arms per-call CUDA-event telemetry plus the
-bounded output-digest diagnostic for the measured request. This shadow N=1 diagnostic is not promoted from timing; it rejects on same-input divergence or requires a later fixed-pair gate.
-max(2*0.5072177176%, 1.5%) and all current-vs-current determinism, correctness,
-sparse/fallback/materialization, resource, and stability gates pass.
-
-Startup budgets are env-controlled and passed to vllm-omni itself, not only the
-outer readiness loop: VLLM_OMNI_INIT_TIMEOUT_S (default 2400),
-VLLM_OMNI_STAGE_INIT_TIMEOUT_S (default 1800), SERVER_READY_TIMEOUT_S (default
-init+600), SERVER_READY_POLL_INTERVAL_S (default 5), VIDEO_SYNC_TIMEOUT_S
-(default 3600), and REQUEST_TIMEOUT_S (default 3000).
+The gate compares the retained Sol-Attn lane with
+MINIMAX_H3_A6000_SOL_ATTN_SKIP_FULL_PREFIX_BLOCKS=0 vs =1 as the only principal
+variable:
+  1. skip_off_a: retained sparse policy except full-prefix-block skip disabled;
+  2. skip_off_b: same skip-off lane for decoded-AV and attention-output stability;
+  3. skip_on: same lane with full-prefix-block skip enabled.
+All modes keep cache off, stride-aware V on, pair-value-halves off, diagnostic
+materialization off, dense-prefix overwrite preserved, exact-prefix-query off,
+static/bitmask scheduler off, prompt/seed/workload fixed, one excluded warmup,
+and one measured request with bounded output-digest diagnostics.  This is a
+matched N=1 diagnostic only; promotion requires exact current-vs-current control,
+exact skip-off vs skip-on decoded media and attention-output digests, sparse and
+copy telemetry gates, resource samples, and an above-threshold N=1 signal.
 EOF_USAGE
 }
 
@@ -85,7 +79,6 @@ expected_uuid=${EXPECTED_UUID:-<not-set>}
 image=$IMAGE
 required_image_label=org.opencontainers.image.version=$REQUIRED_IMAGE_VERSION_LABEL
 identity_guard=non-dry verifies readable image tag plus version/base/title labels for the fresh r9 overlay; opaque image identifiers are omitted and are not proof
-external_r9_build_command=EVIDENCE_DIR=technical_report/evidence/minimax_h3_desktop/sol_engine_port/r9_overlay_image bash ports/minimax_h3_a6000/integration/r9/build_r9_overlay_image.sh
 model_root=$MODEL_ROOT
 prompt_file=$PROMPT_FILE
 out_dir=$OUT_DIR
@@ -102,13 +95,13 @@ server_ready_timeout_s=$SERVER_READY_TIMEOUT_S
 server_ready_poll_interval_s=$SERVER_READY_POLL_INTERVAL_S
 video_sync_timeout_s=$VIDEO_SYNC_TIMEOUT_S
 request_timeout_s=$REQUEST_TIMEOUT_S
-host_python_for_decoded_av_comparator=$HOST_PYTHON
+host_python_for_finalizer=$HOST_PYTHON
 warm_lifecycle=one excluded warmup per mode in the same server process as its measured request
-principal_variable=MINIMAX_H3_A6000_SOL_ATTN_SHADOW_PAIR_VALUE_HALVES same-input diagnostic after same-run current-vs-current determinism check
-policy=retained r8/r9 sparse lane; cache off; stride-aware V on; full-prefix-block skip on; dense-prefix overwrite preserved; dense_first_steps=0; dense_first_layers=2
-current_retained_a=pair-value-halves off; diagnostic materialization off; output digest diagnostic on
-current_retained_b=pair-value-halves off; diagnostic materialization off; output digest diagnostic on
-pair_value_halves=shadow pair-value-halves on, retained-current output returned; diagnostic materialization off; output digest diagnostic on; shadow scalar/row-state records bounded to first 8 mismatches
+principal_variable=MINIMAX_H3_A6000_SOL_ATTN_SKIP_FULL_PREFIX_BLOCKS=0_vs_1
+policy=retained r9 sparse lane; cache off; stride-aware V on; pair-value-halves off; diagnostic materialization off; dense-prefix overwrite preserved; dense_first_steps=0; dense_first_layers=2; exact-prefix-query/static-prefix-sink/bitmask off
+skip_off_a=skip_full_prefix_blocks off; output digest diagnostic on
+skip_off_b=skip_full_prefix_blocks off; output digest diagnostic on; current-vs-current control
+skip_on=skip_full_prefix_blocks on; output digest diagnostic on
 telemetry_arm_file=/evidence/<mode>/measure.arm
 copy_contract=no diagnostic materialization in any mode; materialize/input copy counters must remain zero
 attention_output_digest_contract=bounded per-call output SHA/tolerance metadata only; no raw tensor export
@@ -116,7 +109,7 @@ promotion_threshold_pct=max(1.5,2*0.5072177175606011)=1.5
 classification=matched_N1_gate_not_speedup_claim_until_promoted
 
 Would execute only with:
-  ARGUS_ALLOW_A6000_SOL_ATTN_PAIR_VALUE_HALVES_N1=1 bash ports/minimax_h3_a6000/integration/run_sol_attn_h3_pair_value_halves_n1.sh --execute
+  ARGUS_ALLOW_A6000_SOL_ATTN_PREFIX_SKIP_N1=1 bash ports/minimax_h3_a6000/integration/run_sol_attn_h3_prefix_skip_n1.sh --execute
 EOF_PLAN
 }
 
@@ -125,8 +118,8 @@ if [[ "$DRY_RUN" == "1" ]]; then
   exit 0
 fi
 
-if [[ "${ARGUS_ALLOW_A6000_SOL_ATTN_PAIR_VALUE_HALVES_N1:-0}" != "1" ]]; then
-  echo "ERROR: refusing non-dry Sol-Attn A6000 pair-value-halves gate without ARGUS_ALLOW_A6000_SOL_ATTN_PAIR_VALUE_HALVES_N1=1" >&2
+if [[ "${ARGUS_ALLOW_A6000_SOL_ATTN_PREFIX_SKIP_N1:-0}" != "1" ]]; then
+  echo "ERROR: refusing non-dry Sol-Attn A6000 prefix-skip gate without ARGUS_ALLOW_A6000_SOL_ATTN_PREFIX_SKIP_N1=1" >&2
   exit 11
 fi
 
@@ -160,10 +153,11 @@ record_docker_hygiene_after() {
 }
 
 verify_r9_readable_image_provenance() {
-  local version_label base_label title_label
+  local version_label base_label title_label license_label
   version_label=$(docker image inspect --format '{{ index .Config.Labels "org.opencontainers.image.version" }}' "$IMAGE")
   base_label=$(docker image inspect --format '{{ index .Config.Labels "org.opencontainers.image.base.name" }}' "$IMAGE")
   title_label=$(docker image inspect --format '{{ index .Config.Labels "org.opencontainers.image.title" }}' "$IMAGE")
+  license_label=$(docker image inspect --format '{{ index .Config.Labels "org.opencontainers.image.licenses" }}' "$IMAGE")
   if [[ "$version_label" != "$REQUIRED_IMAGE_VERSION_LABEL" ]]; then
     echo "ERROR: image version label mismatch for $IMAGE: got $version_label expected $REQUIRED_IMAGE_VERSION_LABEL" >&2
     exit 15
@@ -182,6 +176,7 @@ required_image_version_label=$REQUIRED_IMAGE_VERSION_LABEL
 actual_image_version_label=$version_label
 actual_image_base_label=$base_label
 actual_image_title_label=$title_label
+actual_image_license_label=$license_label
 opaque_image_identifier_policy=omitted_not_evidence
 EOF_IDENTITY
 }
@@ -198,52 +193,30 @@ record_gpu_hygiene_preflight() {
   fi
   python3 - "$OUT_DIR/gpu_hygiene_preflight.json" "$OUT_DIR/gpu_hygiene_blocker.json" "$GPU_INDEX" "$EXPECTED_UUID" "$GPU_IDLE_MAX_MEMORY_MIB" "$GPU_IDLE_MAX_UTIL_PCT" <<'PY'
 from __future__ import annotations
-
-import json
-import os
-import shutil
-import subprocess
-import sys
-import time
+import json, os, shutil, subprocess, sys, time
 from pathlib import Path
-
-out_path = Path(sys.argv[1])
-blocker_path = Path(sys.argv[2])
-gpu_index = sys.argv[3]
-expected_uuid = sys.argv[4]
-max_mem_mib = float(sys.argv[5])
-max_util_pct = float(sys.argv[6])
-
-def run(cmd: list[str], *, check: bool = True) -> subprocess.CompletedProcess[str]:
+out_path = Path(sys.argv[1]); blocker_path = Path(sys.argv[2]); gpu_index = sys.argv[3]; expected_uuid = sys.argv[4]
+max_mem_mib = float(sys.argv[5]); max_util_pct = float(sys.argv[6])
+def run(cmd, check=True):
     proc = subprocess.run(cmd, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=30)
     if check and proc.returncode != 0:
         raise RuntimeError(f"command failed rc={proc.returncode}: {' '.join(cmd)}\nstderr={proc.stderr.strip()}")
     return proc
-
-def parse_csv_line(line: str) -> list[str]:
-    return [part.strip() for part in line.split(',')]
-
-def parse_float(value: str) -> float:
-    try:
-        return float(value)
+def parse_csv_line(line): return [part.strip() for part in line.split(',')]
+def parse_float(value):
+    try: return float(value)
     except ValueError:
         cleaned = ''.join(ch for ch in value if ch.isdigit() or ch in '.-')
         return float(cleaned) if cleaned else 0.0
-
-gpu_fields = [
-    'index', 'uuid', 'name', 'memory.total', 'memory.used', 'memory.free',
-    'utilization.gpu', 'utilization.memory', 'temperature.gpu', 'power.draw', 'power.limit', 'pstate',
-]
-gpu_proc = run(['nvidia-smi', '-i', gpu_index, '--query-gpu=' + ','.join(gpu_fields), '--format=csv,noheader,nounits'])
-gpu_values = parse_csv_line(gpu_proc.stdout.strip().splitlines()[0])
-gpu = dict(zip(gpu_fields, gpu_values))
-compute_proc = run(['nvidia-smi', '--query-compute-apps=pid,gpu_uuid,process_name,used_memory', '--format=csv,noheader,nounits'], check=False)
+gpu_fields = ['index','uuid','name','memory.total','memory.used','memory.free','utilization.gpu','utilization.memory','temperature.gpu','power.draw','power.limit','pstate']
+gpu_proc = run(['nvidia-smi','-i',gpu_index,'--query-gpu=' + ','.join(gpu_fields),'--format=csv,noheader,nounits'])
+gpu = dict(zip(gpu_fields, parse_csv_line(gpu_proc.stdout.strip().splitlines()[0])))
+compute_proc = run(['nvidia-smi','--query-compute-apps=pid,gpu_uuid,process_name,used_memory','--format=csv,noheader,nounits'], check=False)
 apps = []
 if compute_proc.returncode == 0:
     for line in compute_proc.stdout.splitlines():
         line = line.strip()
-        if not line or 'No running' in line:
-            continue
+        if not line or 'No running' in line: continue
         parts = parse_csv_line(line)
         if len(parts) >= 4:
             apps.append({'pid': parts[0], 'gpu_uuid': parts[1], 'process_name': parts[2], 'used_memory_mib': parts[3]})
@@ -251,106 +224,49 @@ selected_apps = [app for app in apps if app.get('gpu_uuid') == gpu.get('uuid')]
 meminfo = {}
 try:
     for line in Path('/proc/meminfo').read_text(encoding='utf-8').splitlines():
-        key, rest = line.split(':', 1)
-        meminfo[key] = rest.strip()
+        key, rest = line.split(':', 1); meminfo[key] = rest.strip()
 except OSError as exc:
     meminfo['error'] = str(exc)
 paths = []
 for raw in (os.environ.get('ROOT'), os.environ.get('MODEL_ROOT'), os.environ.get('OUT_DIR')):
     if raw:
         try:
-            usage = shutil.disk_usage(raw)
-            paths.append({'path': raw, 'total_bytes': usage.total, 'used_bytes': usage.used, 'free_bytes': usage.free})
+            usage = shutil.disk_usage(raw); paths.append({'path': raw, 'total_bytes': usage.total, 'used_bytes': usage.used, 'free_bytes': usage.free})
         except OSError as exc:
             paths.append({'path': raw, 'error': str(exc)})
 blockers = []
-if expected_uuid and gpu.get('uuid') != expected_uuid:
-    blockers.append({'kind': 'uuid_mismatch', 'actual_uuid': gpu.get('uuid'), 'expected_uuid': expected_uuid})
-if 'a6000' not in str(gpu.get('name', '')).lower():
-    blockers.append({'kind': 'not_a6000', 'name': gpu.get('name')})
-mem_used = parse_float(gpu.get('memory.used', '0'))
-util_gpu = parse_float(gpu.get('utilization.gpu', '0'))
-if selected_apps:
-    blockers.append({'kind': 'compute_apps_present_on_selected_gpu', 'selected_compute_apps': selected_apps})
-if mem_used > max_mem_mib:
-    blockers.append({'kind': 'memory_used_above_idle_threshold', 'memory_used_mib': mem_used, 'threshold_mib': max_mem_mib})
-if util_gpu > max_util_pct:
-    blockers.append({'kind': 'utilization_above_idle_threshold', 'utilization_gpu_pct': util_gpu, 'threshold_pct': max_util_pct})
-record = {
-    'schema_version': 'minimax_h3_a6000_gpu_hygiene_preflight_v1',
-    'timestamp_unix': time.time(),
-    'gpu_index': gpu_index,
-    'expected_uuid': expected_uuid or None,
-    'idle_thresholds': {'max_memory_used_mib': max_mem_mib, 'max_utilization_gpu_pct': max_util_pct, 'requires_no_compute_apps': True},
-    'selected_gpu': gpu,
-    'selected_compute_apps': selected_apps,
-    'all_compute_apps': apps,
-    'host_meminfo': meminfo,
-    'disk_usage': paths,
-    'status': 'blocked' if blockers else 'idle_ok',
-    'blockers': blockers,
-    'recheck_condition': 'rerun after nvidia-smi shows the selected A6000 has no compute apps, low idle memory/utilization, matching UUID if set, and enough disk space',
-}
+if expected_uuid and gpu.get('uuid') != expected_uuid: blockers.append({'kind': 'uuid_mismatch', 'actual_uuid': gpu.get('uuid'), 'expected_uuid': expected_uuid})
+if 'a6000' not in str(gpu.get('name', '')).lower(): blockers.append({'kind': 'not_a6000', 'name': gpu.get('name')})
+mem_used = parse_float(gpu.get('memory.used', '0')); util_gpu = parse_float(gpu.get('utilization.gpu', '0'))
+if selected_apps: blockers.append({'kind': 'compute_apps_present_on_selected_gpu', 'selected_compute_apps': selected_apps})
+if mem_used > max_mem_mib: blockers.append({'kind': 'memory_used_above_idle_threshold', 'memory_used_mib': mem_used, 'threshold_mib': max_mem_mib})
+if util_gpu > max_util_pct: blockers.append({'kind': 'utilization_above_idle_threshold', 'utilization_gpu_pct': util_gpu, 'threshold_pct': max_util_pct})
+record = {'schema_version': 'minimax_h3_a6000_gpu_hygiene_preflight_v1', 'timestamp_unix': time.time(), 'gpu_index': gpu_index, 'expected_uuid': expected_uuid or None, 'idle_thresholds': {'max_memory_used_mib': max_mem_mib, 'max_utilization_gpu_pct': max_util_pct, 'requires_no_compute_apps': True}, 'selected_gpu': gpu, 'selected_compute_apps': selected_apps, 'all_compute_apps': apps, 'host_meminfo': meminfo, 'disk_usage': paths, 'status': 'blocked' if blockers else 'idle_ok', 'blockers': blockers, 'recheck_condition': 'rerun after nvidia-smi shows the selected A6000 has no compute apps, low idle memory/utilization, matching UUID if set, and enough disk space'}
 out_path.write_text(json.dumps(record, indent=2, sort_keys=True) + '\n', encoding='utf-8')
 if blockers:
-    blocker_path.write_text(json.dumps({
-        'schema_version': 'minimax_h3_a6000_gpu_hygiene_blocker_v1',
-        'status': 'blocked',
-        'reason': 'selected_gpu_not_legally_idle',
-        'blockers': blockers,
-        'selected_gpu': gpu,
-        'selected_compute_apps': selected_apps,
-        'recheck_condition': record['recheck_condition'],
-    }, indent=2, sort_keys=True) + '\n', encoding='utf-8')
+    blocker_path.write_text(json.dumps({'schema_version': 'minimax_h3_a6000_gpu_hygiene_blocker_v1', 'status': 'blocked', 'reason': 'selected_gpu_not_legally_idle', 'blockers': blockers, 'selected_gpu': gpu, 'selected_compute_apps': selected_apps, 'recheck_condition': record['recheck_condition']}, indent=2, sort_keys=True) + '\n', encoding='utf-8')
     raise SystemExit(13)
 PY
 }
 
 record_resource_snapshot() {
-  local output=$1
-  local mode=$2
-  local phase=$3
+  local output=$1 mode=$2 phase=$3
   python3 - "$output" "$mode" "$phase" "$GPU_INDEX" <<'PY'
 from __future__ import annotations
-
-import json
-import subprocess
-import sys
-import time
+import json, subprocess, sys, time
 from pathlib import Path
-
-out = Path(sys.argv[1])
-mode = sys.argv[2]
-phase = sys.argv[3]
-gpu_index = sys.argv[4]
-fields = [
-    'timestamp', 'index', 'uuid', 'name', 'utilization.gpu', 'utilization.memory',
-    'memory.total', 'memory.used', 'memory.free', 'temperature.gpu', 'power.draw', 'power.limit', 'pstate',
-]
-record: dict[str, object] = {
-    'schema_version': 'minimax_h3_a6000_resource_snapshot_v1',
-    'mode': mode,
-    'phase': phase,
-    'timestamp_unix': time.time(),
-}
+out = Path(sys.argv[1]); mode = sys.argv[2]; phase = sys.argv[3]; gpu_index = sys.argv[4]
+fields = ['timestamp','index','uuid','name','utilization.gpu','utilization.memory','memory.total','memory.used','memory.free','temperature.gpu','power.draw','power.limit','pstate']
+record = {'schema_version': 'minimax_h3_a6000_resource_snapshot_v1', 'mode': mode, 'phase': phase, 'timestamp_unix': time.time()}
 try:
-    proc = subprocess.run(
-        ['nvidia-smi', '-i', gpu_index, '--query-gpu=' + ','.join(fields), '--format=csv,noheader,nounits'],
-        text=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        timeout=30,
-        check=True,
-    )
-    values = [part.strip() for part in proc.stdout.strip().splitlines()[0].split(',')]
-    record['selected_gpu'] = dict(zip(fields, values))
-except Exception as exc:  # evidence should capture telemetry failure without hiding the run result
+    proc = subprocess.run(['nvidia-smi','-i',gpu_index,'--query-gpu=' + ','.join(fields),'--format=csv,noheader,nounits'], text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=30, check=True)
+    record['selected_gpu'] = dict(zip(fields, [part.strip() for part in proc.stdout.strip().splitlines()[0].split(',')]))
+except Exception as exc:
     record['selected_gpu_error'] = str(exc)
 try:
     meminfo = {}
     for line in Path('/proc/meminfo').read_text(encoding='utf-8').splitlines():
-        key, rest = line.split(':', 1)
-        meminfo[key] = rest.strip()
+        key, rest = line.split(':', 1); meminfo[key] = rest.strip()
     record['host_meminfo'] = meminfo
 except OSError as exc:
     record['host_meminfo_error'] = str(exc)
@@ -360,18 +276,12 @@ PY
 
 start_mode_resource_sampler() {
   local mode_dir=$1
-  nvidia-smi -i "$GPU_INDEX" \
-    --query-gpu=timestamp,index,uuid,name,utilization.gpu,utilization.memory,memory.total,memory.used,memory.free,temperature.gpu,power.draw,power.limit,pstate \
-    --format=csv,nounits -l "$GPU_RESOURCE_SAMPLE_INTERVAL_S" \
-    > "$mode_dir/gpu_resource_samples.csv" 2> "$mode_dir/gpu_resource_samples.stderr" &
+  nvidia-smi -i "$GPU_INDEX" --query-gpu=timestamp,index,uuid,name,utilization.gpu,utilization.memory,memory.total,memory.used,memory.free,temperature.gpu,power.draw,power.limit,pstate --format=csv,nounits -l "$GPU_RESOURCE_SAMPLE_INTERVAL_S" > "$mode_dir/gpu_resource_samples.csv" 2> "$mode_dir/gpu_resource_samples.stderr" &
   echo $!
 }
 
 start_overall_resource_monitor() {
-  nvidia-smi -i "$GPU_INDEX" \
-    --query-gpu=timestamp,index,name,memory.used,memory.total,power.draw,temperature.gpu,utilization.gpu,utilization.memory \
-    --format=csv,nounits -l "$GPU_RESOURCE_SAMPLE_INTERVAL_S" \
-    > "$OUT_DIR/resource_monitor.csv" 2> "$OUT_DIR/resource_monitor.stderr" &
+  nvidia-smi -i "$GPU_INDEX" --query-gpu=timestamp,index,name,memory.used,memory.total,power.draw,temperature.gpu,utilization.gpu,utilization.memory --format=csv,nounits -l "$GPU_RESOURCE_SAMPLE_INTERVAL_S" > "$OUT_DIR/resource_monitor.csv" 2> "$OUT_DIR/resource_monitor.stderr" &
   echo $!
 }
 
@@ -384,170 +294,47 @@ stop_resource_sampler() {
 }
 
 write_wall_time_json() {
-  local output=$1
-  local label=$2
-  local rc=$3
-  local start_ns=$4
-  local end_ns=$5
-  local start_iso=$6
-  local end_iso=$7
+  local output=$1 label=$2 rc=$3 start_ns=$4 end_ns=$5 start_iso=$6 end_iso=$7
   python3 - "$output" "$label" "$rc" "$start_ns" "$end_ns" "$start_iso" "$end_iso" <<'PY'
 from __future__ import annotations
-
-import json
-import sys
+import json, sys
 from pathlib import Path
-
-out = Path(sys.argv[1])
-label = sys.argv[2]
-rc = int(sys.argv[3])
-start_ns = int(sys.argv[4])
-end_ns = int(sys.argv[5])
-record = {
-    'schema_version': 'minimax_h3_a6000_wall_time_v1',
-    'label': label,
-    'return_code': rc,
-    'start_epoch_ns': start_ns,
-    'end_epoch_ns': end_ns,
-    'start_utc': sys.argv[6],
-    'end_utc': sys.argv[7],
-    'duration_s': (end_ns - start_ns) / 1_000_000_000,
-}
-out.write_text(json.dumps(record, indent=2, sort_keys=True) + '\n', encoding='utf-8')
+out = Path(sys.argv[1]); label = sys.argv[2]; rc = int(sys.argv[3]); start_ns = int(sys.argv[4]); end_ns = int(sys.argv[5])
+out.write_text(json.dumps({'schema_version': 'minimax_h3_a6000_wall_time_v1', 'label': label, 'return_code': rc, 'start_epoch_ns': start_ns, 'end_epoch_ns': end_ns, 'start_utc': sys.argv[6], 'end_utc': sys.argv[7], 'duration_s': (end_ns - start_ns) / 1_000_000_000}, indent=2, sort_keys=True) + '\n', encoding='utf-8')
 PY
 }
 
 write_runtime_failure_decision() {
-  local current_a_rc=$1
-  local current_b_rc=$2
-  local pair_rc=$3
-  python3 - "$OUT_DIR" "$current_a_rc" "$current_b_rc" "$pair_rc" "$VLLM_OMNI_INIT_TIMEOUT_S" "$VLLM_OMNI_STAGE_INIT_TIMEOUT_S" "$SERVER_READY_TIMEOUT_S" "$SERVER_READY_POLL_INTERVAL_S" "$VIDEO_SYNC_TIMEOUT_S" "$REQUEST_TIMEOUT_S" <<'PY'
+  local off_a_rc=$1 off_b_rc=$2 on_rc=$3
+  python3 - "$OUT_DIR" "$off_a_rc" "$off_b_rc" "$on_rc" "$VLLM_OMNI_INIT_TIMEOUT_S" "$VLLM_OMNI_STAGE_INIT_TIMEOUT_S" "$SERVER_READY_TIMEOUT_S" "$SERVER_READY_POLL_INTERVAL_S" "$VIDEO_SYNC_TIMEOUT_S" "$REQUEST_TIMEOUT_S" <<'PY'
 from __future__ import annotations
-
-import json
-import pathlib
-import sys
-import time
-
+import json, pathlib, sys, time
 root = pathlib.Path(sys.argv[1])
-return_codes = {
-    'current_retained_a': int(sys.argv[2]),
-    'current_retained_b': int(sys.argv[3]),
-    'pair_value_halves': int(sys.argv[4]),
-}
-mode_names = tuple(return_codes)
-timeout_values = {
-    'vllm_omni_init_timeout_s': int(sys.argv[5]),
-    'vllm_omni_stage_init_timeout_s': int(sys.argv[6]),
-    'server_ready_timeout_s': int(sys.argv[7]),
-    'server_ready_poll_interval_s': int(sys.argv[8]),
-    'video_sync_timeout_s': int(sys.argv[9]),
-    'request_timeout_s': int(sys.argv[10]),
-}
-
-
-def read_text(path: pathlib.Path, limit_bytes: int = 120_000) -> str:
-    try:
-        data = path.read_bytes()
-    except FileNotFoundError:
-        return ''
-    if len(data) > limit_bytes:
-        data = data[-limit_bytes:]
-    return data.decode('utf-8', errors='replace')
-
-
-def read_json_if_present(path: pathlib.Path) -> dict | None:
-    try:
-        return json.loads(path.read_text(encoding='utf-8'))
-    except Exception:
-        return None
-
-
-def rel(path: pathlib.Path) -> str:
-    try:
-        return str(path.relative_to(root))
-    except ValueError:
-        return str(path)
-
-first_failed_mode = None
-for mode in mode_names:
-    if return_codes[mode] != 0:
-        first_failed_mode = mode
-        break
-
-server_logs: dict[str, dict] = {}
-startup_failure_seen = False
-for mode in mode_names:
-    log_path = root / mode / 'server.log'
-    text = read_text(log_path)
-    application_ready = 'Application startup complete.' in text
-    timeout_seen = (
-        'Orchestrator startup timed out' in text
-        or 'did not become ready within' in text
-        or return_codes[mode] == 62
-        or (return_codes[mode] != 0 and not application_ready)
-    )
-    if return_codes[mode] != 0 and timeout_seen:
-        startup_failure_seen = True
-    server_logs[mode] = {
-        'path': rel(log_path),
-        'exists': log_path.exists(),
-        'bytes': log_path.stat().st_size if log_path.exists() else 0,
-        'application_startup_complete': application_ready,
-        'orchestrator_startup_timeout_seen': 'Orchestrator startup timed out' in text,
-        'did_not_become_ready_seen': 'did not become ready within' in text,
-        'tail_last_200_lines': '\n'.join(text.splitlines()[-200:]),
-    }
-
-wall_time = {'overall': read_json_if_present(root / 'overall_wall_time.json')}
-for mode in mode_names:
-    wall_time[mode] = read_json_if_present(root / mode / 'wall_time.json')
-
-resource_paths = [
-    'gpu_hygiene_preflight.json', 'nvidia_smi_full.txt', 'nvidia_smi_L.txt',
-    'nvidia_smi_compute_apps.csv', 'gpu_lease_status.txt', 'disk_preflight.txt',
-    'resource_monitor.csv', 'overall_wall_time.json', 'r9_image_identity.env', 'workload.env',
-    'docker_info_summary.txt', 'docker_ps_before.jsonl', 'docker_ps_after.jsonl', 'r9_image_inspect.json',
-]
-for mode in mode_names:
-    resource_paths.extend([
-        f'{mode}/startup_timeout_config.env', f'{mode}/gpu_preflight.json',
-        f'{mode}/host_resource_before.json', f'{mode}/host_resource_after.json',
-        f'{mode}/gpu_resource_samples.csv', f'{mode}/wall_time.json', f'{mode}/server.log',
-    ])
-resource_evidence = {
-    item: {'exists': (root / item).exists(), 'bytes': (root / item).stat().st_size if (root / item).exists() else 0}
-    for item in resource_paths
-}
+return_codes = {'skip_off_a': int(sys.argv[2]), 'skip_off_b': int(sys.argv[3]), 'skip_on': int(sys.argv[4])}
+timeout_values = {'vllm_omni_init_timeout_s': int(sys.argv[5]), 'vllm_omni_stage_init_timeout_s': int(sys.argv[6]), 'server_ready_timeout_s': int(sys.argv[7]), 'server_ready_poll_interval_s': int(sys.argv[8]), 'video_sync_timeout_s': int(sys.argv[9]), 'request_timeout_s': int(sys.argv[10])}
+def read_text(path, limit_bytes=120_000):
+    try: data = path.read_bytes()
+    except FileNotFoundError: return ''
+    return data[-limit_bytes:].decode('utf-8', errors='replace')
+def read_json_if_present(path):
+    try: return json.loads(path.read_text(encoding='utf-8'))
+    except Exception: return None
+first_failed_mode = next((m for m, rc in return_codes.items() if rc != 0), None)
+server_logs = {}; startup_failure_seen = False
+for mode, rc in return_codes.items():
+    log_path = root / mode / 'server.log'; text = read_text(log_path); ready = 'Application startup complete.' in text
+    timeout_seen = 'Orchestrator startup timed out' in text or 'did not become ready within' in text or rc == 62 or (rc != 0 and not ready)
+    if rc != 0 and timeout_seen: startup_failure_seen = True
+    server_logs[mode] = {'path': f'{mode}/server.log', 'exists': log_path.exists(), 'bytes': log_path.stat().st_size if log_path.exists() else 0, 'application_startup_complete': ready, 'orchestrator_startup_timeout_seen': 'Orchestrator startup timed out' in text, 'did_not_become_ready_seen': 'did not become ready within' in text, 'tail_last_200_lines': '\n'.join(text.splitlines()[-200:])}
+wall_time = {'overall': read_json_if_present(root / 'overall_wall_time.json')} | {m: read_json_if_present(root / m / 'wall_time.json') for m in return_codes}
+resource_paths = ['gpu_hygiene_preflight.json','nvidia_smi_full.txt','nvidia_smi_L.txt','nvidia_smi_compute_apps.csv','gpu_lease_status.txt','disk_preflight.txt','resource_monitor.csv','overall_wall_time.json','r9_image_identity.env','workload.env','docker_info_summary.txt','docker_ps_before.jsonl','docker_ps_after.jsonl','r9_image_inspect.json']
+for mode in return_codes:
+    resource_paths.extend([f'{mode}/startup_timeout_config.env', f'{mode}/gpu_preflight.json', f'{mode}/host_resource_before.json', f'{mode}/host_resource_after.json', f'{mode}/gpu_resource_samples.csv', f'{mode}/wall_time.json', f'{mode}/server.log'])
+resource_evidence = {item: {'exists': (root / item).exists(), 'bytes': (root / item).stat().st_size if (root / item).exists() else 0} for item in resource_paths}
 reason = 'extended_startup_failure' if startup_failure_seen else 'runtime_failure_no_promotion'
-decision = {
-    'schema_version': 'minimax_h3_a6000_sol_attn_pair_value_halves_diagnostic_n1_startup_failure_v1',
-    'classification': 'blocked',
-    'reason': reason,
-    'failure_type': reason,
-    'promote_to_matched_n3': False,
-    'promote_to_n3': False,
-    'not_speedup_claim': True,
-    'no_product_speedup_claim': True,
-    'timestamp_unix': time.time(),
-    'lane': 'matched_n1_5step_sol_attn_opt_in_not_bf16_fidelity_diagnostic_digest',
-    'workload': {'width': 1344, 'height': 768, 'frames': 124, 'fps': 24, 'duration_s': 5.166667, 'steps': 5, 'seed': 0},
-    'principal_variable': 'MINIMAX_H3_A6000_SOL_ATTN_PAIR_VALUE_HALVES=1 vs 0 after same-run current-vs-current diagnostic',
-    'fixed_variables': {
-        'cache': 'off', 'stride_aware_v': 'on', 'skip_full_prefix_blocks': 'on',
-        'dense_prefix_overwrite': 'preserved', 'diagnostic_materialization': 'off_for_all_modes',
-        'diagnostic_output_digest': 'on_for_bounded_gate_only',
-        'dense_first_steps': 0, 'dense_first_layers': 2,
-    },
-    'timeout_values': timeout_values,
-    'return_codes': return_codes,
-    'first_failed_mode': first_failed_mode,
-    'server_logs': server_logs,
-    'wall_time': wall_time,
-    'resource_evidence': resource_evidence,
-    'claim_boundary': 'Startup/runtime failure artifact only; no product speedup, BF16-fidelity, long-video, quality-equivalence, or promotion claim.',
-}
+decision = {'schema_version': 'minimax_h3_a6000_sol_attn_prefix_skip_n1_runtime_failure_v1', 'classification': 'blocked', 'reason': reason, 'failure_type': reason, 'promote_to_matched_n3': False, 'promote_to_n3': False, 'not_speedup_claim': True, 'no_product_speedup_claim': True, 'timestamp_unix': time.time(), 'lane': 'matched_n1_5step_sol_attn_opt_in_not_bf16_fidelity_prefix_skip', 'workload': {'width': 1344, 'height': 768, 'frames': 124, 'fps': 24, 'duration_s': 5.166667, 'steps': 5, 'seed': 0}, 'principal_variable': 'MINIMAX_H3_A6000_SOL_ATTN_SKIP_FULL_PREFIX_BLOCKS=0_vs_1', 'fixed_variables': {'cache': 'off', 'stride_aware_v': 'on', 'dense_prefix_overwrite': 'preserved', 'pair_value_halves': 'off', 'diagnostic_materialization': 'off_for_all_modes', 'diagnostic_output_digest': 'on_for_bounded_gate_only', 'dense_first_steps': 0, 'dense_first_layers': 2}, 'timeout_values': timeout_values, 'return_codes': return_codes, 'first_failed_mode': first_failed_mode, 'server_logs': server_logs, 'wall_time': wall_time, 'resource_evidence': resource_evidence, 'claim_boundary': 'Startup/runtime failure artifact only; no product speedup, BF16-fidelity, long-video, quality-equivalence, or promotion claim.'}
 (root / 'decision.json').write_text(json.dumps(decision, indent=2, sort_keys=True) + '\n', encoding='utf-8')
+(root / 'RUN_REPORT.md').write_text(f"# r9 Sol-Attn full-prefix-block skip N=1 RUN_REPORT\n\nclassification: blocked\nreason: {reason}\nfirst_failed_mode: {first_failed_mode}\nboundary: no product/BF16/long-video/formal/public/SOTA claim.\n", encoding='utf-8')
 print(json.dumps({'classification': 'blocked', 'reason': reason, 'decision': str(root / 'decision.json'), 'promote_to_matched_n3': False}, sort_keys=True))
 PY
 }
@@ -568,16 +355,19 @@ height=768
 fps=24
 duration=5.166667
 attention_backend=H3_A6000_SOL_ATTN
-comparison=current_retained_a_vs_current_retained_b_then_same_input_pair_value_halves_shadow
-lane=matched_n1_5step_sol_attn_opt_in_not_bf16_fidelity_same_input_shadow
+comparison=skip_off_a_vs_skip_off_b_then_skip_on
+lane=matched_n1_5step_sol_attn_opt_in_not_bf16_fidelity_prefix_skip
+principal_variable=MINIMAX_H3_A6000_SOL_ATTN_SKIP_FULL_PREFIX_BLOCKS_0_vs_1
 sol_attn_cache=off
 sol_attn_stride_aware_v=on
-sol_attn_skip_full_prefix_blocks=on
+sol_attn_pair_value_halves=off
+sol_attn_dense_prefix_overwrite=preserved
 sol_attn_diagnostic_materialize=off_for_all_modes
 sol_attn_diagnostic_output_digest=on_for_bounded_gate_only
 sol_attn_diagnostic_output_max_calls=256
-sol_attn_shadow_pair_value_halves=on_for_pair_value_halves_mode_returns_retained_current
-sol_attn_shadow_max_mismatches=8
+sol_attn_exact_prefix_query=off
+sol_attn_static_prefix_sink=off
+sol_attn_bitmask_scheduler=off
 sol_attn_dense_first_steps=0
 sol_attn_dense_first_layers=2
 warm_lifecycle=one_excluded_warmup_then_one_measured_request_per_mode
@@ -606,8 +396,7 @@ run_one() {
   shift
   local evidence=/evidence/$mode
   local mode_dir="$OUT_DIR/$mode"
-  local sampler_pid=""
-  local start_ns end_ns start_iso end_iso rc
+  local sampler_pid="" start_ns end_ns start_iso end_iso rc
   mkdir -p "$mode_dir"
   chmod 0777 "$OUT_DIR" "$mode_dir"
   record_resource_snapshot "$mode_dir/host_resource_before.json" "$mode" before
@@ -712,23 +501,7 @@ for frame in c.decode():
         af += 1
         samples += frame.samples
 v = video[0]; a = audio[0]
-record = {
-    'mode': mode,
-    'steps': 5,
-    'seed': 0,
-    'sha256': hashlib.sha256(p.read_bytes()).hexdigest(),
-    'bytes': p.stat().st_size,
-    'video_present': True,
-    'audio_present': True,
-    'width': v.codec_context.width,
-    'height': v.codec_context.height,
-    'average_rate': str(v.average_rate),
-    'decoded_video_frames': vf,
-    'audio_sample_rate': a.codec_context.sample_rate,
-    'audio_channels': a.codec_context.channels,
-    'decoded_audio_frames': af,
-    'decoded_audio_samples': samples,
-}
+record = {'mode': mode, 'steps': 5, 'seed': 0, 'sha256': hashlib.sha256(p.read_bytes()).hexdigest(), 'bytes': p.stat().st_size, 'video_present': True, 'audio_present': True, 'width': v.codec_context.width, 'height': v.codec_context.height, 'average_rate': str(v.average_rate), 'decoded_video_frames': vf, 'audio_sample_rate': a.codec_context.sample_rate, 'audio_channels': a.codec_context.channels, 'decoded_audio_frames': af, 'decoded_audio_samples': samples}
 assert record['width'] == 1344 and record['height'] == 768
 assert record['audio_sample_rate'] == 32000 and record['audio_channels'] == 2
 assert vf > 0 and af > 0
@@ -753,9 +526,7 @@ PY
 }
 
 OVERALL_SAMPLER_PID=""
-cleanup_overall_sampler() {
-  stop_resource_sampler "${OVERALL_SAMPLER_PID:-}"
-}
+cleanup_overall_sampler() { stop_resource_sampler "${OVERALL_SAMPLER_PID:-}"; }
 trap cleanup_overall_sampler EXIT
 
 overall_start_ns=$(python3 - <<'PY'
@@ -776,13 +547,16 @@ common_sol_env=(
   -e MINIMAX_H3_A6000_SOL_ATTN_DENSE_FIRST_STEPS=0
   -e MINIMAX_H3_A6000_SOL_ATTN_DENSE_FIRST_LAYERS=2
   -e MINIMAX_H3_A6000_SOL_ATTN_STRIDE_AWARE_V=1
-  -e MINIMAX_H3_A6000_SOL_ATTN_SKIP_FULL_PREFIX_BLOCKS=1
   -e MINIMAX_H3_A6000_SOL_ATTN_DIAGNOSTIC_MATERIALIZE=0
   -e MINIMAX_H3_A6000_SOL_ATTN_DIAGNOSTIC_OUTPUT_DIGEST=1
   -e MINIMAX_H3_A6000_SOL_ATTN_DIAGNOSTIC_MAX_CALLS=256
+  -e MINIMAX_H3_A6000_SOL_ATTN_PAIR_VALUE_HALVES=0
   -e MINIMAX_H3_A6000_SOL_ATTN_SHADOW_PAIR_VALUE_HALVES=0
   -e MINIMAX_H3_A6000_SOL_ATTN_SHADOW_ROW_STATE_PROBE=0
-  -e MINIMAX_H3_A6000_SOL_ATTN_SHADOW_MAX_MISMATCHES=8
+  -e MINIMAX_H3_A6000_SOL_ATTN_EXACT_PREFIX_QUERY=0
+  -e MINIMAX_H3_A6000_SOL_ATTN_STATIC_PREFIX_SINK=0
+  -e MINIMAX_H3_A6000_SOL_ATTN_BITMASK_SCHEDULER=0
+  -e MINIMAX_H3_A6000_SOL_ATTN_FORWARD_CONFIG=
   -e MINIMAX_H3_A6000_SOL_ATTN_MATERIALIZE_MAX_BYTES=1073741824
   -e MINIMAX_H3_A6000_ENABLE_FUSED_ADALN=0
   -e MINIMAX_H3_A6000_ENABLE_FUSED_ROPE=0
@@ -790,32 +564,29 @@ common_sol_env=(
   -e MINIMAX_H3_A6000_ENABLE_TELEMETRY=1
   -e MINIMAX_H3_A6000_TELEMETRY_ATEXIT=1
 )
-run_one current_retained_a \
+run_one skip_off_a \
   "${common_sol_env[@]}" \
-  -e MINIMAX_H3_A6000_SOL_ATTN_PAIR_VALUE_HALVES=0 \
-  -e MINIMAX_H3_A6000_SOL_ATTN_TELEMETRY_ARM_FILE=/evidence/current_retained_a/measure.arm \
-  -e MINIMAX_H3_A6000_SOL_ATTN_TELEMETRY_JSON=/evidence/current_retained_a/sol_attn_telemetry
-current_a_rc=$?
-current_b_rc=0
-pair_rc=0
-if [[ "$current_a_rc" -eq 0 ]]; then
-  run_one current_retained_b \
+  -e MINIMAX_H3_A6000_SOL_ATTN_SKIP_FULL_PREFIX_BLOCKS=0 \
+  -e MINIMAX_H3_A6000_SOL_ATTN_TELEMETRY_ARM_FILE=/evidence/skip_off_a/measure.arm \
+  -e MINIMAX_H3_A6000_SOL_ATTN_TELEMETRY_JSON=/evidence/skip_off_a/sol_attn_telemetry
+off_a_rc=$?
+off_b_rc=0
+on_rc=0
+if [[ "$off_a_rc" -eq 0 ]]; then
+  run_one skip_off_b \
     "${common_sol_env[@]}" \
-    -e MINIMAX_H3_A6000_SOL_ATTN_PAIR_VALUE_HALVES=0 \
-    -e MINIMAX_H3_A6000_SOL_ATTN_TELEMETRY_ARM_FILE=/evidence/current_retained_b/measure.arm \
-    -e MINIMAX_H3_A6000_SOL_ATTN_TELEMETRY_JSON=/evidence/current_retained_b/sol_attn_telemetry
-  current_b_rc=$?
+    -e MINIMAX_H3_A6000_SOL_ATTN_SKIP_FULL_PREFIX_BLOCKS=0 \
+    -e MINIMAX_H3_A6000_SOL_ATTN_TELEMETRY_ARM_FILE=/evidence/skip_off_b/measure.arm \
+    -e MINIMAX_H3_A6000_SOL_ATTN_TELEMETRY_JSON=/evidence/skip_off_b/sol_attn_telemetry
+  off_b_rc=$?
 fi
-if [[ "$current_a_rc" -eq 0 && "$current_b_rc" -eq 0 ]]; then
-  run_one pair_value_halves \
+if [[ "$off_a_rc" -eq 0 && "$off_b_rc" -eq 0 ]]; then
+  run_one skip_on \
     "${common_sol_env[@]}" \
-    -e MINIMAX_H3_A6000_SOL_ATTN_PAIR_VALUE_HALVES=0 \
-    -e MINIMAX_H3_A6000_SOL_ATTN_SHADOW_PAIR_VALUE_HALVES=1 \
-    -e MINIMAX_H3_A6000_SOL_ATTN_SHADOW_ROW_STATE_PROBE=1 \
-    -e MINIMAX_H3_A6000_SOL_ATTN_SHADOW_MAX_MISMATCHES=8 \
-    -e MINIMAX_H3_A6000_SOL_ATTN_TELEMETRY_ARM_FILE=/evidence/pair_value_halves/measure.arm \
-    -e MINIMAX_H3_A6000_SOL_ATTN_TELEMETRY_JSON=/evidence/pair_value_halves/sol_attn_telemetry
-  pair_rc=$?
+    -e MINIMAX_H3_A6000_SOL_ATTN_SKIP_FULL_PREFIX_BLOCKS=1 \
+    -e MINIMAX_H3_A6000_SOL_ATTN_TELEMETRY_ARM_FILE=/evidence/skip_on/measure.arm \
+    -e MINIMAX_H3_A6000_SOL_ATTN_TELEMETRY_JSON=/evidence/skip_on/sol_attn_telemetry
+  on_rc=$?
 fi
 set -e
 stop_resource_sampler "$OVERALL_SAMPLER_PID"
@@ -826,33 +597,34 @@ print(time.time_ns())
 PY
 )
 overall_end_iso=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-combined_rc=$current_a_rc
-if [[ "$combined_rc" -eq 0 ]]; then
-  combined_rc=$current_b_rc
-fi
-if [[ "$combined_rc" -eq 0 ]]; then
-  combined_rc=$pair_rc
-fi
+combined_rc=$off_a_rc
+if [[ "$combined_rc" -eq 0 ]]; then combined_rc=$off_b_rc; fi
+if [[ "$combined_rc" -eq 0 ]]; then combined_rc=$on_rc; fi
 write_wall_time_json "$OUT_DIR/overall_wall_time.json" overall "$combined_rc" "$overall_start_ns" "$overall_end_ns" "$overall_start_iso" "$overall_end_iso"
 record_docker_hygiene_after
-
-if [[ "$current_a_rc" -ne 0 ]]; then
-  write_runtime_failure_decision "$current_a_rc" "$current_b_rc" "$pair_rc"
-  echo "ERROR: first current retained lane failed with rc=$current_a_rc; decision in $OUT_DIR/decision.json" >&2
-  exit "$current_a_rc"
-fi
-if [[ "$current_b_rc" -ne 0 ]]; then
-  write_runtime_failure_decision "$current_a_rc" "$current_b_rc" "$pair_rc"
-  echo "ERROR: second current retained lane failed with rc=$current_b_rc; decision in $OUT_DIR/decision.json" >&2
-  exit "$current_b_rc"
-fi
-if [[ "$pair_rc" -ne 0 ]]; then
-  write_runtime_failure_decision "$current_a_rc" "$current_b_rc" "$pair_rc"
-  echo "ERROR: pair-value-halves candidate failed with rc=$pair_rc; decision in $OUT_DIR/decision.json" >&2
-  exit "$pair_rc"
+if [[ -n "${ARGUS_SKILL_PYTHON:-}" ]]; then
+  "$ARGUS_SKILL_PYTHON" -m argus_skill.tools.gpu_lease status > "$OUT_DIR/gpu_lease_status_after.json" 2> "$OUT_DIR/gpu_lease_status_after.stderr" || true
+else
+  python3 -m argus_skill.tools.gpu_lease status > "$OUT_DIR/gpu_lease_status_after.json" 2> "$OUT_DIR/gpu_lease_status_after.stderr" || true
 fi
 
-"$HOST_PYTHON" "$SCRIPT_DIR/finalize_sol_attn_pair_value_halves_diagnostic.py" "$OUT_DIR" \
+if [[ "$off_a_rc" -ne 0 ]]; then
+  write_runtime_failure_decision "$off_a_rc" "$off_b_rc" "$on_rc"
+  echo "ERROR: first skip-off lane failed with rc=$off_a_rc; decision in $OUT_DIR/decision.json" >&2
+  exit "$off_a_rc"
+fi
+if [[ "$off_b_rc" -ne 0 ]]; then
+  write_runtime_failure_decision "$off_a_rc" "$off_b_rc" "$on_rc"
+  echo "ERROR: second skip-off lane failed with rc=$off_b_rc; decision in $OUT_DIR/decision.json" >&2
+  exit "$off_b_rc"
+fi
+if [[ "$on_rc" -ne 0 ]]; then
+  write_runtime_failure_decision "$off_a_rc" "$off_b_rc" "$on_rc"
+  echo "ERROR: skip-on lane failed with rc=$on_rc; decision in $OUT_DIR/decision.json" >&2
+  exit "$on_rc"
+fi
+
+"$HOST_PYTHON" "$SCRIPT_DIR/finalize_sol_attn_prefix_skip_diagnostic.py" "$OUT_DIR" \
   --vllm-omni-init-timeout-s "$VLLM_OMNI_INIT_TIMEOUT_S" \
   --vllm-omni-stage-init-timeout-s "$VLLM_OMNI_STAGE_INIT_TIMEOUT_S" \
   --server-ready-timeout-s "$SERVER_READY_TIMEOUT_S" \

@@ -58,12 +58,10 @@ def test_contract_and_three_dry_run_lane_manifests_validate() -> None:
 
     summaries = [validate_artifact(_load(path)) for path in MANIFESTS]
     assert {item["lane_id"] for item in summaries} == set(contract["lane_ids"])
-    long_manifests = [
-        _load(path)
-        for path in MANIFESTS
-        if _load(path)["production"]["is_long"]
-    ]
-    assert {item["measurement_status"] for item in long_manifests} == {"unmeasured"}
+    manifests_by_id = {_load(path)["lane_id"]: _load(path) for path in MANIFESTS}
+    long_manifests = [item for item in manifests_by_id.values() if item["production"]["is_long"]]
+    assert manifests_by_id["final-av-30s-1344x768-24fps-v1"]["measurement_status"] == "dry_run_no_new_measurement"
+    assert manifests_by_id["final-av-60s-1344x768-24fps-v1"]["measurement_status"] == "unmeasured"
     assert {item["production"]["generation_mode"] for item in long_manifests} == {"extension"}
     assert {item["production"]["native_context_supported"] for item in long_manifests} == {False}
 
@@ -92,7 +90,7 @@ def test_schema_and_semantic_validator_accept_normalized_historical_records() ->
     jsonschema.Draft202012Validator.check_schema(schema)
     static_validator = jsonschema.Draft202012Validator(schema)
 
-    assert len(RECORDS) == 4
+    assert len(RECORDS) == 5
     for path in RECORDS:
         record = _load(path)
         static_validator.validate(record)
@@ -111,6 +109,7 @@ def test_normalization_retains_exact_short_claim_boundaries_without_new_cross_tr
     turbo8 = by_id["historical-turbo-8step-warm-n10-v1"]
     turbo4 = by_id["historical-turbo-4step-warm-n10-v1"]
     sol = by_id["historical-sol-attn-r8-formal-n10-v1"]
+    r10 = by_id["final-av-30s-r10-guarded-adaptive-step3-formal-n10-v1"]
 
     assert bf16["timing"]["warm_e2e"]["seconds"] == 1792.2021025
     assert turbo8["timing"]["warm_e2e"]["seconds"] == 290.9976015
@@ -120,7 +119,14 @@ def test_normalization_retains_exact_short_claim_boundaries_without_new_cross_tr
     assert sol["comparisons"][0]["value"] == 15.203295894081867
     assert sol["comparisons"][0]["candidate"]["track"] == sol["comparisons"][0]["denominator"]["track"]
     assert "5-step" in sol["claim_boundary"]
-    assert all(record["production"]["is_long"] is False for record in by_id.values())
+    assert r10["production"] == {"assembly_method": "sample_exact_extension_concat", "chunk_count": 6, "generation_mode": "extension", "is_long": True}
+    assert r10["output_av"]["video"]["frames"] == 720
+    assert r10["output_av"]["audio"]["effective_samples_per_channel"] == 960000
+    assert r10["timing"]["warm_e2e"]["seconds"] == 1333.5752375134907
+    assert r10["comparisons"][0]["value"] == 4.326262968443439
+    assert r10["quality"]["human_gate"]["status"] == "not_performed_no_semantic_claim"
+    assert "not native long context" in r10["claim_boundary"]
+    assert [record["production"]["is_long"] for record in by_id.values()].count(True) == 1
 
 
 @pytest.mark.parametrize("fixture_path", REJECTED, ids=lambda path: path.stem)
@@ -148,5 +154,5 @@ def test_cli_validates_contract_manifests_and_records() -> None:
     )
     payload = json.loads(proc.stdout)
     assert payload["status"] == "pass"
-    assert len(payload["validated"]) == 8
+    assert len(payload["validated"]) == 9
     assert payload["failures"] == []

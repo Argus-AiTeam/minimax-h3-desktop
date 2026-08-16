@@ -212,6 +212,10 @@
     "turbo_8step_n10_median_seconds": 290.9976015,
     "turbo_4step_n10_median_seconds": 149.6191865,
     "sol_attn_r8_formal_n10_median_http_time_improvement_percent": 15.203295894081867,
+    "final_av_30s_r10_formal_n10_warm_e2e_improvement_percent_vs_retained_r9": 4.326262968443439,
+    "final_av_30s_r10_candidate_warm_median_seconds": 1333.5752375134907,
+    "final_av_30s_r10_reference_warm_median_seconds": 1394.0061285260017,
+    "final_av_30s_scope": "Accepted only as a matched formal N>=10 30-second final-AV extension/chunked r10 guarded-adaptive step-min=3 timing/structural result versus retained r9_current_sol_attn on one A6000; not native long context, not BF16 fidelity, and not semantic or human quality certification.",
     "sol_attn_scope": "Only the formal matched same-GPU 5-step opt-in lane; not BF16 fidelity, not long video, and not semantic or human quality certification.",
     "normalization_policy": "The canonical fixtures retain accepted medians and claim boundaries. They do not manufacture missing cold/component metrics or create a new cross-track speedup."
   }

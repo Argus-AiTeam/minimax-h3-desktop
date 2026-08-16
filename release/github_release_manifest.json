@@ -184,6 +184,33 @@
       "path": "technical_report/evidence/minimax_h3_desktop/sol_engine_port/sol_attn_pair_value_halves_captured_replay_20260813T145731Z/validation.json"
     },
     {
+      "path": "technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/RUN_REPORT.md"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/formal_n10_summary.json"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/timing_summary.json"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/component_timing_summary.json"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/resource_summary.json"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/quality_proxy_comparison.json"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/sol_attn_telemetry_summary.json"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/final_av_accounting_summary.json"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/reviewer_verdict.json"
+    },
+    {
       "path": "technical_report/evidence/minimax_h3_desktop/dlo_autotune/resident_layer_candidates.json"
     },
     {

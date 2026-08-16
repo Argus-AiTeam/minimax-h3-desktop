@@ -10,6 +10,7 @@ Evidence root: `technical_report/evidence/minimax_h3_desktop`.
 - Practical lane: `practical_disclosed_approx`. Turbo merged LoRA and diagnostic acceleration work stay here unless later evidence changes the boundary.
 - Turbo practical results must not be relabeled as BF16-exact/fidelity results.
 - Missing DLO/Sol-Attn/DMD/AV evidence is reported as **pending** or **blocked**; no missing value is estimated.
+- The accepted 30-second final-AV r10 result is a practical `extension`/chunked lane and is kept separate from native short-clip BF16/Turbo denominators.
 
 ## Platform and workload
 
@@ -47,6 +48,17 @@ Evidence root: `technical_report/evidence/minimax_h3_desktop`.
 - Quality suite: status `structural_av_suite_pass_semantic_quality_not_certified`, cases=24, pairs=12, structural AV pass=True.
 - AV/semantic boundary: human auditory listening `operator_overall_playback_listening_accepted`; semantic_quality_certified=True; quality certification `operator_accepted_practical_8step_with_known_4step_visual_failure_preserved`.
 - Practical recommendation boundary: 8-step remains the default practical candidate; 4-step is ultra-fast/quality-cost experimental, not fidelity evidence.
+
+## Final-AV 30-second extension/chunked r10 formal N=10
+
+- Evidence: `long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/formal_n10_summary.json`, `timing_summary.json`, `final_av_accounting_summary.json`, `resource_summary.json`, `quality_proxy_comparison.json`, and `reviewer_verdict.json`.
+- Status: `accepted_formal_n10_r10_adaptive_tau1_5_step3_diag_independent_reviewer_passed`.
+- Scope: matched formal N>=10 30-second final-AV `extension`/chunked lane, `r10_adaptive_tau1_5_step3_diag` versus retained `r9_current_sol_attn`, single RTX A6000, same workload fingerprint and timing boundary.
+- Output accounting: 10/10 pairs complete for both lanes; each final AV is 1344x768, 720 frames, 24 FPS, 32 kHz stereo, and 960000 effective samples/channel.
+- Timing: candidate warm E2E median **1333.5752375134907s** vs reference **1394.0061285260017s**; reviewer-accepted median warm improvement **4.326262968443439%**. Candidate cold median **1814.1335341165s** vs reference **1884.1419612035s**; median cold improvement **3.6690600480873563%**. Candidate seconds/generated second median **44.45250791711636** vs reference **46.46687095086672**.
+- Components: candidate median denoise **1055.621979043004s**, nested attention **414.49410754394535s**, text conditioning **24.38451678553247s**, encoding/mux **7.457044619048247s**, I/O **0.5703884790127631s**. Split video/audio VAE timings were not separately exposed by the pinned runtime and remain explicit unavailable fields.
+- Resources: candidate median peak GPU memory **27946 MiB**, host memory **250.03582000732422 GiB**, power **300.32 W**, failures **0**.
+- Claim boundary: accepted only for this matched practical 30-second extension/chunked timing/structural lane. It is not native long context, not BF16 fidelity, not human semantic/audio/AV-quality certification, not product readiness, not public-comparison/SOTA evidence, and not an unbounded model-quality claim.
 
 ## DLO resident-layer optimization
 
@@ -105,10 +117,13 @@ E2E diagnostic ablation quality/telemetry:
 ## Pending stages and blockers
 
 - `dlo.formal_n10`: **pending** — no DLO formal N10 timing evidence found.
+- `final_av_60s`: **pending** — no accepted 60-second final-AV extension/chunked result yet.
+- `human_semantic_audio_quality_for_30s`: **pending** — the r10 formal lane used structural AV and objective proxies only.
 
-Blockers:
+Blockers / open items:
 - `DLO`: **pending** — no DLO formal N10 timing evidence found.
 - `DMD/DMD2`: **blocked** — No DMD/DMD2 speed or quality value is reported unless a first-source H3 recipe/checkpoint appears..
+- `native_long_context`: **not accepted** — pinned sources still support only 4 to 15 seconds natively; 30-second output is extension/chunked.
 
 ## Evidence index
 

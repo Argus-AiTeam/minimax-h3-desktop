@@ -3,8 +3,8 @@
   "contract_version": "1.0.0",
   "lane_id": "final-av-30s-1344x768-24fps-v1",
   "dry_run": true,
-  "measurement_status": "unmeasured",
-  "claim_boundary": "Dry-run workload only. No 30-second generation, quality, resource, or speed result exists.",
+  "measurement_status": "dry_run_no_new_measurement",
+  "claim_boundary": "Workload/assembly manifest only. A bounded r10 formal N=10 result for this 30-second extension lane is recorded separately; this manifest is not a native-long-context, BF16-fidelity, human-quality, product-readiness, public-comparison, or SOTA claim.",
   "workload": {
     "task": "fl2va",
     "partition": "FL2VA",

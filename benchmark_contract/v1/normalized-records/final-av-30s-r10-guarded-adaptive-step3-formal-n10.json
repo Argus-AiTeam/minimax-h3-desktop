@@ -1,0 +1,348 @@
+{
+  "claim_boundary": "Reviewer-accepted median warm E2E improvement 4.326262968443439% only for the matched formal N>=10 30-second final-AV extension/chunked r10 guarded-adaptive step-min=3 lane versus retained r9_current_sol_attn on one RTX A6000. It is not native long context, not BF16 fidelity, not human semantic/audio/AV quality certification, not product readiness, not a public-comparison or SOTA claim, and not a general model-quality claim.",
+  "comparisons": [
+    {
+      "candidate": {
+        "deployment_scope": "single_a6000",
+        "generation_mode": "extension",
+        "physical_gpu_uuid": "GPU-b3425477-0877-24de-c5b8-1549ab47cd4b",
+        "quality_threshold_id": "final-av-30s-structural-av-objective-proxy-no-human-v1",
+        "timing_boundary_id": "final_av_30s_extension_warm_after_one_excluded_warmup_v1",
+        "track": "practical_disclosed_approx",
+        "workload_fingerprint": "128a2e9494549efbd309e518c455918565571ce265ec3293b10ca46364979b17"
+      },
+      "comparison_id": "r10-guarded-adaptive-step3-vs-retained-r9-current-final-av-30s-formal-n10",
+      "denominator": {
+        "deployment_scope": "single_a6000",
+        "generation_mode": "extension",
+        "physical_gpu_uuid": "GPU-b3425477-0877-24de-c5b8-1549ab47cd4b",
+        "quality_threshold_id": "final-av-30s-structural-av-objective-proxy-no-human-v1",
+        "timing_boundary_id": "final_av_30s_extension_warm_after_one_excluded_warmup_v1",
+        "track": "practical_disclosed_approx",
+        "workload_fingerprint": "128a2e9494549efbd309e518c455918565571ce265ec3293b10ca46364979b17"
+      },
+      "metric": "warm_e2e_seconds",
+      "principal_variable": "sol_attn_r10_guarded_adaptive_tau1_5_step_min_3",
+      "result_kind": "median_time_improvement_percent",
+      "sample_count": 10,
+      "value": 4.326262968443439
+    }
+  ],
+  "contract_version": "1.0.0",
+  "deployment": {
+    "gpu_count_used": 1,
+    "gpu_count_visible": 1,
+    "gpu_model": "NVIDIA RTX A6000",
+    "physical_gpu_uuids": [
+      "GPU-b3425477-0877-24de-c5b8-1549ab47cd4b"
+    ],
+    "scope": "single_a6000"
+  },
+  "lane_id": "final-av-30s-1344x768-24fps-v1",
+  "output_av": {
+    "audio": {
+      "channels": 2,
+      "decoded_samples_per_channel": 960000,
+      "effective_samples_per_channel": 960000,
+      "encoder_priming_samples": 0,
+      "end_padding_samples": 0,
+      "full_decode": true,
+      "present": true,
+      "sample_rate_hz": 32000
+    },
+    "final_accounting_complete": true,
+    "status": "complete",
+    "video": {
+      "fps": 24,
+      "frames": 720,
+      "full_decode": true,
+      "height": 768,
+      "present": true,
+      "width": 1344
+    }
+  },
+  "production": {
+    "assembly_method": "sample_exact_extension_concat",
+    "chunk_count": 6,
+    "generation_mode": "extension",
+    "is_long": true
+  },
+  "promotion": {
+    "level": "formal_n_ge_10",
+    "quality_threshold_id": "final-av-30s-structural-av-objective-proxy-no-human-v1",
+    "sample_count": 10
+  },
+  "quality": {
+    "human_gate": {
+      "scope": "Independent review accepted structural final-AV accounting and no-reference objective proxies only; no human semantic/audio/AV quality or product-quality certification is claimed.",
+      "status": "not_performed_no_semantic_claim"
+    },
+    "objective": {
+      "audio_continuity": {
+        "status": "measured",
+        "unit": "max_boundary_rms_ratio_1024_sample_windows",
+        "value": 3412.7994350474596
+      },
+      "av_sync_proxy": {
+        "status": "measured",
+        "unit": "ms_motion_audio_envelope_xcorr",
+        "value": -291.6666666666667
+      },
+      "background_consistency": {
+        "status": "measured",
+        "unit": "rgb_histogram_intersection_first_last",
+        "value": 0.7100694444444444
+      },
+      "camera_consistency": {
+        "status": "measured",
+        "unit": "chunk_terminal_histogram_intersection_mean",
+        "value": 0.873263888888889
+      },
+      "freezing": {
+        "status": "measured",
+        "unit": "fraction_near_frozen_transitions",
+        "value": 0.13351877607788595
+      },
+      "loudness": {
+        "status": "measured",
+        "unit": "dBFS_rms_proxy",
+        "value": -19.086758388387025
+      },
+      "motion": {
+        "status": "measured",
+        "unit": "mean_abs_downsampled_frame_delta",
+        "value": 0.010376921870052083
+      },
+      "repetition": {
+        "status": "measured",
+        "unit": "fraction_near_duplicate_transitions",
+        "value": 0.02920723226703755
+      },
+      "silence": {
+        "status": "measured",
+        "unit": "fraction_100ms_windows_below_minus_50dbfs",
+        "value": 0.0
+      },
+      "subject_identity_consistency": {
+        "status": "measured",
+        "unit": "rgb_histogram_intersection_first_last",
+        "value": 0.7100694444444444
+      },
+      "visual_seams": {
+        "status": "measured",
+        "unit": "seam_transition_p95_over_internal_p95",
+        "value": 0.21631098872793586
+      }
+    }
+  },
+  "record_id": "final-av-30s-r10-guarded-adaptive-step3-formal-n10-v1",
+  "record_status": "accepted_historical",
+  "resources": {
+    "failures": {
+      "status": "measured",
+      "unit": "count",
+      "value": 0.0
+    },
+    "peak_gpu_memory_mib": {
+      "status": "measured",
+      "unit": "MiB",
+      "value": 27946.0
+    },
+    "peak_host_memory_gib": {
+      "status": "measured",
+      "unit": "GiB",
+      "value": 250.03582000732422
+    },
+    "peak_power_w": {
+      "status": "measured",
+      "unit": "W",
+      "value": 300.32
+    }
+  },
+  "schema_version": "minimax-h3-a6000-benchmark-record-v1",
+  "source_evidence": [
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/formal_n10_summary.json",
+      "scope": "Reviewer-accepted formal N>=10 r10 bounded claim summary."
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/timing_summary.json",
+      "scope": "Matched r9 reference versus r10 candidate timing distributions."
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/final_av_accounting_summary.json",
+      "scope": "720-frame and 960000-sample/channel final-AV accounting for all pairs."
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/reviewer_verdict.json",
+      "scope": "Independent Reviewer acceptance for the bounded r10 formal result and exclusions."
+    }
+  ],
+  "timing": {
+    "additive_component_order": [
+      "text_conditioning",
+      "denoise",
+      "video_vae",
+      "audio_vae",
+      "encoding_mux",
+      "io"
+    ],
+    "boundary_id": "final_av_30s_extension_warm_after_one_excluded_warmup_v1",
+    "cold_e2e": {
+      "cv_percent": 0.18120484936255404,
+      "max_seconds": 1821.062616178,
+      "mean_seconds": 1814.9583826473,
+      "min_seconds": 1811.361976125,
+      "n": 10,
+      "sample_std_seconds": 3.2887926032690866,
+      "seconds": 1814.1335341165,
+      "status": "measured"
+    },
+    "components": {
+      "attention": {
+        "additive_to_e2e": false,
+        "cv_percent": 0.14203544623536205,
+        "max_seconds": 415.02295531463625,
+        "mean_seconds": 414.30103684997556,
+        "min_seconds": 413.4280097503662,
+        "n": 10,
+        "parent": "denoise",
+        "sample_std_seconds": 0.5884543264475945,
+        "seconds": 414.49410754394535,
+        "status": "measured",
+        "timing_basis": "cumulative_device_seconds"
+      },
+      "audio_vae": {
+        "additive_to_e2e": true,
+        "n": 0,
+        "reason": "Pinned dense CUDNN sync runtime exposed no separate nested attention or split video/audio VAE timing; denoise and combined decode are recorded in container_summary.stage_duration_summary.",
+        "seconds": null,
+        "status": "not_available_historical_evidence",
+        "timing_basis": "not_available"
+      },
+      "denoise": {
+        "additive_to_e2e": true,
+        "cv_percent": 0.06249504675720375,
+        "max_seconds": 1057.0678282239824,
+        "mean_seconds": 1055.7601108223782,
+        "min_seconds": 1054.6277414190117,
+        "n": 10,
+        "sample_std_seconds": 0.6597977749023514,
+        "seconds": 1055.621979043004,
+        "status": "measured",
+        "timing_basis": "wall_seconds"
+      },
+      "encoding_mux": {
+        "additive_to_e2e": true,
+        "cv_percent": 0.8083518689201532,
+        "max_seconds": 7.5471060030395165,
+        "mean_seconds": 7.458223059208831,
+        "min_seconds": 7.361749120987952,
+        "n": 10,
+        "sample_std_seconds": 0.06028868548734841,
+        "seconds": 7.457044619048247,
+        "status": "measured",
+        "timing_basis": "wall_seconds"
+      },
+      "io": {
+        "additive_to_e2e": true,
+        "cv_percent": 1.3140197395014526,
+        "max_seconds": 0.5848785769776441,
+        "mean_seconds": 0.5722668068017811,
+        "min_seconds": 0.5632948650163598,
+        "n": 10,
+        "sample_std_seconds": 0.007519698803990045,
+        "seconds": 0.5703884790127631,
+        "status": "measured",
+        "timing_basis": "wall_seconds"
+      },
+      "text_conditioning": {
+        "additive_to_e2e": true,
+        "cv_percent": 0.8992069849758575,
+        "max_seconds": 24.54429739707848,
+        "mean_seconds": 24.2918029413966,
+        "min_seconds": 23.926722653966863,
+        "n": 10,
+        "sample_std_seconds": 0.21843358882560904,
+        "seconds": 24.38451678553247,
+        "status": "measured",
+        "timing_basis": "wall_seconds"
+      },
+      "video_vae": {
+        "additive_to_e2e": true,
+        "n": 0,
+        "reason": "Pinned dense CUDNN sync runtime exposed no separate nested attention or split video/audio VAE timing; denoise and combined decode are recorded in container_summary.stage_duration_summary.",
+        "seconds": null,
+        "status": "not_available_historical_evidence",
+        "timing_basis": "not_available"
+      }
+    },
+    "seconds_per_generated_second": {
+      "cv_percent": 0.06556488265519576,
+      "max_seconds": 44.500986548367656,
+      "mean_seconds": 44.453634733356694,
+      "min_seconds": 44.408678185966956,
+      "n": 10,
+      "sample_std_seconds": 0.02914597344889466,
+      "seconds": 44.45250791711636,
+      "status": "measured"
+    },
+    "warm_e2e": {
+      "cv_percent": 0.0655648826551968,
+      "max_seconds": 1335.0295964510296,
+      "mean_seconds": 1333.6090420007008,
+      "min_seconds": 1332.2603455790086,
+      "n": 10,
+      "sample_std_seconds": 0.8743792034668537,
+      "seconds": 1333.5752375134907,
+      "status": "measured"
+    }
+  },
+  "track": {
+    "disclosure": "Six-chunk FL2VA extension lane using Turbo 8-step and opt-in Sol-Attn. r10 changes only guarded adaptive Sol-Attn step_min=3 versus the retained r9_current_sol_attn reference. This is practical disclosed approximate evidence, not BF16 fidelity or native long context.",
+    "id": "practical_disclosed_approx",
+    "mechanisms": [
+      "statically_merged_turbo_lora",
+      "8_step",
+      "extension",
+      "no_cache",
+      "sol_attn_r9_current_reference",
+      "sol_attn_r10_guarded_adaptive_tau1_5_step_min_3"
+    ]
+  },
+  "workload": {
+    "audio_channels": 2,
+    "audio_sample_rate_hz": 32000,
+    "conditioning_assets": [
+      {
+        "kind": "generated_prior_terminal_rgb_frame",
+        "provenance": "For chunks 2-6, decode the prior chunk's retained terminal frame and record its RGB byte SHA-256 before submission; chunk 1 is text-only."
+      }
+    ],
+    "final_frame_count": 720,
+    "fps": 24,
+    "height": 768,
+    "nominal_duration_seconds": 30.0,
+    "num_inference_steps": 8,
+    "partition": "FL2VA",
+    "prompt": {
+      "id": "orbital-continuity-long-v1",
+      "sha256": "c85689e3348c9eab59ea7a87f61797823f82e2dc822fc6f1fc8093def3e909bb",
+      "source": "benchmark_contract/v1/prompts/orbital-continuity-long-v1.txt"
+    },
+    "seed_plan": {
+      "repetitions": 1,
+      "seeds": [
+        4200,
+        4201,
+        4202,
+        4203,
+        4204,
+        4205
+      ]
+    },
+    "task": "fl2va",
+    "width": 1344
+  },
+  "workload_fingerprint": "128a2e9494549efbd309e518c455918565571ce265ec3293b10ca46364979b17"
+}

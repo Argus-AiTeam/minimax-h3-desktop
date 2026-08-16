@@ -164,6 +164,7 @@ def test_r9_build_script_is_build_only_default_off_and_stride_aware() -> None:
     assert "org.opencontainers.image.version=\"r9\"" in dockerfile
     assert "MiniMax-H3 A6000 r9 Sol-Attn integration overlay" in dockerfile
     assert "MINIMAX_H3_A6000_SOL_ATTN_STRIDE_AWARE_V=0" in dockerfile
+    assert "MINIMAX_H3_A6000_SOL_ATTN_DIAGNOSTIC_OUTPUT_DIGEST=0" in dockerfile
     assert "MINIMAX_H3_A6000_SOL_ATTN_DIAGNOSTIC_MATERIALIZE=0" in dockerfile
     assert "minimax_h3_a6000_r9_patched_source_hashes_v1" in helper
     assert "docker run" not in script and "--gpus" not in script
@@ -175,54 +176,153 @@ def test_stride_aware_v_n1_gate_is_matched_warm_copy_timed_and_default_dry() -> 
     assert "ARGUS_ALLOW_A6000_SOL_ATTN_STRIDE_AWARE_V_N1=1" in script
     assert "argus/minimax-h3-vllm-omni:8e2e9b6b53e8-r9-sol-attn-overlay" in script
     assert "REQUIRED_IMAGE_VERSION_LABEL=${REQUIRED_IMAGE_VERSION_LABEL:-r9}" in script
-    assert "run_one r8_materialized_reference" in script
-    assert "run_one stride_aware_v" in script
+    assert "run_one materialized_reference" in script
+    assert "run_one current_retained" in script
     assert "request warmup" in script and "request output" in script
-    assert "SOL_ATTN_TELEMETRY_ARM_FILE=/evidence/r8_materialized_reference/measure.arm" in script
-    assert "SOL_ATTN_TELEMETRY_ARM_FILE=/evidence/stride_aware_v/measure.arm" in script
+    assert "SOL_ATTN_TELEMETRY_ARM_FILE=/evidence/materialized_reference/measure.arm" in script
+    assert "SOL_ATTN_TELEMETRY_ARM_FILE=/evidence/current_retained/measure.arm" in script
     assert "MINIMAX_H3_A6000_SOL_ATTN_STRIDE_AWARE_V=0" in script
     assert "MINIMAX_H3_A6000_SOL_ATTN_STRIDE_AWARE_V=1" in script
     assert "MINIMAX_H3_A6000_SOL_ATTN_DIAGNOSTIC_MATERIALIZE=1" in script
     assert "MINIMAX_H3_A6000_SOL_ATTN_DIAGNOSTIC_MATERIALIZE=0" in script
+    assert "MINIMAX_H3_A6000_SOL_ATTN_SKIP_FULL_PREFIX_BLOCKS=1" in script
+    assert "MINIMAX_H3_A6000_SOL_ATTN_PAIR_VALUE_HALVES=0" in script
     assert "materialize_gpu_copy_latency_ms" in script
     assert "sparse_attention_gpu_latency_ms" in script
     assert "denoise_gpu_latency_ms" in script
     assert "observed_r8_cv_pct = 0.5072177175606011" in script
     assert "promotion_threshold_pct = max(1.5, 2.0 * observed_r8_cv_pct)" in script
     assert "both_sparse_calls_192" in script and "both_fallback_calls_zero" in script
-    assert "candidate_zero_input_copy_events_bytes" in script
-    assert "real_h3_fused_value_layout_seen" in script
-    assert "rejected_no_above_noise_product_signal" in script
+    assert "materialized_lane_actually_materialized_v" in script
+    assert "retained_zero_materialization_and_input_copies" in script
+    assert "real_h3_fused_value_layout_seen_in_retained" in script
+    assert "hash_equality_used_for_decision': False" in script
+    assert "--init-timeout '$VLLM_OMNI_INIT_TIMEOUT_S'" in script
+    assert "--stage-init-timeout '$VLLM_OMNI_STAGE_INIT_TIMEOUT_S'" in script
+    assert "VLLM_OMNI_INIT_TIMEOUT_S=${VLLM_OMNI_INIT_TIMEOUT_S:-2400}" in script
+    assert "VLLM_OMNI_STAGE_INIT_TIMEOUT_S=${VLLM_OMNI_STAGE_INIT_TIMEOUT_S:-1800}" in script
+    assert "SERVER_READY_TIMEOUT_S=${SERVER_READY_TIMEOUT_S:-$((VLLM_OMNI_INIT_TIMEOUT_S + 600))}" in script
+    assert "startup_timeout_config.env" in script
+    assert "write_runtime_failure_decision" in script
+    assert "no_above_noise_n1_signal" in script
     assert "promote_to_matched_n3" in script
+    assert "duration=5.166667" in script and "duration=30" not in script and "duration=60" not in script
+
+
+def test_prefix_skip_n1_gate_is_matched_default_dry_only_principal_variable() -> None:
+    script = (PORT / "integration" / "run_sol_attn_h3_prefix_skip_n1.sh").read_text(encoding="utf-8")
+    finalizer = (PORT / "integration" / "finalize_sol_attn_prefix_skip_diagnostic.py").read_text(encoding="utf-8")
+    assert "DRY_RUN=1" in script
+    assert "ARGUS_ALLOW_A6000_SOL_ATTN_PREFIX_SKIP_N1=1" in script
+    assert "argus/minimax-h3-vllm-omni:8e2e9b6b53e8-r9-sol-attn-overlay" in script
+    assert "run_one skip_off_a" in script
+    assert "run_one skip_off_b" in script
+    assert "run_one skip_on" in script
+    assert "request warmup" in script and "request output" in script
+    assert "SOL_ATTN_TELEMETRY_ARM_FILE=/evidence/skip_off_a/measure.arm" in script
+    assert "SOL_ATTN_TELEMETRY_ARM_FILE=/evidence/skip_off_b/measure.arm" in script
+    assert "SOL_ATTN_TELEMETRY_ARM_FILE=/evidence/skip_on/measure.arm" in script
+    assert "MINIMAX_H3_A6000_SOL_ATTN_SKIP_FULL_PREFIX_BLOCKS=0" in script
+    assert "MINIMAX_H3_A6000_SOL_ATTN_SKIP_FULL_PREFIX_BLOCKS=1" in script
+    assert "MINIMAX_H3_A6000_SOL_ATTN_STRIDE_AWARE_V=1" in script
+    assert "MINIMAX_H3_A6000_SOL_ATTN_DIAGNOSTIC_MATERIALIZE=0" in script
+    assert "MINIMAX_H3_A6000_SOL_ATTN_DIAGNOSTIC_OUTPUT_DIGEST=1" in script
+    assert "MINIMAX_H3_A6000_SOL_ATTN_PAIR_VALUE_HALVES=0" in script
+    assert "MINIMAX_H3_A6000_SOL_ATTN_EXACT_PREFIX_QUERY=0" in script
+    assert "MINIMAX_H3_A6000_SOL_ATTN_STATIC_PREFIX_SINK=0" in script
+    assert "MINIMAX_H3_A6000_SOL_ATTN_BITMASK_SCHEDULER=0" in script
+    assert "MINIMAX_H3_A6000_SOL_ATTN_DIAGNOSTIC_MATERIALIZE=1" not in script
+    assert "principal_variable=MINIMAX_H3_A6000_SOL_ATTN_SKIP_FULL_PREFIX_BLOCKS_0_vs_1" in script
+    assert "current_current_attention_output_digests_equal" in finalizer
+    assert "candidate_attention_output_digests_equal" in finalizer
+    assert "skip_off_modes_have_no_full_prefix_skip_marker" in finalizer
+    assert "skip_on_mode_has_full_prefix_skip_marker" in finalizer
+    assert "skip_on_skipped_prefix_blocks_positive" in finalizer
+    assert "all_prefix_dense_overwrite_calls_192" in finalizer
+    assert "all_zero_materialization_and_input_copies" in finalizer
+    assert "sparse_attention_gpu_latency_ms" in finalizer and "denoise_gpu_latency_ms" in finalizer
+    assert "peak_gpu_power_w" in finalizer and "host_mem_available_kib" in finalizer
+    assert "ignored_policy_keys={\"skip_full_prefix_blocks\"}" in finalizer
+    assert "decoded_av_comparison_current_vs_current.json" in finalizer
+    assert "decoded_av_comparison_skip_off_vs_skip_on.json" in finalizer
+    assert '"hash_equality_used_for_decision": False' in finalizer
+    assert "no_above_noise_n1_signal" in finalizer
+    assert "promote_to_matched_n3" in finalizer
     assert "duration=5.166667" in script and "duration=30" not in script and "duration=60" not in script
 
 
 def test_pair_value_halves_n1_gate_is_matched_default_off_no_materialization() -> None:
     script = (PORT / "integration" / "run_sol_attn_h3_pair_value_halves_n1.sh").read_text(encoding="utf-8")
+    finalizer = (PORT / "integration" / "finalize_sol_attn_pair_value_halves_diagnostic.py").read_text(encoding="utf-8")
     assert "DRY_RUN=1" in script
     assert "ARGUS_ALLOW_A6000_SOL_ATTN_PAIR_VALUE_HALVES_N1=1" in script
     assert "argus/minimax-h3-vllm-omni:8e2e9b6b53e8-r9-sol-attn-overlay" in script
     assert "REQUIRED_IMAGE_VERSION_LABEL=${REQUIRED_IMAGE_VERSION_LABEL:-r9}" in script
-    assert "run_one current_retained" in script
+    assert "run_one current_retained_a" in script
+    assert "run_one current_retained_b" in script
     assert "run_one pair_value_halves" in script
     assert "request warmup" in script and "request output" in script
-    assert "SOL_ATTN_TELEMETRY_ARM_FILE=/evidence/current_retained/measure.arm" in script
+    assert "SOL_ATTN_TELEMETRY_ARM_FILE=/evidence/current_retained_a/measure.arm" in script
+    assert "SOL_ATTN_TELEMETRY_ARM_FILE=/evidence/current_retained_b/measure.arm" in script
     assert "SOL_ATTN_TELEMETRY_ARM_FILE=/evidence/pair_value_halves/measure.arm" in script
     assert "MINIMAX_H3_A6000_SOL_ATTN_STRIDE_AWARE_V=1" in script
     assert "MINIMAX_H3_A6000_SOL_ATTN_SKIP_FULL_PREFIX_BLOCKS=1" in script
     assert "MINIMAX_H3_A6000_SOL_ATTN_DIAGNOSTIC_MATERIALIZE=0" in script
+    assert "MINIMAX_H3_A6000_SOL_ATTN_DIAGNOSTIC_OUTPUT_DIGEST=1" in script
+    assert "MINIMAX_H3_A6000_SOL_ATTN_DIAGNOSTIC_MAX_CALLS=256" in script
+    assert "MINIMAX_H3_A6000_SOL_ATTN_SHADOW_ROW_STATE_PROBE=1" in script
     assert "MINIMAX_H3_A6000_SOL_ATTN_DIAGNOSTIC_MATERIALIZE=1" not in script
     assert "MINIMAX_H3_A6000_SOL_ATTN_PAIR_VALUE_HALVES=0" in script
     assert "MINIMAX_H3_A6000_SOL_ATTN_PAIR_VALUE_HALVES=1" in script
-    assert "both_zero_materialization_and_input_copies" in script
-    assert "candidate_pair_value_halves_seen" in script
-    assert "current_pair_value_halves_absent" in script
-    assert "both_skip_full_prefix_blocks_seen" in script
-    assert "sparse_attention_gpu_latency_ms" in script and "denoise_gpu_latency_ms" in script
-    assert "peak_gpu_power_w" in script and "host_mem_available_kib" in script
-    assert "rejected_no_above_noise_n1_signal" in script
-    assert "promote_to_matched_n3" in script
+    assert "all_zero_materialization_and_input_copies" in finalizer
+    assert "candidate_pair_value_halves_seen" in finalizer
+    assert "current_pair_value_halves_absent" in finalizer
+    assert "all_skip_full_prefix_blocks_seen" in finalizer
+    assert "current_current_attention_output_digests_equal" in finalizer
+    assert "pair_attention_output_digests_equal" in finalizer
+    assert "row_state_shadow_probe_summary" in finalizer
+    assert "same_input_shadow_row_state_route_digest_equal" in finalizer
+    assert "sparse_attention_gpu_latency_ms" in finalizer and "denoise_gpu_latency_ms" in finalizer
+    assert "peak_gpu_power_w" in finalizer and "host_mem_available_kib" in finalizer
+    assert "--init-timeout '$VLLM_OMNI_INIT_TIMEOUT_S'" in script
+    assert "--stage-init-timeout '$VLLM_OMNI_STAGE_INIT_TIMEOUT_S'" in script
+    assert "VLLM_OMNI_INIT_TIMEOUT_S=${VLLM_OMNI_INIT_TIMEOUT_S:-2400}" in script
+    assert "VLLM_OMNI_STAGE_INIT_TIMEOUT_S=${VLLM_OMNI_STAGE_INIT_TIMEOUT_S:-1800}" in script
+    assert "SERVER_READY_TIMEOUT_S=${SERVER_READY_TIMEOUT_S:-$((VLLM_OMNI_INIT_TIMEOUT_S + 600))}" in script
+    assert "startup_timeout_config.env" in script
+    assert "extended_startup_failure" in script
+    assert "write_runtime_failure_decision" in script
+    assert "finalize_sol_attn_pair_value_halves_diagnostic.py" in script
+    assert "decoded_av_comparison_current_vs_current.json" in finalizer
+    assert "decoded_av_comparison_current_vs_pair_value_halves.json" in finalizer
+    assert "decoded_av_content_used_for_decision" in finalizer
+    assert "mp4_sha256_recorded_not_gate_pair" in finalizer
+    assert '"hash_equality_used_for_decision": False' in finalizer
+    assert "classification = \"reject_no_promotion\"" in finalizer
+    assert "current_current_decoded_av_unstable_separate_full_chain_from_kernel" in finalizer
+    assert "no_above_noise_n1_signal" in finalizer
+    assert "promote_to_matched_n3" in finalizer
     assert "duration=5.166667" in script and "duration=30" not in script and "duration=60" not in script
+
+
+def test_adaptive_routing_finalizer_treats_zero_fallback_as_zero() -> None:
+    finalizer = (PORT / "integration" / "finalize_sol_attn_adaptive_routing_diagnostic.py").read_text(encoding="utf-8")
+    assert '"all_fallback_calls_zero": all(int(tel[mode].get("fallback_calls", -1)) == 0 for mode in modes),' in finalizer
+    assert 'tel[mode].get("fallback_calls", -1) or -1' not in finalizer
+
+
+def test_pair_value_halves_shadow_localizer_is_no_raw_tensor_reject_gate() -> None:
+    localizer = (PORT / "integration" / "localize_sol_attn_pair_value_halves_shadow.py").read_text(encoding="utf-8")
+    assert "raw tensors" in localizer
+    assert "raw_tensor_exported" in localizer
+    assert "reject_no_promotion" in localizer
+    assert "bf16_probability_rounding_or_pv_dot_codegen" in localizer
+    assert "route_or_exact_block_selection" in localizer
+    assert "row_max_or_row_sum" in localizer
+    assert "approximate_vs_exact_contribution" in localizer
+    assert "v_stride_or_load" in localizer
+    assert "lo_hi_store_behavior" in localizer
+    assert "promote_to_matched_n3\": False" in localizer
 
 
 def test_sol_attn_gpu2_diagnostic_requires_fresh_r8_identity_and_resource_telemetry() -> None:

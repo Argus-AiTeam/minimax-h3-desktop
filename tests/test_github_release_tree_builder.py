@@ -59,7 +59,7 @@ def test_real_manifest_builds_sanitized_export_to_tmp_path(tmp_path: Path) -> No
     assert (dest / "benchmark_contract" / "v1" / "contract.json").is_file()
     assert (dest / "benchmark_contract" / "v1" / "README.md").is_file()
     assert len(list((dest / "benchmark_contract" / "v1" / "lane-manifests").glob("*.json"))) == 3
-    assert len(list((dest / "benchmark_contract" / "v1" / "normalized-records").glob("*.json"))) == 4
+    assert len(list((dest / "benchmark_contract" / "v1" / "normalized-records").glob("*.json"))) == 5
     assert len(list((dest / "tests" / "fixtures" / "benchmark_contract" / "rejected").glob("*.json"))) == 6
     assert (dest / "tests" / "fixtures" / "minimal_av_case" / "run_record.json").is_file()
     readme = (dest / "README.md").read_text(encoding="utf-8")
@@ -74,6 +74,7 @@ def test_real_manifest_builds_sanitized_export_to_tmp_path(tmp_path: Path) -> No
     assert "sparse_candidate_calls=192" in readme
     assert "sparse_calls=192" in readme
     assert "15.203%" in readme
+    assert "4.326%" in readme
     assert "不是 50-step BF16 fidelity speedup" in readme
     assert "git init" not in readme
     assert "gh auth" not in readme
@@ -92,6 +93,7 @@ def test_real_manifest_builds_sanitized_export_to_tmp_path(tmp_path: Path) -> No
     assert any(item["path"].endswith("sol_attn_h3_matched_retest_r8_n3_20260812T013544Z/decision.json") for item in build_manifest["files"])
     assert any(item["path"].endswith("sol_attn_h3_formal_n10_r8_n10_20260812T031757Z/formal_n10_decision.json") for item in build_manifest["files"])
     assert any(item["path"].endswith("sol_attn_h3_formal_n10_r8_n10_20260812T031757Z/formal_n10_summary.json") for item in build_manifest["files"])
+    assert any(item["path"].endswith("final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/formal_n10_summary.json") for item in build_manifest["files"])
     assert not any("sol_attn_h3_gpu2_5step_r6_" in item["path"] for item in build_manifest["files"])
     script = dest / "scripts" / "a6000_one_command.sh"
     assert script.read_text(encoding="utf-8").startswith("#!/usr/bin/env bash")

@@ -1,7 +1,7 @@
 <h1 align="center">MiniMax-H3 on a Single RTX A6000</h1>
 
 <p align="center">
-  <strong>完整 FL2VA · 1344×768 · 同步视频与立体声音频 · Turbo 最高 11.98× · Sol-Attn N=10</strong>
+  <strong>完整 FL2VA · 1344×768 · 同步视频与立体声音频 · Turbo 最高 11.98× · 30秒 r10 formal N=10</strong>
 </p>
 
 <p align="center">
@@ -22,7 +22,7 @@
   <img alt="License Apache 2.0" src="https://img.shields.io/badge/code-Apache--2.0-blue">
 </p>
 
-> **长视频研发状态：** 当前聚焦单张 RTX A6000 的 720p 级 30/60 秒音视频生产；已验收数据、负结果、待检验假设与下一实验见 [`CURRENT_WORK.md`](CURRENT_WORK.md)。短片基线不会被表述为长视频结果。规范工作负载、计时层级、质量门槛与 claim-boundary validator 见 [`benchmark_contract/v1/README.md`](benchmark_contract/v1/README.md)；当前 pinned 开源路径只支持 4–15 秒原生输出，30/60 秒 manifest 均明确为尚未实测的 `extension` 路线。
+> **长视频研发状态：** 当前聚焦单张 RTX A6000 的 720p 级 30/60 秒音视频生产；30 秒 final-AV extension/chunked r10 formal N=10 已有有界验收结果（warm E2E median **1333.575 s** vs retained r9 **1394.006 s**，median improvement **4.326%**）。这不是原生长上下文、BF16 fidelity、人类语义/音频质量、产品就绪、公开对比或 SOTA 结论；60 秒仍未验收。已验收数据、负结果、待检验假设与下一实验见 [`CURRENT_WORK.md`](CURRENT_WORK.md)。规范工作负载、计时层级、质量门槛与 claim-boundary validator 见 [`benchmark_contract/v1/README.md`](benchmark_contract/v1/README.md)。
 
 **不需要 A100/H100，也没有把多卡服务器结果冒充桌面结果。** 本项目在一张真实的 **NVIDIA RTX A6000 48GB（SM86）**上跑通完整 MiniMax-H3 FL2VA，并提供可复现的 BF16 baseline、Turbo practical 路线、默认关闭的 Sol-Attn 实验实现、部署脚本、测试和原始证据摘要。
 
@@ -80,6 +80,16 @@ as coherent blue plasma thrusters ignite ...
 - 操作者已完成人工观看/听感审阅并给出整体正向验收；已知 4-step 失败样本仍保留，不因整体评价而删除。
 - BF16 与 Turbo 分轨：Turbo 使用静态合并 LoRA，是 `practical_disclosed_approx`，不是无损 BF16 fidelity。
 
+### 30 秒 final-AV extension/chunked formal r10
+
+这是单张 A6000 上的 practical approximate 长视频链路结果，不与上面的 BF16 短片分母交叉计算 speedup。
+
+| 路线 | 生成模式 | 正式 N | Warm E2E median | 对照 | 结论边界 |
+|---|---|---:|---:|---:|---|
+| `r10_adaptive_tau1_5_step3_diag` | six-chunk `extension` / chunked final-AV | 10 | **1333.575 s** | retained `r9_current_sol_attn` **1394.006 s** | **4.326%** median warm-E2E improvement；720 帧、960,000 samples/channel 完整核算 |
+
+该 r10 结果只说明 matched formal N=10 30 秒 final-AV extension/chunked lane 中，guarded adaptive step-min=3 Sol-Attn 相对 retained r9 有有界 warm-E2E 改善。它明确排除原生长上下文、BF16 fidelity、人类语义/音频质量、产品就绪、公开对比和 SOTA。60 秒路线仍未验收。
+
 完整统计、CV、质量与资源边界见 [`technical_report/minimax_h3_a6000_performance.md`](technical_report/minimax_h3_a6000_performance.md)。
 
 ---
@@ -96,6 +106,7 @@ as coherent blue plasma thrusters ignite ...
 - [x] DLO resident-layer 容量与 50-step 候选评估
 - [x] SM86 exact Triton kernel 候选与输出漂移检查
 - [x] Sol-Attn r8 真实 H3 metadata plumbing、sparse execution、N=3 route gate 和 formal N=10
+- [x] 30 秒 final-AV extension/chunked r10 formal N=10 timing/structural 结果（有界，不是 native/BF16/human-quality/product claim）
 - [x] CPU/static tests、sanitized export、publication audit 与证据报告
 
 ---
@@ -238,6 +249,8 @@ Formal N=10 matched-workload 结果：
 | fallback calls | 0 |
 
 该结论只适用于 **5-step Sol-Attn opt-in matched lane**。它不是 50-step BF16 fidelity speedup，也不代表 Turbo、DLO 或完整语义质量等价。实现默认关闭、metadata 缺失时 fail-closed 到 dense。
+
+30 秒 final-AV extension/chunked r10 formal N=10 进一步保留默认关闭的 guarded adaptive Sol-Attn step-min=3：warm E2E median **1333.575 s** vs retained r9 **1394.006 s**，median improvement **4.326%**，10/10 pairs final-AV 完整。这个结论只适用于 matched 30 秒 extension/chunked practical lane，不是 native long context、BF16 fidelity、人类语义/音频质量、产品就绪、公开对比或 SOTA。
 
 后续 `MINIMAX_H3_A6000_SOL_ATTN_PAIR_VALUE_HALVES` 路线仍默认关闭，只在 captured-metadata、非 Docker、无模型 SM86 replay 中得到保留：candidate total median **144.652 ms** vs current prefix-skip **175.216 ms**，forward pointer subphase **129.850 ms** vs **158.161 ms**，`max_abs_valid=0`，且 replay lanes 中无非预期 materialized copy 次数/字节。这个结果只说明 captured metadata kernel 机制可运行；没有加载 H3 模型、没有启动 Docker，不是 H3 端到端、长视频、BF16 保真、普通电脑、产品加速、公开对比或 SOTA 声明。
 

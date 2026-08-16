@@ -7,6 +7,7 @@ Status: **final evidence integration; operator overall practical-quality gate ac
 - Fidelity lane: `fidelity_bf16_exact`. Only the certified same-physical-GPU3 baseline is accepted here.
 - Practical lane: `practical_disclosed_approx`. GPU3 paired Turbo timing, DMD feasibility notes, and exact-kernel diagnostics live here unless future evidence changes.
 - Turbo practical results must not be relabeled as fidelity/BF16-exact results.
+- The accepted 30-second r10 result is a practical final-AV `extension`/chunked timing/structural result only; it is not native long context, BF16 fidelity, human semantic/audio quality, product readiness, public-comparison, or SOTA evidence.
 
 ## Baseline certification
 
@@ -111,6 +112,16 @@ Status: **final evidence integration; operator overall practical-quality gate ac
 - R8 matched-workload retest route decision: `proceed_to_formal_n10_candidate`; evidence `sol_engine_port/sol_attn_h3_matched_retest_r8_n3_20260812T013544Z/decision.json`; terminal_recheck=`delivery/r8_matched_retest_terminal_recheck_20260812T024043Z/summary.json`; completed_pairs=3/3; median_http_time_improvement=14.782455716069165%; threshold=3.0%; supervisor_status=failed; supervisor_return_code=2; posthoc_finalization_note=`sol_engine_port/sol_attn_h3_matched_retest_r8_n3_20260812T013544Z/posthoc_finalization_note.json`; n10_recommendation=proceed_to_formal_n10_candidate. Reason: bounded matched retest passed correctness, sparse-runtime, resource, quality-proxy, and timing gates. This N=3 route gate led to the later accepted formal N>=10 gate; the N=3 gate itself remains bounded route evidence, not formal N10 or a speedup/quality/fidelity claim.
 - R8 formal N>=10 matched-workload gate: `accepted_formal_n10_same_gpu_sol_attn_speed_candidate`; evidence `sol_engine_port/sol_attn_h3_formal_n10_r8_n10_20260812T031757Z/formal_n10_decision.json`; requested_pairs=10; started_pairs=10; completed_pairs=10; supervisor_status=complete. Reason: N>=10 same-GPU matched workload passed sparse-runtime, structural AV, resource, quality-proxy, and timing gates. Accepted only within the formal matched 5-step Sol-Attn opt-in lane; this is not BF16 fidelity, Turbo/DLO/DMD evidence, release approval, or human-auditory/semantic quality certification.
 
+## Final-AV 30-second extension/chunked r10 formal N=10
+
+- Evidence: `long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/formal_n10_summary.json`; timing `timing_summary.json`; AV accounting `final_av_accounting_summary.json`; resource `resource_summary.json`; reviewer `reviewer_verdict.json`.
+- Status: `accepted_formal_n10_r10_adaptive_tau1_5_step3_diag_independent_reviewer_passed`; Reviewer verdict=`accept`.
+- Matched design: 10/10 pairs, candidate `r10_adaptive_tau1_5_step3_diag` (tau=1.5, guarded adaptive step_min=3) versus retained `r9_current_sol_attn`, one RTX A6000, same workload fingerprint `128a2e9494549efbd309e518c455918565571ce265ec3293b10ca46364979b17`, same timing boundary `final_av_30s_extension_warm_after_one_excluded_warmup_v1`.
+- Timing: candidate warm E2E median **1333.5752375134907s** vs reference **1394.0061285260017s**; reviewer-accepted median warm improvement **4.326262968443439%**. Candidate cold median **1814.1335341165s** vs reference **1884.1419612035s**; median cold improvement **3.6690600480873563%**.
+- Final AV accounting: each candidate/reference output is complete at 1344x768, 720 frames, 24 FPS, 32 kHz stereo, and 960000 effective samples/channel.
+- Resource envelope: candidate median peak GPU memory **27946 MiB**, host memory **250.03582000732422 GiB**, power **300.32 W**, failures **0**.
+- Boundary: accepted only as matched formal N>=10 30-second final-AV extension/chunked practical-lane timing/structural evidence. Objective proxies are no-reference only and do not certify perceived AV quality, prompt faithfulness, human semantic/audio quality, product readiness, native long context, BF16 fidelity, public comparison, or SOTA.
+
 ## DMD / DMD2
 
 - Evidence: `dmd_primary_source_note.md`.
@@ -128,6 +139,7 @@ Status: **final evidence integration; operator overall practical-quality gate ac
 - H3 Sol-Attn r8 metadata plumbing reached the real 5-step H3 attention boundary and executed the sparse path with valid structural AV/resource telemetry. Evidence: `delivery/r8_sol_attn_cpu_ingest_20260812T005600Z/r8_terminal_classification.json`. Limit: accepted 5-step sparse-execution metadata-plumbing diagnostic only; not a speedup, N10, BF16 fidelity, release, or quality-equivalence claim
 - The r8 N=3 matched-workload route gate is terminal and led to the later accepted formal N>=10 Sol-Attn gate. Evidence: `sol_engine_port/sol_attn_h3_matched_retest_r8_n3_20260812T013544Z/decision.json`. Limit: Bounded N=3 5-step route decision only; not formal N10, not a speedup, not BF16 fidelity, and not quality-equivalence certification.
 - Formal r8 Sol-Attn N>=10 matched-workload promotion is complete. Evidence: `sol_engine_port/sol_attn_h3_formal_n10_r8_n10_20260812T031757Z/formal_n10_decision.json`. Limit: Formal matched 5-step Sol-Attn lane only; not BF16 fidelity, Turbo, DLO, DMD, release, or human-auditory quality certification.
+- Final-AV 30-second r10 guarded-adaptive step-min=3 formal N=10 is accepted as a bounded practical `extension`/chunked timing/structural result versus retained `r9_current_sol_attn`. Evidence: `long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/formal_n10_summary.json`, `timing_summary.json`, `final_av_accounting_summary.json`, `reviewer_verdict.json`; normalized public record `benchmark_contract/v1/normalized-records/final-av-30s-r10-guarded-adaptive-step3-formal-n10.json`. Limit: no native long context, no BF16 fidelity, no human semantic/audio/AV-quality certification, no product readiness, no public-comparison/SOTA, and no unbounded model-quality claim.
 - The stride-aware-V SM86 harness is accepted as model-free correctness and zero-materialization validation for the current kernel path. Evidence: `sol_engine_port/sol_attn_stride_aware_v_harness_20260813T082456Z/summary.json`, `sol_engine_port/sol_attn_stride_aware_v_harness_20260813T082456Z/harness.json`. Limit: no MiniMax-H3 model load, no Docker real chain, no AV output, no 30/60-second result, and no H3 end-to-end speedup claim.
 - The pair-value-halves SM86 captured replay is retained as a default-off captured-metadata/model-free kernel candidate. Evidence: `sol_engine_port/sol_attn_pair_value_halves_captured_replay_20260813T145731Z/summary.json`, `sol_engine_port/sol_attn_pair_value_halves_captured_replay_20260813T145731Z/decision.json`, `sol_engine_port/sol_attn_pair_value_halves_captured_replay_20260813T145731Z/validation.json` (with prior standalone harness evidence retained at `sol_engine_port/sol_attn_pair_value_halves_20260813T110953Z/summary.json` and `harness.json`). Limit: no MiniMax-H3 model load, no Docker real chain, no AV output, no 30/60-second result, no BF16-fidelity result, no normal-PC evidence, and no H3 end-to-end/product/SOTA speedup claim.
 
@@ -139,12 +151,15 @@ Status: **final evidence integration; operator overall practical-quality gate ac
 - Toy Sol-Attn is deployed or faster. Reason: Current toy harness is kernel-candidate-only, model_load=false, and sparse median is slower than dense. Evidence: `sol_engine_port/sol_attn_gpu_20260809T173323Z/result.json`.
 - The 2026-08-13 stride-aware-V harness is an H3 product speedup. Reason: it is a model-free SM86 harness with no MiniMax-H3 model load, no AV output, and sparse median slower than dense for its synthetic benchmark shape. Evidence: `sol_engine_port/sol_attn_stride_aware_v_harness_20260813T082456Z/harness.json`.
 - The 2026-08-13 pair-value-halves captured replay is an H3 E2E, long-video, BF16-fidelity, normal-PC, product, public-comparison, or SOTA result. Reason: it is a captured-metadata/non-Docker/model-free SM86 kernel replay with no Docker launch, no MiniMax-H3 model load, no AV output, and no matched real-chain gate. Evidence: `sol_engine_port/sol_attn_pair_value_halves_captured_replay_20260813T145731Z/summary.json`.
+- The 30-second r10 result is native long context, BF16 fidelity, human semantic/audio quality, product readiness, public comparison, or SOTA evidence. Reason: it is explicitly a six-chunk `extension`/chunked practical lane with structural AV and no-reference objective proxies only. Evidence: `long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/formal_n10_summary.json` and `reviewer_verdict.json`.
 
 ### Blocked
 - MiniMax-H3 DMD/DMD2 is a no-go after Turbo unless feasibility evidence changes. Status: blocked_research_only_no_go_after_turbo_unless_feasibility_changes Evidence: `dmd_primary_source_note.md`.
 
 ### Pending
 - Formal DLO N10 performance promotion is complete. Status: pending_no_formal_n10_because_current_candidate_is_below_baseline_noise Evidence: `dlo_autotune/detached_continuation/status.txt`, `dlo_autotune/runs/a6000_dlo_candidate_50_rl16_20260810T141257Z/candidate50_summary.json`.
+- Final-AV 60-second extension/chunked result. Status: pending_no_accepted_60s_result Evidence: `benchmark_contract/v1/lane-manifests/final-av-60s-1344x768-24fps-v1.json`.
+- Human semantic/audio quality certification for the accepted 30-second r10 lane. Status: pending_not_claimed Evidence: `long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/reviewer_verdict.json`.
 
 ## Reproduction / final gate commands
 

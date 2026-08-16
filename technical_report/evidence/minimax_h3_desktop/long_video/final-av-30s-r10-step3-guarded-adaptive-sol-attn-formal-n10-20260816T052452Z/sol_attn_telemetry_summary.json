@@ -1,0 +1,1325 @@
+{
+  "pairs": [
+    {
+      "pair": "pair01",
+      "sol_attn_telemetry_summary": {
+        "candidate": {
+          "adaptive_guard_active_count": 1344,
+          "adaptive_guard_counts_by_step": {
+            "0": {
+              "active": 0,
+              "inactive": 336,
+              "reasons": {
+                "step_before_adaptive_min": 336
+              }
+            },
+            "1": {
+              "active": 0,
+              "inactive": 336,
+              "reasons": {
+                "step_before_adaptive_min": 336
+              }
+            },
+            "2": {
+              "active": 0,
+              "inactive": 336,
+              "reasons": {
+                "step_before_adaptive_min": 336
+              }
+            },
+            "3": {
+              "active": 336,
+              "inactive": 0,
+              "reasons": {
+                "active": 336
+              }
+            },
+            "4": {
+              "active": 336,
+              "inactive": 0,
+              "reasons": {
+                "active": 336
+              }
+            },
+            "5": {
+              "active": 336,
+              "inactive": 0,
+              "reasons": {
+                "active": 336
+              }
+            },
+            "6": {
+              "active": 336,
+              "inactive": 0,
+              "reasons": {
+                "active": 336
+              }
+            }
+          },
+          "adaptive_guard_inactive_count": 1008,
+          "adaptive_guard_reason_counts": {
+            "active": 1344,
+            "step_before_adaptive_min": 1008
+          },
+          "adaptive_guard_requested_count": 2352,
+          "adaptive_layer_max_values": [],
+          "adaptive_layer_min_values": [],
+          "adaptive_profiles": [
+            "r10_adaptive_tau1_5_step3_diag"
+          ],
+          "adaptive_routing_values": [
+            false,
+            true
+          ],
+          "adaptive_step_max_values": [],
+          "adaptive_step_min_values": [
+            3
+          ],
+          "denoise_gpu_latency_ms": 1216259.623046875,
+          "denoise_timed_calls": 49,
+          "dense_calls": 196,
+          "density_sample_count": 2352,
+          "diagnostic_raw_tensor_exported": false,
+          "fallback_calls": 0,
+          "fallback_reasons": {},
+          "input_copy_bytes": 0,
+          "input_copy_events": 0,
+          "materialize_copy_bytes": 0,
+          "materialize_copy_count": 0,
+          "sparse_attention_gpu_latency_ms": 415022.95531463623,
+          "sparse_attention_timed_calls": 2352,
+          "sparse_calls": 2352,
+          "sparse_candidate_calls": 2352,
+          "stride_aware_value_calls": 2352,
+          "tau_values": [
+            1.0,
+            1.5
+          ],
+          "thresh_type_values": [
+            "diag"
+          ]
+        },
+        "reference": {
+          "adaptive_routing_values": [
+            false
+          ],
+          "denoise_gpu_latency_ms": 1284560.927734375,
+          "denoise_timed_calls": 49,
+          "dense_calls": 196,
+          "density_sample_count": 2352,
+          "diagnostic_raw_tensor_exported": false,
+          "fallback_calls": 0,
+          "fallback_reasons": {},
+          "input_copy_bytes": 0,
+          "input_copy_events": 0,
+          "materialize_copy_bytes": 0,
+          "materialize_copy_count": 0,
+          "sparse_attention_gpu_latency_ms": 484107.3183364868,
+          "sparse_attention_timed_calls": 2352,
+          "sparse_calls": 2352,
+          "sparse_candidate_calls": 2352,
+          "stride_aware_value_calls": 2352,
+          "tau_values": [
+            1.0
+          ],
+          "thresh_type_values": [
+            "diag"
+          ]
+        }
+      },
+      "telemetry_paths": {
+        "candidate": "${PWD}/technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/pair01/r10_adaptive_tau1_5_step3_diag/sol_attn_telemetry.sol_attn.json",
+        "reference": "${PWD}/technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/pair01/r9_current_sol_attn/sol_attn_telemetry.sol_attn.json"
+      }
+    },
+    {
+      "pair": "pair02",
+      "sol_attn_telemetry_summary": {
+        "candidate": {
+          "adaptive_guard_active_count": 1344,
+          "adaptive_guard_counts_by_step": {
+            "0": {
+              "active": 0,
+              "inactive": 336,
+              "reasons": {
+                "step_before_adaptive_min": 336
+              }
+            },
+            "1": {
+              "active": 0,
+              "inactive": 336,
+              "reasons": {
+                "step_before_adaptive_min": 336
+              }
+            },
+            "2": {
+              "active": 0,
+              "inactive": 336,
+              "reasons": {
+                "step_before_adaptive_min": 336
+              }
+            },
+            "3": {
+              "active": 336,
+              "inactive": 0,
+              "reasons": {
+                "active": 336
+              }
+            },
+            "4": {
+              "active": 336,
+              "inactive": 0,
+              "reasons": {
+                "active": 336
+              }
+            },
+            "5": {
+              "active": 336,
+              "inactive": 0,
+              "reasons": {
+                "active": 336
+              }
+            },
+            "6": {
+              "active": 336,
+              "inactive": 0,
+              "reasons": {
+                "active": 336
+              }
+            }
+          },
+          "adaptive_guard_inactive_count": 1008,
+          "adaptive_guard_reason_counts": {
+            "active": 1344,
+            "step_before_adaptive_min": 1008
+          },
+          "adaptive_guard_requested_count": 2352,
+          "adaptive_layer_max_values": [],
+          "adaptive_layer_min_values": [],
+          "adaptive_profiles": [
+            "r10_adaptive_tau1_5_step3_diag"
+          ],
+          "adaptive_routing_values": [
+            false,
+            true
+          ],
+          "adaptive_step_max_values": [],
+          "adaptive_step_min_values": [
+            3
+          ],
+          "denoise_gpu_latency_ms": 1215639.3125,
+          "denoise_timed_calls": 49,
+          "dense_calls": 196,
+          "density_sample_count": 2352,
+          "diagnostic_raw_tensor_exported": false,
+          "fallback_calls": 0,
+          "fallback_reasons": {},
+          "input_copy_bytes": 0,
+          "input_copy_events": 0,
+          "materialize_copy_bytes": 0,
+          "materialize_copy_count": 0,
+          "sparse_attention_gpu_latency_ms": 414838.9535827637,
+          "sparse_attention_timed_calls": 2352,
+          "sparse_calls": 2352,
+          "sparse_candidate_calls": 2352,
+          "stride_aware_value_calls": 2352,
+          "tau_values": [
+            1.0,
+            1.5
+          ],
+          "thresh_type_values": [
+            "diag"
+          ]
+        },
+        "reference": {
+          "adaptive_routing_values": [
+            false
+          ],
+          "denoise_gpu_latency_ms": 1286881.40625,
+          "denoise_timed_calls": 49,
+          "dense_calls": 196,
+          "density_sample_count": 2352,
+          "diagnostic_raw_tensor_exported": false,
+          "fallback_calls": 0,
+          "fallback_reasons": {},
+          "input_copy_bytes": 0,
+          "input_copy_events": 0,
+          "materialize_copy_bytes": 0,
+          "materialize_copy_count": 0,
+          "sparse_attention_gpu_latency_ms": 485351.98664855957,
+          "sparse_attention_timed_calls": 2352,
+          "sparse_calls": 2352,
+          "sparse_candidate_calls": 2352,
+          "stride_aware_value_calls": 2352,
+          "tau_values": [
+            1.0
+          ],
+          "thresh_type_values": [
+            "diag"
+          ]
+        }
+      },
+      "telemetry_paths": {
+        "candidate": "${PWD}/technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/pair02/r10_adaptive_tau1_5_step3_diag/sol_attn_telemetry.sol_attn.json",
+        "reference": "${PWD}/technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/pair02/r9_current_sol_attn/sol_attn_telemetry.sol_attn.json"
+      }
+    },
+    {
+      "pair": "pair03",
+      "sol_attn_telemetry_summary": {
+        "candidate": {
+          "adaptive_guard_active_count": 1344,
+          "adaptive_guard_counts_by_step": {
+            "0": {
+              "active": 0,
+              "inactive": 336,
+              "reasons": {
+                "step_before_adaptive_min": 336
+              }
+            },
+            "1": {
+              "active": 0,
+              "inactive": 336,
+              "reasons": {
+                "step_before_adaptive_min": 336
+              }
+            },
+            "2": {
+              "active": 0,
+              "inactive": 336,
+              "reasons": {
+                "step_before_adaptive_min": 336
+              }
+            },
+            "3": {
+              "active": 336,
+              "inactive": 0,
+              "reasons": {
+                "active": 336
+              }
+            },
+            "4": {
+              "active": 336,
+              "inactive": 0,
+              "reasons": {
+                "active": 336
+              }
+            },
+            "5": {
+              "active": 336,
+              "inactive": 0,
+              "reasons": {
+                "active": 336
+              }
+            },
+            "6": {
+              "active": 336,
+              "inactive": 0,
+              "reasons": {
+                "active": 336
+              }
+            }
+          },
+          "adaptive_guard_inactive_count": 1008,
+          "adaptive_guard_reason_counts": {
+            "active": 1344,
+            "step_before_adaptive_min": 1008
+          },
+          "adaptive_guard_requested_count": 2352,
+          "adaptive_layer_max_values": [],
+          "adaptive_layer_min_values": [],
+          "adaptive_profiles": [
+            "r10_adaptive_tau1_5_step3_diag"
+          ],
+          "adaptive_routing_values": [
+            false,
+            true
+          ],
+          "adaptive_step_max_values": [],
+          "adaptive_step_min_values": [
+            3
+          ],
+          "denoise_gpu_latency_ms": 1213337.99609375,
+          "denoise_timed_calls": 49,
+          "dense_calls": 196,
+          "density_sample_count": 2352,
+          "diagnostic_raw_tensor_exported": false,
+          "fallback_calls": 0,
+          "fallback_reasons": {},
+          "input_copy_bytes": 0,
+          "input_copy_events": 0,
+          "materialize_copy_bytes": 0,
+          "materialize_copy_count": 0,
+          "sparse_attention_gpu_latency_ms": 413457.29035949707,
+          "sparse_attention_timed_calls": 2352,
+          "sparse_calls": 2352,
+          "sparse_candidate_calls": 2352,
+          "stride_aware_value_calls": 2352,
+          "tau_values": [
+            1.0,
+            1.5
+          ],
+          "thresh_type_values": [
+            "diag"
+          ]
+        },
+        "reference": {
+          "adaptive_routing_values": [
+            false
+          ],
+          "denoise_gpu_latency_ms": 1286806.458984375,
+          "denoise_timed_calls": 49,
+          "dense_calls": 196,
+          "density_sample_count": 2352,
+          "diagnostic_raw_tensor_exported": false,
+          "fallback_calls": 0,
+          "fallback_reasons": {},
+          "input_copy_bytes": 0,
+          "input_copy_events": 0,
+          "materialize_copy_bytes": 0,
+          "materialize_copy_count": 0,
+          "sparse_attention_gpu_latency_ms": 485411.0245513916,
+          "sparse_attention_timed_calls": 2352,
+          "sparse_calls": 2352,
+          "sparse_candidate_calls": 2352,
+          "stride_aware_value_calls": 2352,
+          "tau_values": [
+            1.0
+          ],
+          "thresh_type_values": [
+            "diag"
+          ]
+        }
+      },
+      "telemetry_paths": {
+        "candidate": "${PWD}/technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/pair03/r10_adaptive_tau1_5_step3_diag/sol_attn_telemetry.sol_attn.json",
+        "reference": "${PWD}/technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/pair03/r9_current_sol_attn/sol_attn_telemetry.sol_attn.json"
+      }
+    },
+    {
+      "pair": "pair04",
+      "sol_attn_telemetry_summary": {
+        "candidate": {
+          "adaptive_guard_active_count": 1344,
+          "adaptive_guard_counts_by_step": {
+            "0": {
+              "active": 0,
+              "inactive": 336,
+              "reasons": {
+                "step_before_adaptive_min": 336
+              }
+            },
+            "1": {
+              "active": 0,
+              "inactive": 336,
+              "reasons": {
+                "step_before_adaptive_min": 336
+              }
+            },
+            "2": {
+              "active": 0,
+              "inactive": 336,
+              "reasons": {
+                "step_before_adaptive_min": 336
+              }
+            },
+            "3": {
+              "active": 336,
+              "inactive": 0,
+              "reasons": {
+                "active": 336
+              }
+            },
+            "4": {
+              "active": 336,
+              "inactive": 0,
+              "reasons": {
+                "active": 336
+              }
+            },
+            "5": {
+              "active": 336,
+              "inactive": 0,
+              "reasons": {
+                "active": 336
+              }
+            },
+            "6": {
+              "active": 336,
+              "inactive": 0,
+              "reasons": {
+                "active": 336
+              }
+            }
+          },
+          "adaptive_guard_inactive_count": 1008,
+          "adaptive_guard_reason_counts": {
+            "active": 1344,
+            "step_before_adaptive_min": 1008
+          },
+          "adaptive_guard_requested_count": 2352,
+          "adaptive_layer_max_values": [],
+          "adaptive_layer_min_values": [],
+          "adaptive_profiles": [
+            "r10_adaptive_tau1_5_step3_diag"
+          ],
+          "adaptive_routing_values": [
+            false,
+            true
+          ],
+          "adaptive_step_max_values": [],
+          "adaptive_step_min_values": [
+            3
+          ],
+          "denoise_gpu_latency_ms": 1215133.76953125,
+          "denoise_timed_calls": 49,
+          "dense_calls": 196,
+          "density_sample_count": 2352,
+          "diagnostic_raw_tensor_exported": false,
+          "fallback_calls": 0,
+          "fallback_reasons": {},
+          "input_copy_bytes": 0,
+          "input_copy_events": 0,
+          "materialize_copy_bytes": 0,
+          "materialize_copy_count": 0,
+          "sparse_attention_gpu_latency_ms": 414739.7555770874,
+          "sparse_attention_timed_calls": 2352,
+          "sparse_calls": 2352,
+          "sparse_candidate_calls": 2352,
+          "stride_aware_value_calls": 2352,
+          "tau_values": [
+            1.0,
+            1.5
+          ],
+          "thresh_type_values": [
+            "diag"
+          ]
+        },
+        "reference": {
+          "adaptive_routing_values": [
+            false
+          ],
+          "denoise_gpu_latency_ms": 1285596.490234375,
+          "denoise_timed_calls": 49,
+          "dense_calls": 196,
+          "density_sample_count": 2352,
+          "diagnostic_raw_tensor_exported": false,
+          "fallback_calls": 0,
+          "fallback_reasons": {},
+          "input_copy_bytes": 0,
+          "input_copy_events": 0,
+          "materialize_copy_bytes": 0,
+          "materialize_copy_count": 0,
+          "sparse_attention_gpu_latency_ms": 485010.4546508789,
+          "sparse_attention_timed_calls": 2352,
+          "sparse_calls": 2352,
+          "sparse_candidate_calls": 2352,
+          "stride_aware_value_calls": 2352,
+          "tau_values": [
+            1.0
+          ],
+          "thresh_type_values": [
+            "diag"
+          ]
+        }
+      },
+      "telemetry_paths": {
+        "candidate": "${PWD}/technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/pair04/r10_adaptive_tau1_5_step3_diag/sol_attn_telemetry.sol_attn.json",
+        "reference": "${PWD}/technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/pair04/r9_current_sol_attn/sol_attn_telemetry.sol_attn.json"
+      }
+    },
+    {
+      "pair": "pair05",
+      "sol_attn_telemetry_summary": {
+        "candidate": {
+          "adaptive_guard_active_count": 1344,
+          "adaptive_guard_counts_by_step": {
+            "0": {
+              "active": 0,
+              "inactive": 336,
+              "reasons": {
+                "step_before_adaptive_min": 336
+              }
+            },
+            "1": {
+              "active": 0,
+              "inactive": 336,
+              "reasons": {
+                "step_before_adaptive_min": 336
+              }
+            },
+            "2": {
+              "active": 0,
+              "inactive": 336,
+              "reasons": {
+                "step_before_adaptive_min": 336
+              }
+            },
+            "3": {
+              "active": 336,
+              "inactive": 0,
+              "reasons": {
+                "active": 336
+              }
+            },
+            "4": {
+              "active": 336,
+              "inactive": 0,
+              "reasons": {
+                "active": 336
+              }
+            },
+            "5": {
+              "active": 336,
+              "inactive": 0,
+              "reasons": {
+                "active": 336
+              }
+            },
+            "6": {
+              "active": 336,
+              "inactive": 0,
+              "reasons": {
+                "active": 336
+              }
+            }
+          },
+          "adaptive_guard_inactive_count": 1008,
+          "adaptive_guard_reason_counts": {
+            "active": 1344,
+            "step_before_adaptive_min": 1008
+          },
+          "adaptive_guard_requested_count": 2352,
+          "adaptive_layer_max_values": [],
+          "adaptive_layer_min_values": [],
+          "adaptive_profiles": [
+            "r10_adaptive_tau1_5_step3_diag"
+          ],
+          "adaptive_routing_values": [
+            false,
+            true
+          ],
+          "adaptive_step_max_values": [],
+          "adaptive_step_min_values": [
+            3
+          ],
+          "denoise_gpu_latency_ms": 1213806.5,
+          "denoise_timed_calls": 49,
+          "dense_calls": 196,
+          "density_sample_count": 2352,
+          "diagnostic_raw_tensor_exported": false,
+          "fallback_calls": 0,
+          "fallback_reasons": {},
+          "input_copy_bytes": 0,
+          "input_copy_events": 0,
+          "materialize_copy_bytes": 0,
+          "materialize_copy_count": 0,
+          "sparse_attention_gpu_latency_ms": 413625.6474761963,
+          "sparse_attention_timed_calls": 2352,
+          "sparse_calls": 2352,
+          "sparse_candidate_calls": 2352,
+          "stride_aware_value_calls": 2352,
+          "tau_values": [
+            1.0,
+            1.5
+          ],
+          "thresh_type_values": [
+            "diag"
+          ]
+        },
+        "reference": {
+          "adaptive_routing_values": [
+            false
+          ],
+          "denoise_gpu_latency_ms": 1285322.12890625,
+          "denoise_timed_calls": 49,
+          "dense_calls": 196,
+          "density_sample_count": 2352,
+          "diagnostic_raw_tensor_exported": false,
+          "fallback_calls": 0,
+          "fallback_reasons": {},
+          "input_copy_bytes": 0,
+          "input_copy_events": 0,
+          "materialize_copy_bytes": 0,
+          "materialize_copy_count": 0,
+          "sparse_attention_gpu_latency_ms": 485036.0059661865,
+          "sparse_attention_timed_calls": 2352,
+          "sparse_calls": 2352,
+          "sparse_candidate_calls": 2352,
+          "stride_aware_value_calls": 2352,
+          "tau_values": [
+            1.0
+          ],
+          "thresh_type_values": [
+            "diag"
+          ]
+        }
+      },
+      "telemetry_paths": {
+        "candidate": "${PWD}/technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/pair05/r10_adaptive_tau1_5_step3_diag/sol_attn_telemetry.sol_attn.json",
+        "reference": "${PWD}/technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/pair05/r9_current_sol_attn/sol_attn_telemetry.sol_attn.json"
+      }
+    },
+    {
+      "pair": "pair06",
+      "sol_attn_telemetry_summary": {
+        "candidate": {
+          "adaptive_guard_active_count": 1344,
+          "adaptive_guard_counts_by_step": {
+            "0": {
+              "active": 0,
+              "inactive": 336,
+              "reasons": {
+                "step_before_adaptive_min": 336
+              }
+            },
+            "1": {
+              "active": 0,
+              "inactive": 336,
+              "reasons": {
+                "step_before_adaptive_min": 336
+              }
+            },
+            "2": {
+              "active": 0,
+              "inactive": 336,
+              "reasons": {
+                "step_before_adaptive_min": 336
+              }
+            },
+            "3": {
+              "active": 336,
+              "inactive": 0,
+              "reasons": {
+                "active": 336
+              }
+            },
+            "4": {
+              "active": 336,
+              "inactive": 0,
+              "reasons": {
+                "active": 336
+              }
+            },
+            "5": {
+              "active": 336,
+              "inactive": 0,
+              "reasons": {
+                "active": 336
+              }
+            },
+            "6": {
+              "active": 336,
+              "inactive": 0,
+              "reasons": {
+                "active": 336
+              }
+            }
+          },
+          "adaptive_guard_inactive_count": 1008,
+          "adaptive_guard_reason_counts": {
+            "active": 1344,
+            "step_before_adaptive_min": 1008
+          },
+          "adaptive_guard_requested_count": 2352,
+          "adaptive_layer_max_values": [],
+          "adaptive_layer_min_values": [],
+          "adaptive_profiles": [
+            "r10_adaptive_tau1_5_step3_diag"
+          ],
+          "adaptive_routing_values": [
+            false,
+            true
+          ],
+          "adaptive_step_max_values": [],
+          "adaptive_step_min_values": [
+            3
+          ],
+          "denoise_gpu_latency_ms": 1214976.232421875,
+          "denoise_timed_calls": 49,
+          "dense_calls": 196,
+          "density_sample_count": 2352,
+          "diagnostic_raw_tensor_exported": false,
+          "fallback_calls": 0,
+          "fallback_reasons": {},
+          "input_copy_bytes": 0,
+          "input_copy_events": 0,
+          "materialize_copy_bytes": 0,
+          "materialize_copy_count": 0,
+          "sparse_attention_gpu_latency_ms": 414629.7295150757,
+          "sparse_attention_timed_calls": 2352,
+          "sparse_calls": 2352,
+          "sparse_candidate_calls": 2352,
+          "stride_aware_value_calls": 2352,
+          "tau_values": [
+            1.0,
+            1.5
+          ],
+          "thresh_type_values": [
+            "diag"
+          ]
+        },
+        "reference": {
+          "adaptive_routing_values": [
+            false
+          ],
+          "denoise_gpu_latency_ms": 1285182.75,
+          "denoise_timed_calls": 49,
+          "dense_calls": 196,
+          "density_sample_count": 2352,
+          "diagnostic_raw_tensor_exported": false,
+          "fallback_calls": 0,
+          "fallback_reasons": {},
+          "input_copy_bytes": 0,
+          "input_copy_events": 0,
+          "materialize_copy_bytes": 0,
+          "materialize_copy_count": 0,
+          "sparse_attention_gpu_latency_ms": 484866.33642578125,
+          "sparse_attention_timed_calls": 2352,
+          "sparse_calls": 2352,
+          "sparse_candidate_calls": 2352,
+          "stride_aware_value_calls": 2352,
+          "tau_values": [
+            1.0
+          ],
+          "thresh_type_values": [
+            "diag"
+          ]
+        }
+      },
+      "telemetry_paths": {
+        "candidate": "${PWD}/technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/pair06/r10_adaptive_tau1_5_step3_diag/sol_attn_telemetry.sol_attn.json",
+        "reference": "${PWD}/technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/pair06/r9_current_sol_attn/sol_attn_telemetry.sol_attn.json"
+      }
+    },
+    {
+      "pair": "pair07",
+      "sol_attn_telemetry_summary": {
+        "candidate": {
+          "adaptive_guard_active_count": 1344,
+          "adaptive_guard_counts_by_step": {
+            "0": {
+              "active": 0,
+              "inactive": 336,
+              "reasons": {
+                "step_before_adaptive_min": 336
+              }
+            },
+            "1": {
+              "active": 0,
+              "inactive": 336,
+              "reasons": {
+                "step_before_adaptive_min": 336
+              }
+            },
+            "2": {
+              "active": 0,
+              "inactive": 336,
+              "reasons": {
+                "step_before_adaptive_min": 336
+              }
+            },
+            "3": {
+              "active": 336,
+              "inactive": 0,
+              "reasons": {
+                "active": 336
+              }
+            },
+            "4": {
+              "active": 336,
+              "inactive": 0,
+              "reasons": {
+                "active": 336
+              }
+            },
+            "5": {
+              "active": 336,
+              "inactive": 0,
+              "reasons": {
+                "active": 336
+              }
+            },
+            "6": {
+              "active": 336,
+              "inactive": 0,
+              "reasons": {
+                "active": 336
+              }
+            }
+          },
+          "adaptive_guard_inactive_count": 1008,
+          "adaptive_guard_reason_counts": {
+            "active": 1344,
+            "step_before_adaptive_min": 1008
+          },
+          "adaptive_guard_requested_count": 2352,
+          "adaptive_layer_max_values": [],
+          "adaptive_layer_min_values": [],
+          "adaptive_profiles": [
+            "r10_adaptive_tau1_5_step3_diag"
+          ],
+          "adaptive_routing_values": [
+            false,
+            true
+          ],
+          "adaptive_step_max_values": [],
+          "adaptive_step_min_values": [
+            3
+          ],
+          "denoise_gpu_latency_ms": 1213116.318359375,
+          "denoise_timed_calls": 49,
+          "dense_calls": 196,
+          "density_sample_count": 2352,
+          "diagnostic_raw_tensor_exported": false,
+          "fallback_calls": 0,
+          "fallback_reasons": {},
+          "input_copy_bytes": 0,
+          "input_copy_events": 0,
+          "materialize_copy_bytes": 0,
+          "materialize_copy_count": 0,
+          "sparse_attention_gpu_latency_ms": 413428.0097503662,
+          "sparse_attention_timed_calls": 2352,
+          "sparse_calls": 2352,
+          "sparse_candidate_calls": 2352,
+          "stride_aware_value_calls": 2352,
+          "tau_values": [
+            1.0,
+            1.5
+          ],
+          "thresh_type_values": [
+            "diag"
+          ]
+        },
+        "reference": {
+          "adaptive_routing_values": [
+            false
+          ],
+          "denoise_gpu_latency_ms": 1285938.94921875,
+          "denoise_timed_calls": 49,
+          "dense_calls": 196,
+          "density_sample_count": 2352,
+          "diagnostic_raw_tensor_exported": false,
+          "fallback_calls": 0,
+          "fallback_reasons": {},
+          "input_copy_bytes": 0,
+          "input_copy_events": 0,
+          "materialize_copy_bytes": 0,
+          "materialize_copy_count": 0,
+          "sparse_attention_gpu_latency_ms": 485265.8689727783,
+          "sparse_attention_timed_calls": 2352,
+          "sparse_calls": 2352,
+          "sparse_candidate_calls": 2352,
+          "stride_aware_value_calls": 2352,
+          "tau_values": [
+            1.0
+          ],
+          "thresh_type_values": [
+            "diag"
+          ]
+        }
+      },
+      "telemetry_paths": {
+        "candidate": "${PWD}/technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/pair07/r10_adaptive_tau1_5_step3_diag/sol_attn_telemetry.sol_attn.json",
+        "reference": "${PWD}/technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/pair07/r9_current_sol_attn/sol_attn_telemetry.sol_attn.json"
+      }
+    },
+    {
+      "pair": "pair08",
+      "sol_attn_telemetry_summary": {
+        "candidate": {
+          "adaptive_guard_active_count": 1344,
+          "adaptive_guard_counts_by_step": {
+            "0": {
+              "active": 0,
+              "inactive": 336,
+              "reasons": {
+                "step_before_adaptive_min": 336
+              }
+            },
+            "1": {
+              "active": 0,
+              "inactive": 336,
+              "reasons": {
+                "step_before_adaptive_min": 336
+              }
+            },
+            "2": {
+              "active": 0,
+              "inactive": 336,
+              "reasons": {
+                "step_before_adaptive_min": 336
+              }
+            },
+            "3": {
+              "active": 336,
+              "inactive": 0,
+              "reasons": {
+                "active": 336
+              }
+            },
+            "4": {
+              "active": 336,
+              "inactive": 0,
+              "reasons": {
+                "active": 336
+              }
+            },
+            "5": {
+              "active": 336,
+              "inactive": 0,
+              "reasons": {
+                "active": 336
+              }
+            },
+            "6": {
+              "active": 336,
+              "inactive": 0,
+              "reasons": {
+                "active": 336
+              }
+            }
+          },
+          "adaptive_guard_inactive_count": 1008,
+          "adaptive_guard_reason_counts": {
+            "active": 1344,
+            "step_before_adaptive_min": 1008
+          },
+          "adaptive_guard_requested_count": 2352,
+          "adaptive_layer_max_values": [],
+          "adaptive_layer_min_values": [],
+          "adaptive_profiles": [
+            "r10_adaptive_tau1_5_step3_diag"
+          ],
+          "adaptive_routing_values": [
+            false,
+            true
+          ],
+          "adaptive_step_max_values": [],
+          "adaptive_step_min_values": [
+            3
+          ],
+          "denoise_gpu_latency_ms": 1214535.603515625,
+          "denoise_timed_calls": 49,
+          "dense_calls": 196,
+          "density_sample_count": 2352,
+          "diagnostic_raw_tensor_exported": false,
+          "fallback_calls": 0,
+          "fallback_reasons": {},
+          "input_copy_bytes": 0,
+          "input_copy_events": 0,
+          "materialize_copy_bytes": 0,
+          "materialize_copy_count": 0,
+          "sparse_attention_gpu_latency_ms": 414504.93408966064,
+          "sparse_attention_timed_calls": 2352,
+          "sparse_calls": 2352,
+          "sparse_candidate_calls": 2352,
+          "stride_aware_value_calls": 2352,
+          "tau_values": [
+            1.0,
+            1.5
+          ],
+          "thresh_type_values": [
+            "diag"
+          ]
+        },
+        "reference": {
+          "adaptive_routing_values": [
+            false
+          ],
+          "denoise_gpu_latency_ms": 1284348.76171875,
+          "denoise_timed_calls": 49,
+          "dense_calls": 196,
+          "density_sample_count": 2352,
+          "diagnostic_raw_tensor_exported": false,
+          "fallback_calls": 0,
+          "fallback_reasons": {},
+          "input_copy_bytes": 0,
+          "input_copy_events": 0,
+          "materialize_copy_bytes": 0,
+          "materialize_copy_count": 0,
+          "sparse_attention_gpu_latency_ms": 484019.4538345337,
+          "sparse_attention_timed_calls": 2352,
+          "sparse_calls": 2352,
+          "sparse_candidate_calls": 2352,
+          "stride_aware_value_calls": 2352,
+          "tau_values": [
+            1.0
+          ],
+          "thresh_type_values": [
+            "diag"
+          ]
+        }
+      },
+      "telemetry_paths": {
+        "candidate": "${PWD}/technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/pair08/r10_adaptive_tau1_5_step3_diag/sol_attn_telemetry.sol_attn.json",
+        "reference": "${PWD}/technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/pair08/r9_current_sol_attn/sol_attn_telemetry.sol_attn.json"
+      }
+    },
+    {
+      "pair": "pair09",
+      "sol_attn_telemetry_summary": {
+        "candidate": {
+          "adaptive_guard_active_count": 1344,
+          "adaptive_guard_counts_by_step": {
+            "0": {
+              "active": 0,
+              "inactive": 336,
+              "reasons": {
+                "step_before_adaptive_min": 336
+              }
+            },
+            "1": {
+              "active": 0,
+              "inactive": 336,
+              "reasons": {
+                "step_before_adaptive_min": 336
+              }
+            },
+            "2": {
+              "active": 0,
+              "inactive": 336,
+              "reasons": {
+                "step_before_adaptive_min": 336
+              }
+            },
+            "3": {
+              "active": 336,
+              "inactive": 0,
+              "reasons": {
+                "active": 336
+              }
+            },
+            "4": {
+              "active": 336,
+              "inactive": 0,
+              "reasons": {
+                "active": 336
+              }
+            },
+            "5": {
+              "active": 336,
+              "inactive": 0,
+              "reasons": {
+                "active": 336
+              }
+            },
+            "6": {
+              "active": 336,
+              "inactive": 0,
+              "reasons": {
+                "active": 336
+              }
+            }
+          },
+          "adaptive_guard_inactive_count": 1008,
+          "adaptive_guard_reason_counts": {
+            "active": 1344,
+            "step_before_adaptive_min": 1008
+          },
+          "adaptive_guard_requested_count": 2352,
+          "adaptive_layer_max_values": [],
+          "adaptive_layer_min_values": [],
+          "adaptive_profiles": [
+            "r10_adaptive_tau1_5_step3_diag"
+          ],
+          "adaptive_routing_values": [
+            false,
+            true
+          ],
+          "adaptive_step_max_values": [],
+          "adaptive_step_min_values": [
+            3
+          ],
+          "denoise_gpu_latency_ms": 1214492.658203125,
+          "denoise_timed_calls": 49,
+          "dense_calls": 196,
+          "density_sample_count": 2352,
+          "diagnostic_raw_tensor_exported": false,
+          "fallback_calls": 0,
+          "fallback_reasons": {},
+          "input_copy_bytes": 0,
+          "input_copy_events": 0,
+          "materialize_copy_bytes": 0,
+          "materialize_copy_count": 0,
+          "sparse_attention_gpu_latency_ms": 414483.28099823,
+          "sparse_attention_timed_calls": 2352,
+          "sparse_calls": 2352,
+          "sparse_candidate_calls": 2352,
+          "stride_aware_value_calls": 2352,
+          "tau_values": [
+            1.0,
+            1.5
+          ],
+          "thresh_type_values": [
+            "diag"
+          ]
+        },
+        "reference": {
+          "adaptive_routing_values": [
+            false
+          ],
+          "denoise_gpu_latency_ms": 1285191.486328125,
+          "denoise_timed_calls": 49,
+          "dense_calls": 196,
+          "density_sample_count": 2352,
+          "diagnostic_raw_tensor_exported": false,
+          "fallback_calls": 0,
+          "fallback_reasons": {},
+          "input_copy_bytes": 0,
+          "input_copy_events": 0,
+          "materialize_copy_bytes": 0,
+          "materialize_copy_count": 0,
+          "sparse_attention_gpu_latency_ms": 484946.1100845337,
+          "sparse_attention_timed_calls": 2352,
+          "sparse_calls": 2352,
+          "sparse_candidate_calls": 2352,
+          "stride_aware_value_calls": 2352,
+          "tau_values": [
+            1.0
+          ],
+          "thresh_type_values": [
+            "diag"
+          ]
+        }
+      },
+      "telemetry_paths": {
+        "candidate": "${PWD}/technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/pair09/r10_adaptive_tau1_5_step3_diag/sol_attn_telemetry.sol_attn.json",
+        "reference": "${PWD}/technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/pair09/r9_current_sol_attn/sol_attn_telemetry.sol_attn.json"
+      }
+    },
+    {
+      "pair": "pair10",
+      "sol_attn_telemetry_summary": {
+        "candidate": {
+          "adaptive_guard_active_count": 1344,
+          "adaptive_guard_counts_by_step": {
+            "0": {
+              "active": 0,
+              "inactive": 336,
+              "reasons": {
+                "step_before_adaptive_min": 336
+              }
+            },
+            "1": {
+              "active": 0,
+              "inactive": 336,
+              "reasons": {
+                "step_before_adaptive_min": 336
+              }
+            },
+            "2": {
+              "active": 0,
+              "inactive": 336,
+              "reasons": {
+                "step_before_adaptive_min": 336
+              }
+            },
+            "3": {
+              "active": 336,
+              "inactive": 0,
+              "reasons": {
+                "active": 336
+              }
+            },
+            "4": {
+              "active": 336,
+              "inactive": 0,
+              "reasons": {
+                "active": 336
+              }
+            },
+            "5": {
+              "active": 336,
+              "inactive": 0,
+              "reasons": {
+                "active": 336
+              }
+            },
+            "6": {
+              "active": 336,
+              "inactive": 0,
+              "reasons": {
+                "active": 336
+              }
+            }
+          },
+          "adaptive_guard_inactive_count": 1008,
+          "adaptive_guard_reason_counts": {
+            "active": 1344,
+            "step_before_adaptive_min": 1008
+          },
+          "adaptive_guard_requested_count": 2352,
+          "adaptive_layer_max_values": [],
+          "adaptive_layer_min_values": [],
+          "adaptive_profiles": [
+            "r10_adaptive_tau1_5_step3_diag"
+          ],
+          "adaptive_routing_values": [
+            false,
+            true
+          ],
+          "adaptive_step_max_values": [],
+          "adaptive_step_min_values": [
+            3
+          ],
+          "denoise_gpu_latency_ms": 1213609.197265625,
+          "denoise_timed_calls": 49,
+          "dense_calls": 196,
+          "density_sample_count": 2352,
+          "diagnostic_raw_tensor_exported": false,
+          "fallback_calls": 0,
+          "fallback_reasons": {},
+          "input_copy_bytes": 0,
+          "input_copy_events": 0,
+          "materialize_copy_bytes": 0,
+          "materialize_copy_count": 0,
+          "sparse_attention_gpu_latency_ms": 414279.8118362427,
+          "sparse_attention_timed_calls": 2352,
+          "sparse_calls": 2352,
+          "sparse_candidate_calls": 2352,
+          "stride_aware_value_calls": 2352,
+          "tau_values": [
+            1.0,
+            1.5
+          ],
+          "thresh_type_values": [
+            "diag"
+          ]
+        },
+        "reference": {
+          "adaptive_routing_values": [
+            false
+          ],
+          "denoise_gpu_latency_ms": 1283542.21484375,
+          "denoise_timed_calls": 49,
+          "dense_calls": 196,
+          "density_sample_count": 2352,
+          "diagnostic_raw_tensor_exported": false,
+          "fallback_calls": 0,
+          "fallback_reasons": {},
+          "input_copy_bytes": 0,
+          "input_copy_events": 0,
+          "materialize_copy_bytes": 0,
+          "materialize_copy_count": 0,
+          "sparse_attention_gpu_latency_ms": 483821.90017700195,
+          "sparse_attention_timed_calls": 2352,
+          "sparse_calls": 2352,
+          "sparse_candidate_calls": 2352,
+          "stride_aware_value_calls": 2352,
+          "tau_values": [
+            1.0
+          ],
+          "thresh_type_values": [
+            "diag"
+          ]
+        }
+      },
+      "telemetry_paths": {
+        "candidate": "${PWD}/technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/pair10/r10_adaptive_tau1_5_step3_diag/sol_attn_telemetry.sol_attn.json",
+        "reference": "${PWD}/technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/pair10/r9_current_sol_attn/sol_attn_telemetry.sol_attn.json"
+      }
+    }
+  ],
+  "schema_version": "minimax-h3-final-av-30s-r9-current-vs-r10-guarded-adaptive-step3-sol-attn-formal-telemetry-summary-v1"
+}

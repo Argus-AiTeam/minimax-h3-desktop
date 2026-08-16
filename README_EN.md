@@ -1,7 +1,7 @@
 <h1 align="center">MiniMax-H3 on a Single RTX A6000</h1>
 
 <p align="center">
-  <strong>Full FL2VA · 1344×768 · synchronized video and stereo audio · up to 11.98× Turbo · formal Sol-Attn N=10</strong>
+  <strong>Full FL2VA · 1344×768 · synchronized video and stereo audio · up to 11.98× Turbo · 30s r10 formal N=10</strong>
 </p>
 
 <p align="center">
@@ -22,7 +22,7 @@
   <img alt="License Apache 2.0" src="https://img.shields.io/badge/code-Apache--2.0-blue">
 </p>
 
-> **Long-video work:** the current focus is 720p-class 30/60-second audiovisual production on one RTX A6000. See [`CURRENT_WORK.md`](CURRENT_WORK.md) for accepted evidence, negative results, active hypotheses, and the next experiment. Short-clip baselines are not presented as long-video results. The canonical workloads, timing hierarchy, quality gates, and fail-closed claim validator are in [`benchmark_contract/v1/README.md`](benchmark_contract/v1/README.md). The pinned open-source path supports only 4–15-second native output, so both 30/60-second manifests remain unmeasured `extension` lanes.
+> **Long-video work:** the current focus is 720p-class 30/60-second audiovisual production on one RTX A6000. The 30-second final-AV extension/chunked r10 formal N=10 lane now has a bounded accepted result (warm E2E median **1333.575 s** vs retained r9 **1394.006 s**, median improvement **4.326%**). This is not native long context, BF16 fidelity, human semantic/audio quality, product readiness, public-comparison, or SOTA evidence; 60 seconds remains unaccepted. See [`CURRENT_WORK.md`](CURRENT_WORK.md) for accepted evidence, negative results, active hypotheses, and the next experiment. The canonical workloads, timing hierarchy, quality gates, and fail-closed claim validator are in [`benchmark_contract/v1/README.md`](benchmark_contract/v1/README.md).
 
 This project runs the complete MiniMax-H3 FL2VA pipeline on **one real NVIDIA RTX A6000 48 GB (SM86)**. It does not substitute a smaller model and does not report a multi-GPU server as a desktop result. The repository includes a reproducible BF16 baseline, practical Turbo deployment, default-off Sol-Attn work, build/run scripts, tests, and compact evidence.
 
@@ -75,6 +75,16 @@ Frozen workload: **full FL2VA, 1344×768, 124 frames, 24 FPS, 5.166667 seconds, 
 
 The 8-step schedule is the practical recommendation: it delivered a stable 6.159× N=10 result and passed 12/12 visual cases in the 24-case suite. The 4-step schedule reached 11.978× but passed 11/12 visual cases; a known teapot sample had visibly malformed geometry. The operator completed human playback/listening review and gave an overall positive acceptance, while the known 4-step failure remains disclosed.
 
+### 30-second final-AV extension/chunked formal r10
+
+This is a practical approximate long-video lane on one A6000. It is not cross-compared with the BF16 short-clip denominator.
+
+| Lane | Generation mode | Formal N | Warm E2E median | Reference | Claim boundary |
+|---|---|---:|---:|---:|---|
+| `r10_adaptive_tau1_5_step3_diag` | six-chunk `extension` / chunked final AV | 10 | **1333.575 s** | retained `r9_current_sol_attn` **1394.006 s** | **4.326%** median warm-E2E improvement; complete 720-frame / 960,000-sample-per-channel final AV accounting |
+
+The r10 result only states that guarded adaptive step-min=3 Sol-Attn improved the matched formal N=10 30-second final-AV extension/chunked practical lane versus retained r9. It explicitly excludes native long context, BF16 fidelity, human semantic/audio quality, product readiness, public comparison, and SOTA. The 60-second lane is still unaccepted.
+
 See [`technical_report/minimax_h3_a6000_performance.md`](technical_report/minimax_h3_a6000_performance.md) for statistics, variability, quality scope, and evidence paths.
 
 ---
@@ -91,6 +101,7 @@ See [`technical_report/minimax_h3_a6000_performance.md`](technical_report/minima
 - [x] DLO capacity and 50-step candidate analysis
 - [x] SM86 exact-kernel candidates with drift checks
 - [x] Sol-Attn r8 real H3 metadata plumbing, sparse execution, N=3 route gate, and formal N=10
+- [x] 30-second final-AV extension/chunked r10 formal N=10 timing/structural result (bounded; not native/BF16/human-quality/product evidence)
 - [x] CPU/static tests, sanitized export, publication audit, and compact evidence reports
 
 ---
@@ -211,6 +222,8 @@ Formal matched N=10:
 | Fallback calls | 0 |
 
 This result is limited to the **5-step Sol-Attn opt-in matched lane**. It is not a 50-step BF16 fidelity speedup and not a Turbo, DLO, or semantic-quality-equivalence claim. The implementation defaults off and fails closed to dense when metadata is unsuitable.
+
+The 30-second final-AV extension/chunked r10 formal N=10 lane further retains default-off guarded adaptive Sol-Attn step-min=3: warm E2E median **1333.575 s** vs retained r9 **1394.006 s**, median improvement **4.326%**, with 10/10 pairs complete. This applies only to the matched 30-second extension/chunked practical lane and is not native long context, BF16 fidelity, human semantic/audio quality, product readiness, public-comparison, or SOTA evidence.
 
 The later `MINIMAX_H3_A6000_SOL_ATTN_PAIR_VALUE_HALVES` path remains default-off and is retained only by a captured-metadata, non-Docker, model-free SM86 replay: candidate total median **144.652 ms** vs current prefix-skip **175.216 ms**, forward pointer subphase **129.850 ms** vs **158.161 ms**, `max_abs_valid=0`, and zero unintended materialized copy events/bytes in the replay lanes. This shows a captured-metadata kernel mechanism, not an H3 end-to-end, long-video, BF16-fidelity, normal-PC, product-speedup, public-comparison, or SOTA result.
 

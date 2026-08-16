@@ -49,6 +49,11 @@ def test_patch_builder_copies_without_runtime_write():
     assert "MINIMAX_H3_A6000_SOL_ATTN_DENSE_FIRST_LAYERS=2" in report
     assert "MINIMAX_H3_A6000_SOL_ATTN_STRIDE_AWARE_V=0" in report
     assert "MINIMAX_H3_A6000_SOL_ATTN_SKIP_FULL_PREFIX_BLOCKS=0" in report
+    assert "MINIMAX_H3_A6000_SOL_ATTN_SHADOW_PAIR_VALUE_HALVES=0" in report
+    assert "MINIMAX_H3_A6000_SOL_ATTN_SHADOW_ROW_STATE_PROBE=0" in report
+    assert "MINIMAX_H3_A6000_SOL_ATTN_SHADOW_MAX_MISMATCHES=8" in report
+    assert "MINIMAX_H3_A6000_SOL_ATTN_DIAGNOSTIC_OUTPUT_DIGEST=0" in report
+    assert "MINIMAX_H3_A6000_SOL_ATTN_DIAGNOSTIC_MAX_CALLS=256" in report
     assert "MINIMAX_H3_A6000_SOL_ATTN_DIAGNOSTIC_MATERIALIZE=0" in report
     assert "MINIMAX_H3_A6000_SOL_ATTN_MATERIALIZE_MAX_BYTES=67108864" in report
     assert not any(line.endswith("=1") for line in report.splitlines())
@@ -113,6 +118,11 @@ def test_patch_is_opt_in_and_default_dense():
     assert "static_exact_block_lower_bound" in patch_text
     assert "SOL_ATTN_CACHE" in patch_text
     assert "SOL_ATTN_DIAGNOSTIC_MATERIALIZE" in patch_text
+    assert "SOL_ATTN_DIAGNOSTIC_OUTPUT_DIGEST" in patch_text
+    assert "SOL_ATTN_SHADOW_PAIR_VALUE_HALVES" in patch_text
+    assert "SOL_ATTN_SHADOW_ROW_STATE_PROBE" in patch_text
+    assert "shadow_pair_value_halves_records" in patch_text
+    assert "diagnostic_output_records" in patch_text
     assert "SOL_ATTN_STRIDE_AWARE_V" in patch_text
     assert "materialize_copy_bytes" in patch_text
     assert "materialize_gpu_copy_latency_ms" in patch_text
@@ -139,6 +149,10 @@ def test_embedded_sol_attn_backend_blocks_until_real_metadata_and_kernel_path():
     assert "PackedH3Metadata" in source
     assert "sol_attn_h3_sparse_candidate" in source
     assert "MINIMAX_H3_A6000_SOL_ATTN_STRIDE_AWARE_V" in source
+    assert "diagnostic_output_records" in source
+    assert "shadow_pair_value_halves_records" in source
+    assert "MINIMAX_H3_A6000_SOL_ATTN_SHADOW_ROW_STATE_PROBE" in source
+    assert "diagnostic_raw_tensor_exported" in source
     assert "materialize_gpu_copy_latency_ms" in source
     assert "stride_aware_value_calls" in source
     assert "overlay_package_unavailable" in source

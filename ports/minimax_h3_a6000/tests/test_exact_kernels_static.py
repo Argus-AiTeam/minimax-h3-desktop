@@ -62,12 +62,20 @@ def test_exact_kernel_env_switches_default_off():
         "MINIMAX_H3_A6000_TELEMETRY_ATEXIT",
         "MINIMAX_H3_A6000_ENABLE_SHADOW",
         "MINIMAX_H3_A6000_SHADOW_STRICT",
+        "MINIMAX_H3_A6000_SOL_ATTN_SHADOW_ROW_STATE_PROBE",
+        "MINIMAX_H3_A6000_SOL_ATTN_DIAGNOSTIC_OUTPUT_DIGEST",
         "MINIMAX_H3_A6000_SOL_ATTN_DIAGNOSTIC_MATERIALIZE",
+        "MINIMAX_H3_A6000_SOL_ATTN_ADAPTIVE_ROUTING",
     ):
         assert DEFAULT_ENV_SWITCHES[key] == "0"
+    assert DEFAULT_ENV_SWITCHES["MINIMAX_H3_A6000_SOL_ATTN_TAU"] == "1.0"
+    assert DEFAULT_ENV_SWITCHES["MINIMAX_H3_A6000_SOL_ATTN_THRESH_TYPE"] == "diag"
+    assert DEFAULT_ENV_SWITCHES["MINIMAX_H3_A6000_SOL_ATTN_ADAPTIVE_PROFILE"] == ""
+    assert DEFAULT_ENV_SWITCHES["MINIMAX_H3_A6000_SOL_ATTN_ADAPTIVE_STEP_MIN"] == ""
     assert DEFAULT_ENV_SWITCHES["MINIMAX_H3_A6000_EXACT_INDEXED_STRATEGY"] == "auto"
     assert DEFAULT_ENV_SWITCHES["MINIMAX_H3_A6000_TELEMETRY_JSON"] == ""
     assert DEFAULT_ENV_SWITCHES["MINIMAX_H3_A6000_SHADOW_CALLS"] == "3"
+    assert DEFAULT_ENV_SWITCHES["MINIMAX_H3_A6000_SOL_ATTN_DIAGNOSTIC_MAX_CALLS"] == "256"
 
 
 def test_sol_attn_sm86_source_contains_real_triton_candidate_and_harness():
@@ -105,6 +113,10 @@ def test_sol_attn_sm86_source_contains_real_triton_candidate_and_harness():
         "layout_samples",
         "kernel_error:",
         "sol_attn_sm86",
+        "adaptive_routing_policy_error",
+        "adaptive_routing_guard_reason",
+        "MINIMAX_H3_A6000_SOL_ATTN_TAU",
+        "MINIMAX_H3_A6000_SOL_ATTN_ADAPTIVE_STEP_MIN",
     ):
         assert needle in backend
     assert "kernel_not_implemented" not in backend
@@ -122,8 +134,20 @@ def test_sol_attn_sm86_source_contains_real_triton_candidate_and_harness():
         "warmup < 20",
         "fused-QKV V view",
         "materialized_same_values",
+        "adaptive-routing-bench",
+        "run_adaptive_routing_bench",
     ):
         assert needle in harness
+    for needle in (
+        "tl.dot(probability.to(vc_lo.dtype), vc_lo)",
+        "tl.dot(probability.to(vc_hi.dtype), vc_hi)",
+        "tl.dot(exact_probability.to(v_lo.dtype), v_lo)",
+        "tl.dot(exact_probability.to(v_hi.dtype), v_hi)",
+        "cast boundary per value half",
+    ):
+        assert needle in source
+    assert "probability_bf16 = probability.to" not in source
+    assert "exact_probability_bf16 = exact_probability.to" not in source
 
 
 def test_gpu_harnesses_are_external_single_a6000_json_gates():

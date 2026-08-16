@@ -1,0 +1,84 @@
+{
+  "candidate_profile": "r10_adaptive_tau1_5_step3_diag",
+  "classification": "accepted_formal_n10_r10_adaptive_tau1_5_step3_diag_independent_reviewer_passed",
+  "completed_pairs": 10,
+  "created_utc": "2026-08-16T16:05:57Z",
+  "failed_gates": [],
+  "formal_speedup_claimed": true,
+  "requested_pairs": 10,
+  "reviewer_acceptance_status": "accepted_independent_reviewer_passed",
+  "same_gpu_workload_timing_boundary_proof": {
+    "physical_gpu_uuid_sets": [
+      [
+        "GPU-b3425477-0877-24de-c5b8-1549ab47cd4b"
+      ],
+      [
+        "GPU-b3425477-0877-24de-c5b8-1549ab47cd4b"
+      ],
+      [
+        "GPU-b3425477-0877-24de-c5b8-1549ab47cd4b"
+      ],
+      [
+        "GPU-b3425477-0877-24de-c5b8-1549ab47cd4b"
+      ],
+      [
+        "GPU-b3425477-0877-24de-c5b8-1549ab47cd4b"
+      ],
+      [
+        "GPU-b3425477-0877-24de-c5b8-1549ab47cd4b"
+      ],
+      [
+        "GPU-b3425477-0877-24de-c5b8-1549ab47cd4b"
+      ],
+      [
+        "GPU-b3425477-0877-24de-c5b8-1549ab47cd4b"
+      ],
+      [
+        "GPU-b3425477-0877-24de-c5b8-1549ab47cd4b"
+      ],
+      [
+        "GPU-b3425477-0877-24de-c5b8-1549ab47cd4b"
+      ]
+    ],
+    "timing_boundaries": [
+      "final_av_30s_extension_warm_after_one_excluded_warmup_v1",
+      "final_av_30s_extension_warm_after_one_excluded_warmup_v1",
+      "final_av_30s_extension_warm_after_one_excluded_warmup_v1",
+      "final_av_30s_extension_warm_after_one_excluded_warmup_v1",
+      "final_av_30s_extension_warm_after_one_excluded_warmup_v1",
+      "final_av_30s_extension_warm_after_one_excluded_warmup_v1",
+      "final_av_30s_extension_warm_after_one_excluded_warmup_v1",
+      "final_av_30s_extension_warm_after_one_excluded_warmup_v1",
+      "final_av_30s_extension_warm_after_one_excluded_warmup_v1",
+      "final_av_30s_extension_warm_after_one_excluded_warmup_v1"
+    ],
+    "unique_physical_gpu_uuid_sets": [
+      [
+        "GPU-b3425477-0877-24de-c5b8-1549ab47cd4b"
+      ]
+    ],
+    "workload_fingerprints": [
+      "128a2e9494549efbd309e518c455918565571ce265ec3293b10ca46364979b17",
+      "128a2e9494549efbd309e518c455918565571ce265ec3293b10ca46364979b17",
+      "128a2e9494549efbd309e518c455918565571ce265ec3293b10ca46364979b17",
+      "128a2e9494549efbd309e518c455918565571ce265ec3293b10ca46364979b17",
+      "128a2e9494549efbd309e518c455918565571ce265ec3293b10ca46364979b17",
+      "128a2e9494549efbd309e518c455918565571ce265ec3293b10ca46364979b17",
+      "128a2e9494549efbd309e518c455918565571ce265ec3293b10ca46364979b17",
+      "128a2e9494549efbd309e518c455918565571ce265ec3293b10ca46364979b17",
+      "128a2e9494549efbd309e518c455918565571ce265ec3293b10ca46364979b17",
+      "128a2e9494549efbd309e518c455918565571ce265ec3293b10ca46364979b17"
+    ]
+  },
+  "schema_version": "minimax-h3-final-av-30s-r9-current-vs-r10-guarded-adaptive-step3-sol-attn-formal-n10-summary-v1",
+  "status": "pass",
+  "accepted_formal_candidate_pending_reviewer": false,
+  "accepted_formal_candidate_reviewer_accepted": true,
+  "median_warm_delta_percent_reviewer_accepted": 4.326262968443439,
+  "reviewer_verdict": "accept",
+  "reviewer_verdict_path": "${PWD}/technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/reviewer_verdict.md",
+  "reviewer_verdict_json": "${PWD}/technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/reviewer_verdict.json",
+  "reviewer_verdict_source_run_id": "final-av-30s-r10-formal-n10-artifact-reviewer-20260816T161054Z",
+  "reviewer_accepted_utc": "2026-08-16T16:13:33Z",
+  "claim_boundary": "Accepted formal speedup claim is limited to the matched formal N>=10 30-second final-AV extension/chunked lane r10_adaptive_tau1_5_step3_diag versus retained r9_current_sol_attn on one A6000. Output is six-chunk extension/chunked, not native long context; Turbo 8-step is a practical disclosed approximation, not BF16 fidelity; no human semantic/audio/AV quality, product-readiness, public-comparison, SOTA, or unbounded model-quality claim is accepted."
+}

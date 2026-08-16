@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
 
@@ -27,6 +28,7 @@ if torch is not None:
         dense_attention_reference,
         derive_h3_sol_attn_hook_metadata,
         derive_sink_range,
+        effective_sol_attn_policy_for_call,
         estimate_sparse_density,
         sm86_capability_guard,
         sol_attn_h3_reference_or_decline,
@@ -39,7 +41,7 @@ else:
     H3_HOOK_METADATA_SOURCE = None
     PackedH3Metadata = SolAttnPolicy = SolAttnTelemetry = None
     dense_attention_packed_reference = dense_attention_reference = derive_h3_sol_attn_hook_metadata = None
-    derive_sink_range = estimate_sparse_density = None
+    derive_sink_range = effective_sol_attn_policy_for_call = estimate_sparse_density = None
     sm86_capability_guard = sol_attn_h3_reference_or_decline = stride_aware_value_layout_reason = None
     triton_candidate_enabled = None
 
@@ -92,12 +94,25 @@ def test_env_switches_are_default_off():
     assert DEFAULT_ENV_SWITCHES.get("MINIMAX_H3_A6000_SOL_ATTN_TELEMETRY_JSON", "") == ""
     assert DEFAULT_ENV_SWITCHES.get("MINIMAX_H3_A6000_SOL_ATTN_DENSE_FIRST_STEPS") == "10"
     assert DEFAULT_ENV_SWITCHES.get("MINIMAX_H3_A6000_SOL_ATTN_DENSE_FIRST_LAYERS") == "2"
+    assert DEFAULT_ENV_SWITCHES.get("MINIMAX_H3_A6000_SOL_ATTN_ADAPTIVE_ROUTING") == "0"
+    assert DEFAULT_ENV_SWITCHES.get("MINIMAX_H3_A6000_SOL_ATTN_TAU") == "1.0"
+    assert DEFAULT_ENV_SWITCHES.get("MINIMAX_H3_A6000_SOL_ATTN_THRESH_TYPE") == "diag"
+    assert DEFAULT_ENV_SWITCHES.get("MINIMAX_H3_A6000_SOL_ATTN_ADAPTIVE_PROFILE") == ""
+    assert DEFAULT_ENV_SWITCHES.get("MINIMAX_H3_A6000_SOL_ATTN_ADAPTIVE_STEP_MIN") == ""
+    assert DEFAULT_ENV_SWITCHES.get("MINIMAX_H3_A6000_SOL_ATTN_ADAPTIVE_STEP_MAX") == ""
+    assert DEFAULT_ENV_SWITCHES.get("MINIMAX_H3_A6000_SOL_ATTN_ADAPTIVE_LAYER_MIN") == ""
+    assert DEFAULT_ENV_SWITCHES.get("MINIMAX_H3_A6000_SOL_ATTN_ADAPTIVE_LAYER_MAX") == ""
     assert DEFAULT_ENV_SWITCHES.get("MINIMAX_H3_A6000_SOL_ATTN_STRIDE_AWARE_V") == "0"
     assert DEFAULT_ENV_SWITCHES.get("MINIMAX_H3_A6000_SOL_ATTN_EXACT_PREFIX_QUERY") == "0"
     assert DEFAULT_ENV_SWITCHES.get("MINIMAX_H3_A6000_SOL_ATTN_SKIP_FULL_PREFIX_BLOCKS") == "0"
     assert DEFAULT_ENV_SWITCHES.get("MINIMAX_H3_A6000_SOL_ATTN_STATIC_PREFIX_SINK") == "0"
     assert DEFAULT_ENV_SWITCHES.get("MINIMAX_H3_A6000_SOL_ATTN_BITMASK_SCHEDULER") == "0"
     assert DEFAULT_ENV_SWITCHES.get("MINIMAX_H3_A6000_SOL_ATTN_PAIR_VALUE_HALVES") == "0"
+    assert DEFAULT_ENV_SWITCHES.get("MINIMAX_H3_A6000_SOL_ATTN_SHADOW_PAIR_VALUE_HALVES") == "0"
+    assert DEFAULT_ENV_SWITCHES.get("MINIMAX_H3_A6000_SOL_ATTN_SHADOW_ROW_STATE_PROBE") == "0"
+    assert DEFAULT_ENV_SWITCHES.get("MINIMAX_H3_A6000_SOL_ATTN_SHADOW_MAX_MISMATCHES") == "8"
+    assert DEFAULT_ENV_SWITCHES.get("MINIMAX_H3_A6000_SOL_ATTN_DIAGNOSTIC_OUTPUT_DIGEST") == "0"
+    assert DEFAULT_ENV_SWITCHES.get("MINIMAX_H3_A6000_SOL_ATTN_DIAGNOSTIC_MAX_CALLS") == "256"
     assert DEFAULT_ENV_SWITCHES.get("MINIMAX_H3_A6000_SOL_ATTN_DIAGNOSTIC_MATERIALIZE") == "0"
     assert DEFAULT_ENV_SWITCHES.get("MINIMAX_H3_A6000_SOL_ATTN_MATERIALIZE_MAX_BYTES") == "67108864"
     assert DEFAULT_ENV_SWITCHES.get("MINIMAX_H3_A6000_SOL_ATTN_FORWARD_CONFIG") == ""
@@ -110,27 +125,312 @@ def test_sol_attn_policy_from_env_reads_diagnostic_dense_gate_override():
         "MINIMAX_H3_A6000_ENABLE_SOL_ATTN": "1",
         "MINIMAX_H3_A6000_SOL_ATTN_DENSE_FIRST_STEPS": "0",
         "MINIMAX_H3_A6000_SOL_ATTN_DENSE_FIRST_LAYERS": "2",
+        "MINIMAX_H3_A6000_SOL_ATTN_ADAPTIVE_ROUTING": "1",
+        "MINIMAX_H3_A6000_SOL_ATTN_TAU": "1.5",
+        "MINIMAX_H3_A6000_SOL_ATTN_THRESH_TYPE": "exact",
+        "MINIMAX_H3_A6000_SOL_ATTN_ADAPTIVE_PROFILE": "late_steps_unit",
+        "MINIMAX_H3_A6000_SOL_ATTN_ADAPTIVE_STEP_MIN": "4",
+        "MINIMAX_H3_A6000_SOL_ATTN_ADAPTIVE_STEP_MAX": "6",
+        "MINIMAX_H3_A6000_SOL_ATTN_ADAPTIVE_LAYER_MIN": "8",
+        "MINIMAX_H3_A6000_SOL_ATTN_ADAPTIVE_LAYER_MAX": "47",
         "MINIMAX_H3_A6000_SOL_ATTN_EXACT_PREFIX_QUERY": "1",
         "MINIMAX_H3_A6000_SOL_ATTN_SKIP_FULL_PREFIX_BLOCKS": "1",
         "MINIMAX_H3_A6000_SOL_ATTN_STATIC_PREFIX_SINK": "1",
         "MINIMAX_H3_A6000_SOL_ATTN_BITMASK_SCHEDULER": "1",
         "MINIMAX_H3_A6000_SOL_ATTN_PAIR_VALUE_HALVES": "1",
+        "MINIMAX_H3_A6000_SOL_ATTN_SHADOW_PAIR_VALUE_HALVES": "1",
+        "MINIMAX_H3_A6000_SOL_ATTN_SHADOW_ROW_STATE_PROBE": "1",
+        "MINIMAX_H3_A6000_SOL_ATTN_SHADOW_MAX_MISMATCHES": "3",
     }
     policy = SolAttnPolicy.from_env(env)
     assert policy.allow_sparse is True
     assert policy.dense_first_steps == 0
     assert policy.dense_first_layers == 2
+    assert policy.adaptive_routing is True
+    assert policy.adaptive_routing_policy_error is None
+    assert policy.tau == 1.5
+    assert policy.thresh_type == "exact"
+    assert policy.adaptive_profile == "late_steps_unit"
+    assert policy.adaptive_step_min == 4
+    assert policy.adaptive_step_max == 6
+    assert policy.adaptive_layer_min == 8
+    assert policy.adaptive_layer_max == 47
     assert policy.exact_prefix_query is True
     assert policy.skip_full_prefix_blocks is True
     assert policy.static_prefix_sink is True
     assert policy.bitmask_exact_scheduler is True
     assert policy.pair_value_halves is True
+    assert policy.shadow_pair_value_halves is True
+    assert policy.shadow_row_state_probe is True
+    assert policy.shadow_max_mismatches == 3
 
 
 def test_sol_attn_policy_from_env_reads_default_off_forward_config():
     policy = SolAttnPolicy.from_env({"MINIMAX_H3_A6000_SOL_ATTN_FORWARD_CONFIG": " g64_bv64_w4_s1 "})
     assert policy.forward_config == "g64_bv64_w4_s1"
     assert SolAttnPolicy.from_env({}).forward_config is None
+
+
+def test_adaptive_routing_env_is_default_off_and_invalid_values_fail_closed():
+    assert SolAttnPolicy.from_env({"MINIMAX_H3_A6000_SOL_ATTN_TAU": "2.0"}).adaptive_routing is False
+    assert SolAttnPolicy.from_env({"MINIMAX_H3_A6000_SOL_ATTN_THRESH_TYPE": "exact"}).thresh_type == "diag"
+
+    env = {
+        "MINIMAX_H3_A6000_ENABLE_OVERLAY": "1",
+        "MINIMAX_H3_A6000_ENABLE_TRITON_CANDIDATES": "1",
+        "MINIMAX_H3_A6000_ENABLE_SOL_ATTN": "1",
+        "MINIMAX_H3_A6000_SOL_ATTN_DENSE_FIRST_STEPS": "0",
+        "MINIMAX_H3_A6000_SOL_ATTN_DENSE_FIRST_LAYERS": "0",
+        "MINIMAX_H3_A6000_SOL_ATTN_ADAPTIVE_ROUTING": "1",
+        "MINIMAX_H3_A6000_SOL_ATTN_TAU": "nan",
+        "MINIMAX_H3_A6000_SOL_ATTN_THRESH_TYPE": "bad",
+        "MINIMAX_H3_A6000_SOL_ATTN_ADAPTIVE_STEP_MIN": "7",
+        "MINIMAX_H3_A6000_SOL_ATTN_ADAPTIVE_STEP_MAX": "2",
+        "MINIMAX_H3_A6000_SOL_ATTN_ADAPTIVE_LAYER_MIN": "-1",
+    }
+    policy = SolAttnPolicy.from_env(env)
+    q, k, v = _qkv(tokens=6)
+    metadata = PackedH3Metadata(prefix_len=2, latent_grid=(1, 2, 2), valid_length=6, total_length=6)
+    reason = sol_backend.decline_reason(
+        query=q,
+        key=k,
+        value=v,
+        metadata=metadata,
+        step_index=0,
+        layer_index=0,
+        policy=policy,
+        device_capability=(8, 6),
+    )
+    assert reason == (
+        "unsupported_adaptive_routing_policy:"
+        "tau_not_finite;unsupported_threshold_type;adaptive_layer_min_negative;adaptive_step_range_invalid"
+    )
+
+
+def test_guarded_adaptive_routing_uses_retained_tau_outside_guard_and_records_active_calls():
+    policy = SolAttnPolicy.from_env(
+        {
+            "MINIMAX_H3_A6000_ENABLE_OVERLAY": "1",
+            "MINIMAX_H3_A6000_ENABLE_TRITON_CANDIDATES": "1",
+            "MINIMAX_H3_A6000_ENABLE_SOL_ATTN": "1",
+            "MINIMAX_H3_A6000_SOL_ATTN_ADAPTIVE_ROUTING": "1",
+            "MINIMAX_H3_A6000_SOL_ATTN_TAU": "1.5",
+            "MINIMAX_H3_A6000_SOL_ATTN_THRESH_TYPE": "diag",
+            "MINIMAX_H3_A6000_SOL_ATTN_ADAPTIVE_PROFILE": "r9_adaptive_tau1_5_late_steps_diag",
+            "MINIMAX_H3_A6000_SOL_ATTN_ADAPTIVE_STEP_MIN": "4",
+            "MINIMAX_H3_A6000_SOL_ATTN_ADAPTIVE_LAYER_MIN": "2",
+        }
+    )
+    inactive, inactive_reason = effective_sol_attn_policy_for_call(policy, step_index=3, layer_index=16)
+    active, active_reason = effective_sol_attn_policy_for_call(policy, step_index=4, layer_index=16)
+    protected_layer, layer_reason = effective_sol_attn_policy_for_call(policy, step_index=4, layer_index=1)
+
+    assert inactive_reason == "step_before_adaptive_min"
+    assert inactive.adaptive_routing is False
+    assert inactive.tau == 1.0 and inactive.thresh_type == "diag"
+    assert active_reason is None
+    assert active.adaptive_routing is True and active.tau == 1.5
+    assert layer_reason == "layer_before_adaptive_min"
+    assert protected_layer.adaptive_routing is False and protected_layer.tau == 1.0
+
+
+def test_guarded_adaptive_routing_telemetry_marks_guard_active_and_inactive(monkeypatch):
+    q, k, _ = _qkv(tokens=128)
+    value = _fused_value_view(tokens=128)
+    metadata = PackedH3Metadata(prefix_len=70, latent_grid=(1, 1, 40), valid_length=110, total_length=128)
+    telemetry = SolAttnTelemetry()
+    seen_taus = []
+
+    def fake_decline_reason(**kwargs):
+        return None
+
+    def fake_kernel(q_full, k_full, v_full, **kwargs):
+        seen_taus.append(float(kwargs["tau"]))
+        out = torch.zeros(q_full.shape, dtype=q_full.dtype)
+        valid = int(kwargs["tokens"])
+        out[:, :valid] = dense_attention_reference(
+            q_full[:, :valid], k_full[:, :valid], v_full[:, :valid], softmax_scale=kwargs.get("scale")
+        )
+        return out
+
+    monkeypatch.setattr(sol_backend, "decline_reason", fake_decline_reason)
+    monkeypatch.setattr(sol_backend, "_load_sol_attn_sm86", lambda: fake_kernel)
+    policy = SolAttnPolicy(
+        allow_sparse=True,
+        stride_aware_value=True,
+        adaptive_routing=True,
+        tau=1.5,
+        thresh_type="diag",
+        adaptive_profile="r9_adaptive_tau1_5_late_steps_diag",
+        adaptive_step_min=4,
+    )
+    for step_index in (3, 4):
+        sol_attn_h3_reference_or_decline(
+            q,
+            k,
+            value,
+            metadata=metadata,
+            step_index=step_index,
+            layer_index=2,
+            policy=policy,
+            telemetry=telemetry,
+            device_capability=(8, 6),
+        )
+
+    assert seen_taus == [1.0, 1.5]
+    inactive, active = telemetry.density_samples[-2:]
+    assert inactive["adaptive_guard_active"] is False
+    assert inactive["adaptive_guard_reason"] == "step_before_adaptive_min"
+    assert inactive["tau"] == 1.0 and inactive["adaptive_candidate_tau"] == 1.5
+    assert active["adaptive_guard_active"] is True
+    assert active["adaptive_guard_reason"] == "active"
+    assert active["tau"] == 1.5 and active["adaptive_profile"] == "r9_adaptive_tau1_5_late_steps_diag"
+
+
+def test_sol_attn_diagnostic_output_digest_is_default_off_bounded_and_no_raw(monkeypatch: pytest.MonkeyPatch):
+    q, k, v = _qkv(tokens=8)
+    metadata = PackedH3Metadata(prefix_len=2, latent_grid=(1, 2, 2), valid_length=6, total_length=8)
+    policy = SolAttnPolicy(pair_value_halves=True, stride_aware_value=True, skip_full_prefix_blocks=True)
+    telemetry = SolAttnTelemetry()
+
+    telemetry.record_diagnostic_output(
+        query=q,
+        key=k,
+        value=v,
+        output=v,
+        metadata=metadata,
+        step_index=10,
+        layer_index=2,
+        policy=policy,
+        sink_range=(0, 2),
+        stage="unit_test",
+    )
+    assert telemetry.diagnostic_output_records == []
+
+    monkeypatch.setenv("MINIMAX_H3_A6000_SOL_ATTN_DIAGNOSTIC_OUTPUT_DIGEST", "1")
+    monkeypatch.setenv("MINIMAX_H3_A6000_SOL_ATTN_DIAGNOSTIC_MAX_CALLS", "1")
+    telemetry.record_diagnostic_output(
+        query=q,
+        key=k,
+        value=v,
+        output=v,
+        metadata=metadata,
+        step_index=10,
+        layer_index=2,
+        policy=policy,
+        sink_range=(0, 2),
+        stage="unit_test",
+    )
+    telemetry.record_diagnostic_output(
+        query=q,
+        key=k,
+        value=v,
+        output=v,
+        metadata=metadata,
+        step_index=11,
+        layer_index=3,
+        policy=policy,
+        sink_range=(0, 2),
+        stage="unit_test_over_cap",
+    )
+
+    assert len(telemetry.diagnostic_output_records) == 1
+    record = telemetry.diagnostic_output_records[0]
+    assert record["raw_tensor_exported"] is False
+    assert record["metadata"]["step_index"] == 10
+    assert record["policy"]["pair_value_halves"] is True
+    assert record["output_digest"]["algorithm"] == "sha256"
+    assert len(record["output_digest"]["sha256"]) == 64
+    assert "values" not in record and "tensor" not in record
+
+
+def test_sol_attn_shadow_pair_value_halves_records_only_sanitized_scalar_mismatch():
+    q, k, v = _qkv(tokens=8)
+    metadata = PackedH3Metadata(prefix_len=2, latent_grid=(1, 2, 2), valid_length=6, total_length=8)
+    telemetry = SolAttnTelemetry()
+    retained = torch.zeros_like(v)
+    candidate = retained.clone()
+    candidate[:, 3, 0, 65] = torch.tensor(0.25, dtype=candidate.dtype)
+    policy = SolAttnPolicy(shadow_pair_value_halves=True, shadow_max_mismatches=1, stride_aware_value=True)
+
+    telemetry.record_shadow_pair_value_halves(
+        query=q,
+        key=k,
+        value=v,
+        retained_output=retained,
+        candidate_output=candidate,
+        metadata=metadata,
+        step_index=12,
+        layer_index=4,
+        policy=policy,
+        sink_range=(0, 2),
+        sparse_call_index=7,
+    )
+
+    assert telemetry.shadow_pair_value_halves_calls == 1
+    assert telemetry.shadow_pair_value_halves_mismatch_count == 1
+    assert telemetry.shadow_pair_value_halves_record_failures == 0
+    assert len(telemetry.shadow_pair_value_halves_records) == 1
+    record = telemetry.shadow_pair_value_halves_records[0]
+    assert record["raw_tensor_exported"] is False
+    assert record["candidate_marker"] == "pair_value_halves_shadow_candidate"
+    assert record["returned_output"] == "retained_current"
+    assert record["metadata"]["step_index"] == 12
+    assert record["error"]["max_abs"] == 0.25
+    assert record["error"]["argmax_region_bucket"]["region"] == "tail"
+    assert record["error"]["argmax_region_bucket"]["value_half"] == "hi"
+    assert record["region_equality"] == {"prefix_equal": True, "tail_equal": False, "padding_equal": True}
+    assert record["finite_equality"]["finite_mask_equal"] is True
+    assert "row_state_probe" not in record
+    assert all(len(value) == 64 for value in record["code_hashes"].values())
+    assert "values" not in record and "path" not in json.dumps(record).lower()
+
+
+def test_shadow_row_state_probe_records_only_scalar_route_and_pv_summaries():
+    q, k, v = _qkv(tokens=8)
+    metadata = PackedH3Metadata(prefix_len=2, latent_grid=(1, 2, 2), valid_length=6, total_length=8)
+    telemetry = SolAttnTelemetry()
+    retained = torch.zeros_like(v)
+    candidate = retained.clone()
+    candidate[:, 3, 0, 65] = torch.tensor(0.25, dtype=candidate.dtype)
+    policy = SolAttnPolicy(
+        shadow_pair_value_halves=True,
+        shadow_row_state_probe=True,
+        shadow_max_mismatches=1,
+        stride_aware_value=True,
+    )
+
+    telemetry.record_shadow_pair_value_halves(
+        query=q,
+        key=k,
+        value=v,
+        retained_output=retained,
+        candidate_output=candidate,
+        metadata=metadata,
+        step_index=12,
+        layer_index=4,
+        policy=policy,
+        sink_range=(0, 1),
+        sparse_call_index=7,
+    )
+
+    record = telemetry.shadow_pair_value_halves_records[0]
+    probe = record["row_state_probe"]
+    assert probe["status"] == "pass"
+    assert probe["raw_tensor_exported"] is False
+    assert probe["route"]["route_digest_equal"] is True
+    assert probe["route"]["exact_order_digest_equal"] is True
+    assert probe["row_state"]["row_max_abs_delta"] == 0.0
+    assert probe["row_state"]["row_sum_abs_delta"] == 0.0
+    assert "pv_contribution_summaries" in probe
+    assert "lo" in probe["pv_contribution_summaries"]["total_numerator"]
+    assert probe["raw_tensor_payload_available"] is False
+    assert probe["route"]["route_values_exported"] is False
+    assert probe["route"]["exact_block_indices_exported"] is False
+    assert probe["pv_contribution_summaries"]["lo_hi_raw_vectors_exported"] is False
+    probe_json = json.dumps(probe).lower()
+    assert "raw_tensor_values" not in probe_json
+    assert "path" not in probe_json
 
 
 def test_sol_attn_forward_config_group_hook_is_default_off_static():
@@ -142,7 +442,10 @@ def test_sol_attn_forward_config_group_hook_is_default_off_static():
     assert "_forward_ptr_pair_v64_kernel" in source
     assert "pair_value_halves" in source
     assert DEFAULT_ENV_SWITCHES.get("MINIMAX_H3_A6000_SOL_ATTN_FORWARD_CONFIG") == ""
+    assert DEFAULT_ENV_SWITCHES.get("MINIMAX_H3_A6000_SOL_ATTN_ADAPTIVE_ROUTING") == "0"
     assert DEFAULT_ENV_SWITCHES.get("MINIMAX_H3_A6000_SOL_ATTN_PAIR_VALUE_HALVES") == "0"
+    assert DEFAULT_ENV_SWITCHES.get("MINIMAX_H3_A6000_SOL_ATTN_SHADOW_PAIR_VALUE_HALVES") == "0"
+    assert DEFAULT_ENV_SWITCHES.get("MINIMAX_H3_A6000_SOL_ATTN_SHADOW_ROW_STATE_PROBE") == "0"
 
 
 def test_h3_hook_metadata_derivation_uses_source_backed_layout_only():
@@ -541,7 +844,6 @@ def test_pair_value_halves_probe_preserves_dense_prefix_overwrite_contract(monke
     assert telemetry.prefix_query_dense_calls == 1
     assert telemetry.density_samples[-1]["pair_value_halves"] is True
     assert telemetry.materialize_copy_count == 0 and telemetry.materialize_copy_bytes == 0
-
 
 
 def test_invalid_stride_aware_value_fails_closed_without_materializing():

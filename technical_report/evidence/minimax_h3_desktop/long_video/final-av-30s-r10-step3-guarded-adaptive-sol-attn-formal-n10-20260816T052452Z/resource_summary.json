@@ -1,0 +1,507 @@
+{
+  "candidate": {
+    "container_peak_gpu_memory_mib": {
+      "distribution": {
+        "cv_percent": 1.6502207164188591,
+        "max": 29412.0,
+        "mean": 28092.6,
+        "median": 27946.0,
+        "min": 27946.0,
+        "n": 10,
+        "status": "measured",
+        "stdev": 463.5899049806844,
+        "values": [
+          27946.0,
+          29412.0,
+          27946.0,
+          27946.0,
+          27946.0,
+          27946.0,
+          27946.0,
+          27946.0,
+          27946.0,
+          27946.0
+        ]
+      },
+      "source": "container_summary.resources"
+    },
+    "container_peak_gpu_util_percent": {
+      "distribution": {
+        "cv_percent": 0.0,
+        "max": 100.0,
+        "mean": 100.0,
+        "median": 100.0,
+        "min": 100.0,
+        "n": 10,
+        "status": "measured",
+        "stdev": 0.0,
+        "values": [
+          100.0,
+          100.0,
+          100.0,
+          100.0,
+          100.0,
+          100.0,
+          100.0,
+          100.0,
+          100.0,
+          100.0
+        ]
+      },
+      "source": "container_summary.resources"
+    },
+    "container_peak_host_memory_used_gib": {
+      "distribution": {
+        "cv_percent": 0.7626246552644383,
+        "max": 252.6073341369629,
+        "mean": 249.78884620666503,
+        "median": 250.03582000732422,
+        "min": 246.83433151245117,
+        "n": 10,
+        "status": "measured",
+        "stdev": 1.904951327272597,
+        "values": [
+          250.45313262939453,
+          252.21171951293945,
+          247.5247573852539,
+          248.43946075439453,
+          250.99332809448242,
+          252.6073341369629,
+          250.2379913330078,
+          249.83364868164062,
+          248.75275802612305,
+          246.83433151245117
+        ]
+      },
+      "source": "container_summary.resources"
+    },
+    "container_peak_power_w": {
+      "distribution": {
+        "cv_percent": 0.07973219238109397,
+        "max": 300.42,
+        "mean": 300.182,
+        "median": 300.32,
+        "min": 299.82,
+        "n": 10,
+        "status": "measured",
+        "stdev": 0.2393416897334155,
+        "values": [
+          299.82,
+          300.34,
+          300.42,
+          300.32,
+          300.37,
+          300.32,
+          300.07,
+          299.83,
+          299.95,
+          300.38
+        ]
+      },
+      "source": "container_summary.resources"
+    },
+    "container_peak_temperature_c": {
+      "distribution": {
+        "cv_percent": 0.0,
+        "max": 80.0,
+        "mean": 80.0,
+        "median": 80.0,
+        "min": 80.0,
+        "n": 10,
+        "status": "measured",
+        "stdev": 0.0,
+        "values": [
+          80.0,
+          80.0,
+          80.0,
+          80.0,
+          80.0,
+          80.0,
+          80.0,
+          80.0,
+          80.0,
+          80.0
+        ]
+      },
+      "source": "container_summary.resources"
+    },
+    "container_sample_count": {
+      "distribution": {
+        "cv_percent": 0.15807469011349115,
+        "max": 360.0,
+        "mean": 359.1,
+        "median": 359.0,
+        "min": 358.0,
+        "n": 10,
+        "status": "measured",
+        "stdev": 0.5676462121975467,
+        "values": [
+          360.0,
+          360.0,
+          358.0,
+          359.0,
+          359.0,
+          359.0,
+          359.0,
+          359.0,
+          359.0,
+          359.0
+        ]
+      },
+      "source": "container_summary.resources"
+    },
+    "failures": {
+      "distribution": {
+        "cv_percent": null,
+        "max": 0.0,
+        "mean": 0.0,
+        "median": 0.0,
+        "min": 0.0,
+        "n": 10,
+        "status": "measured",
+        "stdev": 0.0,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "source": "benchmark_record.resources"
+    },
+    "peak_gpu_memory_mib": {
+      "distribution": {
+        "cv_percent": 1.6502207164188591,
+        "max": 29412.0,
+        "mean": 28092.6,
+        "median": 27946.0,
+        "min": 27946.0,
+        "n": 10,
+        "status": "measured",
+        "stdev": 463.5899049806844,
+        "values": [
+          27946.0,
+          29412.0,
+          27946.0,
+          27946.0,
+          27946.0,
+          27946.0,
+          27946.0,
+          27946.0,
+          27946.0,
+          27946.0
+        ]
+      },
+      "source": "benchmark_record.resources"
+    },
+    "peak_host_memory_gib": {
+      "distribution": {
+        "cv_percent": 0.7626246552644383,
+        "max": 252.6073341369629,
+        "mean": 249.78884620666503,
+        "median": 250.03582000732422,
+        "min": 246.83433151245117,
+        "n": 10,
+        "status": "measured",
+        "stdev": 1.904951327272597,
+        "values": [
+          250.45313262939453,
+          252.21171951293945,
+          247.5247573852539,
+          248.43946075439453,
+          250.99332809448242,
+          252.6073341369629,
+          250.2379913330078,
+          249.83364868164062,
+          248.75275802612305,
+          246.83433151245117
+        ]
+      },
+      "source": "benchmark_record.resources"
+    },
+    "peak_power_w": {
+      "distribution": {
+        "cv_percent": 0.07973219238109397,
+        "max": 300.42,
+        "mean": 300.182,
+        "median": 300.32,
+        "min": 299.82,
+        "n": 10,
+        "status": "measured",
+        "stdev": 0.2393416897334155,
+        "values": [
+          299.82,
+          300.34,
+          300.42,
+          300.32,
+          300.37,
+          300.32,
+          300.07,
+          299.83,
+          299.95,
+          300.38
+        ]
+      },
+      "source": "benchmark_record.resources"
+    }
+  },
+  "reference": {
+    "container_peak_gpu_memory_mib": {
+      "distribution": {
+        "cv_percent": 0.0,
+        "max": 27946.0,
+        "mean": 27946.0,
+        "median": 27946.0,
+        "min": 27946.0,
+        "n": 10,
+        "status": "measured",
+        "stdev": 0.0,
+        "values": [
+          27946.0,
+          27946.0,
+          27946.0,
+          27946.0,
+          27946.0,
+          27946.0,
+          27946.0,
+          27946.0,
+          27946.0,
+          27946.0
+        ]
+      },
+      "source": "container_summary.resources"
+    },
+    "container_peak_gpu_util_percent": {
+      "distribution": {
+        "cv_percent": 0.0,
+        "max": 100.0,
+        "mean": 100.0,
+        "median": 100.0,
+        "min": 100.0,
+        "n": 10,
+        "status": "measured",
+        "stdev": 0.0,
+        "values": [
+          100.0,
+          100.0,
+          100.0,
+          100.0,
+          100.0,
+          100.0,
+          100.0,
+          100.0,
+          100.0,
+          100.0
+        ]
+      },
+      "source": "container_summary.resources"
+    },
+    "container_peak_host_memory_used_gib": {
+      "distribution": {
+        "cv_percent": 0.799091663417501,
+        "max": 252.61932373046875,
+        "mean": 249.5997428894043,
+        "median": 249.6523494720459,
+        "min": 246.5699348449707,
+        "n": 10,
+        "status": "measured",
+        "stdev": 1.9945307373407464,
+        "values": [
+          250.0579948425293,
+          249.05090713500977,
+          251.0368423461914,
+          250.67180633544922,
+          247.3579559326172,
+          247.61784744262695,
+          251.7681121826172,
+          252.61932373046875,
+          246.5699348449707,
+          249.2467041015625
+        ]
+      },
+      "source": "container_summary.resources"
+    },
+    "container_peak_power_w": {
+      "distribution": {
+        "cv_percent": 0.10552573482547677,
+        "max": 300.62,
+        "mean": 300.128,
+        "median": 300.07000000000005,
+        "min": 299.81,
+        "n": 10,
+        "status": "measured",
+        "stdev": 0.3167122774170069,
+        "values": [
+          300.51,
+          300.23,
+          300.62,
+          299.86,
+          300.43,
+          299.82,
+          299.81,
+          299.84,
+          300.25,
+          299.91
+        ]
+      },
+      "source": "container_summary.resources"
+    },
+    "container_peak_temperature_c": {
+      "distribution": {
+        "cv_percent": 0.5283671946814334,
+        "max": 80.0,
+        "mean": 79.8,
+        "median": 80.0,
+        "min": 79.0,
+        "n": 10,
+        "status": "measured",
+        "stdev": 0.4216370213557839,
+        "values": [
+          80.0,
+          80.0,
+          80.0,
+          80.0,
+          80.0,
+          80.0,
+          80.0,
+          80.0,
+          79.0,
+          79.0
+        ]
+      },
+      "source": "container_summary.resources"
+    },
+    "container_sample_count": {
+      "distribution": {
+        "cv_percent": 0.19776595748395115,
+        "max": 375.0,
+        "mean": 373.1,
+        "median": 373.0,
+        "min": 372.0,
+        "n": 10,
+        "status": "measured",
+        "stdev": 0.7378647873726218,
+        "values": [
+          373.0,
+          373.0,
+          373.0,
+          373.0,
+          375.0,
+          373.0,
+          373.0,
+          373.0,
+          373.0,
+          372.0
+        ]
+      },
+      "source": "container_summary.resources"
+    },
+    "failures": {
+      "distribution": {
+        "cv_percent": null,
+        "max": 0.0,
+        "mean": 0.0,
+        "median": 0.0,
+        "min": 0.0,
+        "n": 10,
+        "status": "measured",
+        "stdev": 0.0,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "source": "benchmark_record.resources"
+    },
+    "peak_gpu_memory_mib": {
+      "distribution": {
+        "cv_percent": 0.0,
+        "max": 27946.0,
+        "mean": 27946.0,
+        "median": 27946.0,
+        "min": 27946.0,
+        "n": 10,
+        "status": "measured",
+        "stdev": 0.0,
+        "values": [
+          27946.0,
+          27946.0,
+          27946.0,
+          27946.0,
+          27946.0,
+          27946.0,
+          27946.0,
+          27946.0,
+          27946.0,
+          27946.0
+        ]
+      },
+      "source": "benchmark_record.resources"
+    },
+    "peak_host_memory_gib": {
+      "distribution": {
+        "cv_percent": 0.799091663417501,
+        "max": 252.61932373046875,
+        "mean": 249.5997428894043,
+        "median": 249.6523494720459,
+        "min": 246.5699348449707,
+        "n": 10,
+        "status": "measured",
+        "stdev": 1.9945307373407464,
+        "values": [
+          250.0579948425293,
+          249.05090713500977,
+          251.0368423461914,
+          250.67180633544922,
+          247.3579559326172,
+          247.61784744262695,
+          251.7681121826172,
+          252.61932373046875,
+          246.5699348449707,
+          249.2467041015625
+        ]
+      },
+      "source": "benchmark_record.resources"
+    },
+    "peak_power_w": {
+      "distribution": {
+        "cv_percent": 0.10552573482547677,
+        "max": 300.62,
+        "mean": 300.128,
+        "median": 300.07000000000005,
+        "min": 299.81,
+        "n": 10,
+        "status": "measured",
+        "stdev": 0.3167122774170069,
+        "values": [
+          300.51,
+          300.23,
+          300.62,
+          299.86,
+          300.43,
+          299.82,
+          299.81,
+          299.84,
+          300.25,
+          299.91
+        ]
+      },
+      "source": "benchmark_record.resources"
+    }
+  },
+  "scope": "Resource distributions across completed matched pairs. benchmark_record resources are contract fields; container_resources include the finer local monitor fields when present."
+}

@@ -24,7 +24,8 @@ bits in ascending order, mirroring the upstream SM90 route-mask stream while
 preserving the pointer path's online-softmax order.  A separate default-off
 pair-value candidate keeps the current BV64 probability/value-dot shape but
 computes the Q/K routing and online-softmax sequence once while updating both
-64-column value halves in one forward program.
+64-column value halves in one forward program.  Its BF16 probability cast is
+kept per value half to mirror the retained one-BV-tile program's cast boundary.
 
 The module is intentionally not imported by :mod:`minimax_h3_a6000` package
 initialization.  Importing this file requires PyTorch+Triton, but no CUDA work is
@@ -556,9 +557,12 @@ def _forward_ptr_pair_v64_kernel(
         alpha = tl.math.exp2(tl.where(has_approximate, row_max - new_max, 0.0))
         probability = tl.math.exp2(safe_scores - tl.where(has_approximate, new_max, 0.0)[:, None])
         probability = tl.where(has_approximate & approximate[None, :], probability, 0.0)
-        probability_bf16 = probability.to(vc_lo.dtype)
-        output_lo = output_lo * alpha[:, None] + tl.dot(probability_bf16, vc_lo)
-        output_hi = output_hi * alpha[:, None] + tl.dot(probability_bf16, vc_hi)
+        # Keep the BF16 probability-cast boundary per value half, matching the
+        # retained pointer path where each BV64 value tile is a separate forward
+        # program with its own ``probability.to(v.dtype)`` at the PV dot.  The
+        # route/row-state stream is still shared; only the cast object is not.
+        output_lo = output_lo * alpha[:, None] + tl.dot(probability.to(vc_lo.dtype), vc_lo)
+        output_hi = output_hi * alpha[:, None] + tl.dot(probability.to(vc_hi.dtype), vc_hi)
         lengths = tl.minimum(BLOCK, tl.maximum(0, T - block_indices * BLOCK)).to(tl.float32)
         row_sum = row_sum * alpha + tl.sum(probability * lengths[None, :], axis=1)
         row_max = new_max
@@ -593,9 +597,10 @@ def _forward_ptr_pair_v64_kernel(
             )
             v_lo = tl.load(v_ptr + v_lo_offsets, mask=kv_valid[:, None], other=0.0)
             v_hi = tl.load(v_ptr + v_hi_offsets, mask=kv_valid[:, None], other=0.0)
-            exact_probability_bf16 = exact_probability.to(v_lo.dtype)
-            output_lo = output_lo * alpha[:, None] + tl.dot(exact_probability_bf16, v_lo)
-            output_hi = output_hi * alpha[:, None] + tl.dot(exact_probability_bf16, v_hi)
+            # Same exact-token cast boundary as the approximate-summary path:
+            # cast per half to match the retained per-BV64 current programs.
+            output_lo = output_lo * alpha[:, None] + tl.dot(exact_probability.to(v_lo.dtype), v_lo)
+            output_hi = output_hi * alpha[:, None] + tl.dot(exact_probability.to(v_hi.dtype), v_hi)
             row_max = new_max
 
     output_offsets_lo = ((batch * TP + q_tokens[:, None]).to(tl.int64) * H + head) * D + value_dims_lo[None, :]

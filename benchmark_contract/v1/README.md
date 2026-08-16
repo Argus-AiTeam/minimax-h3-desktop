@@ -13,7 +13,7 @@ The pinned open-source path does **not** currently support native 30- or 60-seco
 - The prepared local model contains only `FL2VA`. It supports text-only generation plus first/last image conditioning; the separately documented `Ref2VA` partition is not locally prepared.
 - Sana/Sol-Engine revision `d00eef311670a58deb2c323fe072738fcb945600` grounds the accepted 1344×768, 124-frame short cell, not native 30/60-second generation.
 
-因此，当前 30/60 秒 dry-run 路线明确标记为 **`extension`**：首段为 T2VA，后续段使用上一段保留的末帧作为 FL2VA 首帧条件。除非未来有新的版本化源码和真实验证，否则不得标记为 `native_long_context`。
+因此，当前 30/60 秒路线必须明确标记为 **`extension`** 或其他非原生长上下文分类：首段为 T2VA，后续段使用上一段保留的末帧作为 FL2VA 首帧条件。已验收的 30 秒 r10 结果属于六段 extension/chunked final-AV；除非未来有新的版本化源码和真实验证，否则任何 30/60 秒结果都不得标记为 `native_long_context`。
 
 ## Canonical artifacts / 规范文件
 
@@ -21,16 +21,16 @@ The pinned open-source path does **not** currently support native 30- or 60-seco
 - [`../../schemas/minimax_h3_benchmark_record_v1.schema.json`](../../schemas/minimax_h3_benchmark_record_v1.schema.json): machine-readable result shape.
 - [`../../tools/validate_benchmark_record.py`](../../tools/validate_benchmark_record.py): fail-closed semantic validator.
 - [`lane-manifests/native-short-1344x768-124f-24fps-v1.json`](lane-manifests/native-short-1344x768-124f-24fps-v1.json): accepted short-cell identity, no rerun.
-- [`lane-manifests/final-av-30s-1344x768-24fps-v1.json`](lane-manifests/final-av-30s-1344x768-24fps-v1.json): **unmeasured** 30-second extension lane.
+- [`lane-manifests/final-av-30s-1344x768-24fps-v1.json`](lane-manifests/final-av-30s-1344x768-24fps-v1.json): 30-second extension workload/assembly manifest; the accepted r10 formal result is recorded separately.
 - [`lane-manifests/final-av-60s-1344x768-24fps-v1.json`](lane-manifests/final-av-60s-1344x768-24fps-v1.json): **unmeasured** 60-second extension lane.
-- [`normalized-records/`](normalized-records/): bounded normalized records derived from accepted BF16, Turbo, and Sol-Attn evidence. Explicit unavailable fields are not measurements.
+- [`normalized-records/`](normalized-records/): bounded normalized records derived from accepted BF16, Turbo, Sol-Attn short-clip, and r10 30-second final-AV evidence. Explicit unavailable fields are not measurements.
 
 ## Frozen lanes / 冻结路线
 
 | Lane | Final video | Final audio | Current mode | Measurement status |
 |---|---:|---:|---|---|
 | Native short | 1344×768, 124 frames, 24 FPS | 32 kHz stereo; historical AAC decode count 166,912 samples/channel | `native_short_clip` | accepted historical evidence exists |
-| Final AV 30 s | 1344×768, exactly 720 frames | exactly 960,000 effective samples/channel | `extension`, 6 source chunks | **unmeasured** |
+| Final AV 30 s | 1344×768, exactly 720 frames | exactly 960,000 effective samples/channel | `extension`, 6 source chunks | accepted bounded r10 formal N=10 timing/structural result exists; not native long context or human-quality certification |
 | Final AV 60 s | 1344×768, exactly 1,440 frames | exactly 1,920,000 effective samples/channel | `extension`, 12 source chunks | **unmeasured** |
 
 For extension assembly, chunk 1 retains source frames `[0,120)`; later chunks retain `[1,121)` because source frame 0 is the prior terminal-frame condition. Each chunk contributes exactly 120 final frames and 160,000 effective PCM samples per channel. AAC priming and end padding must be reported separately. Missing audio, unknown padding, wrong frame count, or decode failure is incomplete final AV and fails closed.
@@ -85,14 +85,15 @@ Promotion is N=1 → N=3 → matched N≥10. N=1 and N=3 are gates, not formal s
 
 A speedup denominator must match track, workload fingerprint, physical GPU UUID, deployment scope, timing boundary, quality threshold, and long-production mode. Only one named principal variable may differ. The validator rejects cross-track, cross-GPU, cross-workload, cold/warm, single/multi-GPU, and stitched-as-native comparisons.
 
-## Accepted short evidence retained / 已验收短片证据
+## Accepted bounded evidence retained / 已验收有界证据
 
-- BF16 warm N=10 median: **1792.2021025 s**.
-- Turbo 8-step N=10 median: **290.9976015 s**, practical approximation.
-- Turbo 4-step N=10 median: **149.6191865 s**, practical approximation with greater quality risk.
-- Sol-Attn r8 median HTTP-time improvement: **15.203295894%**, only for the formal same-GPU matched 5-step opt-in lane.
+- BF16 warm N=10 median: **1792.2021025 s** for the native short fidelity denominator.
+- Turbo 8-step N=10 median: **290.9976015 s**, practical approximation on the native short clip.
+- Turbo 4-step N=10 median: **149.6191865 s**, practical approximation with greater quality risk on the native short clip.
+- Sol-Attn r8 median HTTP-time improvement: **15.203295894%**, only for the formal same-GPU matched 5-step opt-in short lane.
+- Final-AV 30 s r10: reviewer-accepted formal N=10 matched warm-E2E improvement **4.326262968%** versus retained `r9_current_sol_attn`; candidate warm median **1333.5752375 s** vs reference **1394.0061285 s**, cold median **1814.1335341 s** vs **1884.1419612 s**, six-chunk `extension`, complete 720-frame / 960,000-sample-per-channel accounting.
 
-The normalized Turbo records intentionally do not create a new cross-track speedup claim. The Sol-Attn comparison is valid only because both sides use the same practical track, workload, physical GPU, timing boundary, and quality threshold. None of these values is a long-video result.
+The normalized Turbo records intentionally do not create a new cross-track speedup claim. The r8 and r10 comparisons are valid only because each comparison keeps the same practical track, workload, physical GPU, timing boundary, and quality threshold inside its own lane. The 30-second r10 result is not native long context, not BF16 fidelity, not human semantic/audio/AV quality certification, not product readiness, and not public-comparison/SOTA evidence.
 
 ## Validation / 验证
 

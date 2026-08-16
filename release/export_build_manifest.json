@@ -5,7 +5,7 @@
     "virtual environments, caches, pycache, PID files, raw logs, non-curated generated media/audio, Docker layers, archives, and credentials",
     "Git remotes, tags, releases, and publication actions"
   ],
-  "file_count": 137,
+  "file_count": 149,
   "files": [
     {
       "path": ".argus_release_tree",
@@ -21,8 +21,8 @@
     },
     {
       "path": "CURRENT_WORK.md",
-      "sha256": "090f103acf9c6973f99e17561b3562d132a029bcc7e1da6dac91211a1c456f77",
-      "size_bytes": 14105,
+      "sha256": "445cadfac0aedffb3d2d4199008284db5f04926c7bd0a6d0ab14f55bd34adc6f",
+      "size_bytes": 7011,
       "source": "CURRENT_WORK.md"
     },
     {
@@ -45,38 +45,38 @@
     },
     {
       "path": "README.md",
-      "sha256": "8d131e1844d188da0c87eb46f4372701f8d58f180686561cbad6671d9d53089c",
-      "size_bytes": 14071,
+      "sha256": "8f96eb17466d2aa1611bb5d6e6a2d0a6e95bc9a1c7b567cd13f8e9cc7b275b98",
+      "size_bytes": 15641,
       "source": "README.md"
     },
     {
       "path": "README_EN.md",
-      "sha256": "2ef47939ffaf476be8d3c2c25d42ff5486d21c98852b7a9dc926a5f85e8671c1",
-      "size_bytes": 13481,
+      "sha256": "3ac00c9d3ba4cb82eaad9deda07365f37b4ae4f24e15b6e4df8a8614952b4f89",
+      "size_bytes": 15141,
       "source": "README_EN.md"
     },
     {
       "path": "RESEARCH_DASHBOARD.md",
-      "sha256": "6d9790ac7b07f8080ba39e2b322c39925d31a8bfcfd048f7d13ba5e4262fe202",
-      "size_bytes": 15490,
+      "sha256": "a71dd1590df26eb2ae85562e25934c7acfd5499da50510342a8a73c74a480c68",
+      "size_bytes": 9540,
       "source": "RESEARCH_DASHBOARD.md"
     },
     {
       "path": "benchmark_contract/v1/README.md",
-      "sha256": "c9564af77b7a02d621ba76827f18e8553dcf471ca41f5ae7607ddc2b636cc69e",
-      "size_bytes": 8173,
+      "sha256": "0dc84265d2f2d277c4baa4fca216e546178ee1127b8323721e0e663927ea2503",
+      "size_bytes": 9127,
       "source": "benchmark_contract/v1/README.md"
     },
     {
       "path": "benchmark_contract/v1/contract.json",
-      "sha256": "7795726562ff05776c17829f4c5f9eb79ca12d142cb0eb7da1a3297493af1a19",
-      "size_bytes": 12693,
+      "sha256": "ed5fd1410f6990cb6f11f29a9568238e4d48c102fe7a5a78b98a5fc938f55c7e",
+      "size_bytes": 13245,
       "source": "benchmark_contract/v1/contract.json"
     },
     {
       "path": "benchmark_contract/v1/lane-manifests/final-av-30s-1344x768-24fps-v1.json",
-      "sha256": "fec3efda3a536ca1ed1223f4947b7c76bfc8eec7d88b4ecb9d49f0721c3a3624",
-      "size_bytes": 3233,
+      "sha256": "a29477620b930f412c55b1122173671cecce2dbce942893305856d15dc9ccd7a",
+      "size_bytes": 3409,
       "source": "benchmark_contract/v1/lane-manifests/final-av-30s-1344x768-24fps-v1.json"
     },
     {
@@ -96,6 +96,12 @@
       "sha256": "cf3d2ebe75baf52495ac514eeed59bb398de835db24c3fad1fd3fecac4846520",
       "size_bytes": 6822,
       "source": "benchmark_contract/v1/normalized-records/bf16-warm-n10.json"
+    },
+    {
+      "path": "benchmark_contract/v1/normalized-records/final-av-30s-r10-guarded-adaptive-step3-formal-n10.json",
+      "sha256": "98f5e2513a93e7e10c917ae6a54ee419161e57dc673e100a74e4ffd37357c136",
+      "size_bytes": 12469,
+      "source": "benchmark_contract/v1/normalized-records/final-av-30s-r10-guarded-adaptive-step3-formal-n10.json"
     },
     {
       "path": "benchmark_contract/v1/normalized-records/sol-attn-r8-formal-n10.json",
@@ -159,8 +165,8 @@
     },
     {
       "path": "ports/minimax_h3_a6000/README.md",
-      "sha256": "3eb06944dbaea8aedf8546725ec24f24122ccf0a5965c9e3d432c51a457ddac4",
-      "size_bytes": 17625,
+      "sha256": "4c9f0ca2bcd25dea1fbee825a3f3ffb915ba95f84b697571c8392101ae9f8f07",
+      "size_bytes": 17747,
       "source": "ports/minimax_h3_a6000/README.md"
     },
     {
@@ -189,8 +195,8 @@
     },
     {
       "path": "ports/minimax_h3_a6000/gpu_sol_attn_sm86_harness.py",
-      "sha256": "2fbd84190f9fd019a0f8fe68d639db91fe2a1eb2d940fb2ad6be9332447ae986",
-      "size_bytes": 176343,
+      "sha256": "79b3c542380d440807c33ec96e26ac4a11c94dd0fd25c574a997381a51a6a593",
+      "size_bytes": 197956,
       "source": "ports/minimax_h3_a6000/gpu_sol_attn_sm86_harness.py"
     },
     {
@@ -279,8 +285,8 @@
     },
     {
       "path": "ports/minimax_h3_a6000/integration/r9/Dockerfile",
-      "sha256": "aa353067c3d11cd57a8f40ca6b6fc4ff65b6db977ef5d70845e839df7bb36884",
-      "size_bytes": 4060,
+      "sha256": "946cf98cff663fbb86d6fe25d50c5b0f5316a456e981a75cfbd65812dc3a15da",
+      "size_bytes": 4373,
       "source": "ports/minimax_h3_a6000/integration/r9/Dockerfile"
     },
     {
@@ -320,6 +326,12 @@
       "source": "ports/minimax_h3_a6000/integration/run_gpu2_sol_attn_h3_5step_diagnostic.sh"
     },
     {
+      "path": "ports/minimax_h3_a6000/integration/run_sol_attn_h3_adaptive_routing_n1.sh",
+      "sha256": "6bed6e2148883ef55096039862e55230a370a485d0eb1c2385b98fa5d5abb8b5",
+      "size_bytes": 33682,
+      "source": "ports/minimax_h3_a6000/integration/run_sol_attn_h3_adaptive_routing_n1.sh"
+    },
+    {
       "path": "ports/minimax_h3_a6000/integration/run_sol_attn_h3_formal_n10_r8.sh",
       "sha256": "0ff3eed0a68399aa779fd18a74aa810581b695f2aadf96ac6f688857687fa439",
       "size_bytes": 15954,
@@ -333,20 +345,26 @@
     },
     {
       "path": "ports/minimax_h3_a6000/integration/run_sol_attn_h3_pair_value_halves_n1.sh",
-      "sha256": "80a4ce596adfde2160255276f849b1ebe0c7761b721a2a190949e4d7bcf9e02c",
-      "size_bytes": 37752,
+      "sha256": "0a0d825943c7c2eafb284fef21b2113b716712b5abc364915c7f10796a28f1ab",
+      "size_bytes": 36283,
       "source": "ports/minimax_h3_a6000/integration/run_sol_attn_h3_pair_value_halves_n1.sh"
     },
     {
+      "path": "ports/minimax_h3_a6000/integration/run_sol_attn_h3_prefix_skip_n1.sh",
+      "sha256": "b7b6053c331ff1e543d473cb5a8b066fb1209bcbd2fb1f96ff6b65df663d934a",
+      "size_bytes": 34053,
+      "source": "ports/minimax_h3_a6000/integration/run_sol_attn_h3_prefix_skip_n1.sh"
+    },
+    {
       "path": "ports/minimax_h3_a6000/integration/run_sol_attn_h3_stride_aware_v_n1.sh",
-      "sha256": "bacc1cf424040b2d12796542dccc272d2722d6e0449be3e9bbee16b50242c737",
-      "size_bytes": 34331,
+      "sha256": "e370837f986f59ccc40db9e882f833fbd19028d018590d6a7dd05d3d6f94f553",
+      "size_bytes": 50021,
       "source": "ports/minimax_h3_a6000/integration/run_sol_attn_h3_stride_aware_v_n1.sh"
     },
     {
       "path": "ports/minimax_h3_a6000/patches/vllm_omni_h3_a6000_opt_in.patch",
-      "sha256": "4afa4dde653545cbbd6eeca38e07e6398e21a9eea89417266e49e5c72e6bf9c4",
-      "size_bytes": 37462,
+      "sha256": "09836cb9eee2e31decb706ece1175fc5ada7ff2b3511d3f1b16b26899e7ba27d",
+      "size_bytes": 40225,
       "source": "ports/minimax_h3_a6000/patches/vllm_omni_h3_a6000_opt_in.patch"
     },
     {
@@ -363,8 +381,8 @@
     },
     {
       "path": "ports/minimax_h3_a6000/src/minimax_h3_a6000/env.py",
-      "sha256": "4272ec6cd1beccf9df806674f47db57e338ea92dcb10d75b198c8f4d0d7dd997",
-      "size_bytes": 1917,
+      "sha256": "6b60dcc122e3faabd6260f73e87e503a1078f53a0ca39a3579a47d7dd85b061c",
+      "size_bytes": 2653,
       "source": "ports/minimax_h3_a6000/src/minimax_h3_a6000/env.py"
     },
     {
@@ -387,14 +405,14 @@
     },
     {
       "path": "ports/minimax_h3_a6000/src/minimax_h3_a6000/sol_attn_backend.py",
-      "sha256": "ab2bc327bdfe4bb211f2b3c3a10825f3beaf231cdab45b9f2805db9591d91d08",
-      "size_bytes": 34091,
+      "sha256": "3b92b5adf8cdf47962ef65d559640ed50a5873aeaeb95900ab0e7b7d423022b9",
+      "size_bytes": 71506,
       "source": "ports/minimax_h3_a6000/src/minimax_h3_a6000/sol_attn_backend.py"
     },
     {
       "path": "ports/minimax_h3_a6000/src/minimax_h3_a6000/sol_attn_triton_sm86.py",
-      "sha256": "07300bb1c7786870f7dac9021e785fa62da2bc01167462e1560013a32ccf7cbb",
-      "size_bytes": 46895,
+      "sha256": "b8d4923fdeded8b6ed5dcb597c03af499af7d53f3c787524ac4f9c1286f35bd4",
+      "size_bytes": 47395,
       "source": "ports/minimax_h3_a6000/src/minimax_h3_a6000/sol_attn_triton_sm86.py"
     },
     {
@@ -405,8 +423,8 @@
     },
     {
       "path": "ports/minimax_h3_a6000/tests/test_exact_kernels_static.py",
-      "sha256": "9f850eb66f931ca3b6259d952e2551ff2e1d28c1773aea79923cd9a5ea74b763",
-      "size_bytes": 7540,
+      "sha256": "4a4adc7a476368488d8e4d051d80eb4e3b93c261f8b049dd39f5d2e09240ad95",
+      "size_bytes": 8840,
       "source": "ports/minimax_h3_a6000/tests/test_exact_kernels_static.py"
     },
     {
@@ -417,8 +435,8 @@
     },
     {
       "path": "ports/minimax_h3_a6000/tests/test_patch_and_guards.py",
-      "sha256": "e6f2c14d79f1ab32fc934a3a10628f4dbc6fe290aceb55f87d498cd98a733720",
-      "size_bytes": 7278,
+      "sha256": "65874cdcf2506623984869612ff8111ad5248ac8544d1f0fb34a6ca6f4fa0579",
+      "size_bytes": 8176,
       "source": "ports/minimax_h3_a6000/tests/test_patch_and_guards.py"
     },
     {
@@ -429,8 +447,8 @@
     },
     {
       "path": "ports/minimax_h3_a6000/tests/test_r6_integration_static.py",
-      "sha256": "63c79b744d8c6a5f1ced6d198edb61d0912760410b23774b2ca385b2471449bb",
-      "size_bytes": 15522,
+      "sha256": "6449581cb4dc833d4dcc946b11da4495aed89366706a52d261f3a460d957f318",
+      "size_bytes": 22354,
       "source": "ports/minimax_h3_a6000/tests/test_r6_integration_static.py"
     },
     {
@@ -441,14 +459,14 @@
     },
     {
       "path": "ports/minimax_h3_a6000/tests/test_sol_attn_backend.py",
-      "sha256": "b15e77d42a37f318c10d63a78e647caaf79702c5ba578d4afe1914ab83f558d1",
-      "size_bytes": 31470,
+      "sha256": "ae3fd67eeca8c648b54a7744015f25e5f8c40b85bb8ff1d98d7da9e6baebe13a",
+      "size_bytes": 44815,
       "source": "ports/minimax_h3_a6000/tests/test_sol_attn_backend.py"
     },
     {
       "path": "release/github_release_manifest.json",
-      "sha256": "2c526949d3392dd27eaf059ec9f95021e8845e6ad528be239fc7e63473dc0b48",
-      "size_bytes": 7885,
+      "sha256": "a3a0c4a3b85a3c7997eea1a2a88f2e5987c6a694b62ee11019d4883d36451b2e",
+      "size_bytes": 9570,
       "source": "release/github_release_manifest.json"
     },
     {
@@ -572,6 +590,60 @@
       "source": "technical_report/evidence/minimax_h3_desktop/hidden_cache_policy.json"
     },
     {
+      "path": "technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/RUN_REPORT.md",
+      "sha256": "5ce7404e8a9912873442f611b3fff10758a4d1c0e3fc14fbbf7f210525dc3187",
+      "size_bytes": 3970,
+      "source": "technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/RUN_REPORT.md"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/component_timing_summary.json",
+      "sha256": "5d32a407fc18838c4156c1d388ad0bc54478d39e8dcb007ea3ac895b34a13e5d",
+      "size_bytes": 16918,
+      "source": "technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/component_timing_summary.json"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/final_av_accounting_summary.json",
+      "sha256": "a18851c81b2448c4b9cdb405c12aa788db22d8e08853d9f19a7f8f685bfe70c6",
+      "size_bytes": 22251,
+      "source": "technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/final_av_accounting_summary.json"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/formal_n10_summary.json",
+      "sha256": "5dbf272fb8388ecf2fff136e74ce7a3aeac8c5af66364200e7ba3dde255b1248",
+      "size_bytes": 4094,
+      "source": "technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/formal_n10_summary.json"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/quality_proxy_comparison.json",
+      "sha256": "0af555a39e98720f72ec336bd1826660fb47ed13745dcfa951f49db993a07cd7",
+      "size_bytes": 17910,
+      "source": "technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/quality_proxy_comparison.json"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/resource_summary.json",
+      "sha256": "79022397b325390f9d3e4f8fecd9e03116c69a3a09959af854af4d5676b79f0c",
+      "size_bytes": 11545,
+      "source": "technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/resource_summary.json"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/reviewer_verdict.json",
+      "sha256": "70b7f992bf020b5b202336041e71c580b389f04ff0f78151b36169e0915d456e",
+      "size_bytes": 1168,
+      "source": "technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/reviewer_verdict.json"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/sol_attn_telemetry_summary.json",
+      "sha256": "fd904e1c9539741328499be93e5641e923e20ed118233d9a248a8fb13c5cf4ee",
+      "size_bytes": 42049,
+      "source": "technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/sol_attn_telemetry_summary.json"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/timing_summary.json",
+      "sha256": "fceb3ce2606c2e243834234c2534e551cf9d3ca30f4a2a13d413ec6c619d0970",
+      "size_bytes": 23331,
+      "source": "technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/timing_summary.json"
+    },
+    {
       "path": "technical_report/evidence/minimax_h3_desktop/metadata/checkpoint_size_summary.json",
       "sha256": "9b8753e4d1082639cbfa689da5ef168885fa748ce2e24acc31370cf044a50c1f",
       "size_bytes": 26011,
@@ -675,20 +747,20 @@
     },
     {
       "path": "technical_report/final_technical_report.md",
-      "sha256": "2b95ecfc3e1de02d6dee09655a0d155bccf11053e33342731c109da85b5a613f",
-      "size_bytes": 30269,
+      "sha256": "cb541968e389014375c27cb0dbe4ec0411e094ccab29f1af86b9c09dfabcd22d",
+      "size_bytes": 33786,
       "source": "technical_report/final_technical_report.md"
     },
     {
       "path": "technical_report/minimax_h3_a6000_performance.md",
-      "sha256": "5a216667960c20d26e998cdebcf921c31a0737181d5d4be5ed8f8e321279a4c1",
-      "size_bytes": 22481,
+      "sha256": "d2fb74a47469c2369868385afbd09385fc9d02368668a819fb1e51abb9692ba2",
+      "size_bytes": 24981,
       "source": "technical_report/minimax_h3_a6000_performance.md"
     },
     {
       "path": "technical_report/progress_update.md",
-      "sha256": "224462c430820830ebc895a6f2a072342ee23cc749867411d555fa739660e5ed",
-      "size_bytes": 8258,
+      "sha256": "0bcdd6136b29daf9b6bf0d79cf9b1b8693f4bfa5e5e90f51acd0fdbecb5a0f63",
+      "size_bytes": 4557,
       "source": "technical_report/progress_update.md"
     },
     {
@@ -735,14 +807,14 @@
     },
     {
       "path": "tests/test_benchmark_contract.py",
-      "sha256": "cd61549644e2e70f2c86e6d54d988729beae53ffddceeb98ed561eb7f44581f6",
-      "size_bytes": 6235,
+      "sha256": "15764cedb17924a023ee7ae6fe42ab19449fdfe17b135a8331e2e704a7e639f8",
+      "size_bytes": 7063,
       "source": "tests/test_benchmark_contract.py"
     },
     {
       "path": "tests/test_github_release_tree_builder.py",
-      "sha256": "f81e5f7bf49e8dfed424e9fd0f4264c104cf9a17ec163a379e0dc34e412010e4",
-      "size_bytes": 6891,
+      "sha256": "24ab791417493e7c1f867098bd8b32dcc10d95281fe0db810fbad19c9e4a828c",
+      "size_bytes": 7099,
       "source": "tests/test_github_release_tree_builder.py"
     },
     {
@@ -753,8 +825,8 @@
     },
     {
       "path": "tests/test_public_quickstart.py",
-      "sha256": "569b2db95b3dcba9afcc22ad9e92ea9be0a23dd45ceffe38f717e70ccd1f2ab2",
-      "size_bytes": 2996,
+      "sha256": "f3b3ac3cba0cf6a6642311a9d615f7ebb9e847d47e20ac72309ff4a8a01538cb",
+      "size_bytes": 3027,
       "source": "tests/test_public_quickstart.py"
     },
     {
@@ -777,8 +849,8 @@
     },
     {
       "path": "tools/build_github_release_tree.py",
-      "sha256": "0d22ca6c9b80163e6b6ee16020bb2d097bd609a7d86d8a1ae42a0e0104cf7af9",
-      "size_bytes": 29368,
+      "sha256": "88b014fecaeae6ba5b1142b719494eac3be2cb97589b3d0eed38bfbbe564d4a5",
+      "size_bytes": 29389,
       "source": "tools/build_github_release_tree.py"
     },
     {
@@ -795,8 +867,8 @@
     },
     {
       "path": "tools/minimax_h3_benchmark_contract.py",
-      "sha256": "10b67568a58f0f4a27aee3995a33dac3d1af0232a2c571e3e5dfbeb548d2d685",
-      "size_bytes": 26684,
+      "sha256": "5c2bf269f9bb36568be7a51b3b121e7171a634bd525d8539e4032778d74b89ac",
+      "size_bytes": 26742,
       "source": "tools/minimax_h3_benchmark_contract.py"
     },
     {

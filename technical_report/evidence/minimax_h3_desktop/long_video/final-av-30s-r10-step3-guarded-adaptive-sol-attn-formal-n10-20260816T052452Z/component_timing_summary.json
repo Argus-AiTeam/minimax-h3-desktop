@@ -1,0 +1,759 @@
+{
+  "candidate": {
+    "attention": {
+      "additive_to_e2e_values": [
+        false
+      ],
+      "component_n_distribution": {
+        "cv_percent": 0.0,
+        "max": 6.0,
+        "mean": 6.0,
+        "median": 6.0,
+        "min": 6.0,
+        "n": 10,
+        "status": "measured",
+        "stdev": 0.0,
+        "values": [
+          6.0,
+          6.0,
+          6.0,
+          6.0,
+          6.0,
+          6.0,
+          6.0,
+          6.0,
+          6.0,
+          6.0
+        ]
+      },
+      "parents": [
+        "denoise"
+      ],
+      "reasons": [],
+      "seconds": {
+        "cv_percent": 0.14203544623536205,
+        "max": 415.02295531463625,
+        "mean": 414.30103684997556,
+        "median": 414.49410754394535,
+        "min": 413.4280097503662,
+        "n": 10,
+        "status": "measured",
+        "stdev": 0.5884543264475945,
+        "values": [
+          415.02295531463625,
+          414.8389535827637,
+          413.45729035949705,
+          414.7397555770874,
+          413.62564747619626,
+          414.62972951507567,
+          413.4280097503662,
+          414.50493408966065,
+          414.48328099823,
+          414.2798118362427
+        ]
+      },
+      "status_counts": {
+        "measured": 10
+      },
+      "timing_bases": [
+        "cuda_event_device_seconds_nested_in_denoise"
+      ],
+      "units": []
+    },
+    "audio_vae": {
+      "additive_to_e2e_values": [
+        true
+      ],
+      "component_n_distribution": {
+        "cv_percent": null,
+        "max": 0.0,
+        "mean": 0.0,
+        "median": 0.0,
+        "min": 0.0,
+        "n": 10,
+        "status": "measured",
+        "stdev": 0.0,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "parents": [],
+      "reasons": [
+        "Pinned dense CUDNN sync runtime exposed no separate nested attention or split video/audio VAE timing; denoise and combined decode are recorded in container_summary.stage_duration_summary."
+      ],
+      "seconds": {
+        "n": 0,
+        "status": "missing"
+      },
+      "status_counts": {
+        "not_available_historical_evidence": 10
+      },
+      "timing_bases": [
+        "not_available"
+      ],
+      "units": []
+    },
+    "denoise": {
+      "additive_to_e2e_values": [
+        true
+      ],
+      "component_n_distribution": {
+        "cv_percent": 0.0,
+        "max": 6.0,
+        "mean": 6.0,
+        "median": 6.0,
+        "min": 6.0,
+        "n": 10,
+        "status": "measured",
+        "stdev": 0.0,
+        "values": [
+          6.0,
+          6.0,
+          6.0,
+          6.0,
+          6.0,
+          6.0,
+          6.0,
+          6.0,
+          6.0,
+          6.0
+        ]
+      },
+      "parents": [],
+      "reasons": [],
+      "seconds": {
+        "cv_percent": 0.06249504675720375,
+        "max": 1057.0678282239824,
+        "mean": 1055.7601108223782,
+        "median": 1055.621979043004,
+        "min": 1054.6277414190117,
+        "n": 10,
+        "status": "measured",
+        "stdev": 0.6597977749023514,
+        "values": [
+          1057.0678282239824,
+          1056.4947476849775,
+          1055.5584156020195,
+          1055.958172410028,
+          1055.6855424839887,
+          1055.8480109520606,
+          1055.391551616951,
+          1055.4344464978785,
+          1055.534651332884,
+          1054.6277414190117
+        ]
+      },
+      "status_counts": {
+        "measured": 10
+      },
+      "timing_bases": [
+        "wall_seconds"
+      ],
+      "units": []
+    },
+    "encoding_mux": {
+      "additive_to_e2e_values": [
+        true
+      ],
+      "component_n_distribution": {
+        "cv_percent": 0.0,
+        "max": 1.0,
+        "mean": 1.0,
+        "median": 1.0,
+        "min": 1.0,
+        "n": 10,
+        "status": "measured",
+        "stdev": 0.0,
+        "values": [
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "parents": [],
+      "reasons": [],
+      "seconds": {
+        "cv_percent": 0.8083518689201532,
+        "max": 7.5471060030395165,
+        "mean": 7.458223059208831,
+        "median": 7.457044619048247,
+        "min": 7.361749120987952,
+        "n": 10,
+        "status": "measured",
+        "stdev": 0.06028868548734841,
+        "values": [
+          7.389215998002328,
+          7.539232178998645,
+          7.481252402008977,
+          7.5471060030395165,
+          7.435028008010704,
+          7.435043399047572,
+          7.424570634961128,
+          7.361749120987952,
+          7.479045839048922,
+          7.489987007982563
+        ]
+      },
+      "status_counts": {
+        "measured": 10
+      },
+      "timing_bases": [
+        "wall_seconds"
+      ],
+      "units": []
+    },
+    "io": {
+      "additive_to_e2e_values": [
+        true
+      ],
+      "component_n_distribution": {
+        "cv_percent": 0.0,
+        "max": 1.0,
+        "mean": 1.0,
+        "median": 1.0,
+        "min": 1.0,
+        "n": 10,
+        "status": "measured",
+        "stdev": 0.0,
+        "values": [
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "parents": [],
+      "reasons": [],
+      "seconds": {
+        "cv_percent": 1.3140197395014526,
+        "max": 0.5848785769776441,
+        "mean": 0.5722668068017811,
+        "median": 0.5703884790127631,
+        "min": 0.5632948650163598,
+        "n": 10,
+        "status": "measured",
+        "stdev": 0.007519698803990045,
+        "values": [
+          0.5669756550341845,
+          0.5848785769776441,
+          0.5643204140360467,
+          0.573388670978602,
+          0.5718736560083926,
+          0.5632948650163598,
+          0.5684084479580633,
+          0.577060497016646,
+          0.5835639829747379,
+          0.5689033020171337
+        ]
+      },
+      "status_counts": {
+        "measured": 10
+      },
+      "timing_bases": [
+        "wall_seconds"
+      ],
+      "units": []
+    },
+    "text_conditioning": {
+      "additive_to_e2e_values": [
+        true
+      ],
+      "component_n_distribution": {
+        "cv_percent": 0.0,
+        "max": 6.0,
+        "mean": 6.0,
+        "median": 6.0,
+        "min": 6.0,
+        "n": 10,
+        "status": "measured",
+        "stdev": 0.0,
+        "values": [
+          6.0,
+          6.0,
+          6.0,
+          6.0,
+          6.0,
+          6.0,
+          6.0,
+          6.0,
+          6.0,
+          6.0
+        ]
+      },
+      "parents": [],
+      "reasons": [],
+      "seconds": {
+        "cv_percent": 0.8992069849758575,
+        "max": 24.54429739707848,
+        "mean": 24.2918029413966,
+        "median": 24.38451678553247,
+        "min": 23.926722653966863,
+        "n": 10,
+        "status": "measured",
+        "stdev": 0.21843358882560904,
+        "values": [
+          24.462643712875433,
+          24.40781207307009,
+          24.053496740933042,
+          24.361221497994848,
+          24.54429739707848,
+          24.47348530095769,
+          23.926722653966863,
+          24.20423625508556,
+          24.44516131700948,
+          24.03895246499451
+        ]
+      },
+      "status_counts": {
+        "measured": 10
+      },
+      "timing_bases": [
+        "wall_seconds"
+      ],
+      "units": []
+    },
+    "video_vae": {
+      "additive_to_e2e_values": [
+        true
+      ],
+      "component_n_distribution": {
+        "cv_percent": null,
+        "max": 0.0,
+        "mean": 0.0,
+        "median": 0.0,
+        "min": 0.0,
+        "n": 10,
+        "status": "measured",
+        "stdev": 0.0,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "parents": [],
+      "reasons": [
+        "Pinned dense CUDNN sync runtime exposed no separate nested attention or split video/audio VAE timing; denoise and combined decode are recorded in container_summary.stage_duration_summary."
+      ],
+      "seconds": {
+        "n": 0,
+        "status": "missing"
+      },
+      "status_counts": {
+        "not_available_historical_evidence": 10
+      },
+      "timing_bases": [
+        "not_available"
+      ],
+      "units": []
+    }
+  },
+  "reference": {
+    "attention": {
+      "additive_to_e2e_values": [
+        false
+      ],
+      "component_n_distribution": {
+        "cv_percent": 0.0,
+        "max": 6.0,
+        "mean": 6.0,
+        "median": 6.0,
+        "min": 6.0,
+        "n": 10,
+        "status": "measured",
+        "stdev": 0.0,
+        "values": [
+          6.0,
+          6.0,
+          6.0,
+          6.0,
+          6.0,
+          6.0,
+          6.0,
+          6.0,
+          6.0,
+          6.0
+        ]
+      },
+      "parents": [
+        "denoise"
+      ],
+      "reasons": [],
+      "seconds": {
+        "cv_percent": 0.12035565487677796,
+        "max": 485.4110245513916,
+        "mean": 484.7836459648132,
+        "median": 484.9782823677063,
+        "min": 483.82190017700196,
+        "n": 10,
+        "status": "measured",
+        "stdev": 0.5834645318364717,
+        "values": [
+          484.1073183364868,
+          485.35198664855955,
+          485.4110245513916,
+          485.0104546508789,
+          485.0360059661865,
+          484.86633642578124,
+          485.2658689727783,
+          484.0194538345337,
+          484.9461100845337,
+          483.82190017700196
+        ]
+      },
+      "status_counts": {
+        "measured": 10
+      },
+      "timing_bases": [
+        "cuda_event_device_seconds_nested_in_denoise"
+      ],
+      "units": []
+    },
+    "audio_vae": {
+      "additive_to_e2e_values": [
+        true
+      ],
+      "component_n_distribution": {
+        "cv_percent": null,
+        "max": 0.0,
+        "mean": 0.0,
+        "median": 0.0,
+        "min": 0.0,
+        "n": 10,
+        "status": "measured",
+        "stdev": 0.0,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "parents": [],
+      "reasons": [
+        "Pinned dense CUDNN sync runtime exposed no separate nested attention or split video/audio VAE timing; denoise and combined decode are recorded in container_summary.stage_duration_summary."
+      ],
+      "seconds": {
+        "n": 0,
+        "status": "missing"
+      },
+      "status_counts": {
+        "not_available_historical_evidence": 10
+      },
+      "timing_bases": [
+        "not_available"
+      ],
+      "units": []
+    },
+    "denoise": {
+      "additive_to_e2e_values": [
+        true
+      ],
+      "component_n_distribution": {
+        "cv_percent": 0.0,
+        "max": 6.0,
+        "mean": 6.0,
+        "median": 6.0,
+        "min": 6.0,
+        "n": 10,
+        "status": "measured",
+        "stdev": 0.0,
+        "values": [
+          6.0,
+          6.0,
+          6.0,
+          6.0,
+          6.0,
+          6.0,
+          6.0,
+          6.0,
+          6.0,
+          6.0
+        ]
+      },
+      "parents": [],
+      "reasons": [],
+      "seconds": {
+        "cv_percent": 0.05778327135773997,
+        "max": 1117.7802353230072,
+        "mean": 1116.713948082784,
+        "median": 1116.573697379994,
+        "min": 1115.7326270949561,
+        "n": 10,
+        "status": "measured",
+        "stdev": 0.6452738509104066,
+        "values": [
+          1117.0485546389828,
+          1117.7802353230072,
+          1117.61752316996,
+          1116.5744237469626,
+          1116.4917201899807,
+          1116.261138407921,
+          1116.9530529889744,
+          1116.5729710130254,
+          1116.107234254072,
+          1115.7326270949561
+        ]
+      },
+      "status_counts": {
+        "measured": 10
+      },
+      "timing_bases": [
+        "wall_seconds"
+      ],
+      "units": []
+    },
+    "encoding_mux": {
+      "additive_to_e2e_values": [
+        true
+      ],
+      "component_n_distribution": {
+        "cv_percent": 0.0,
+        "max": 1.0,
+        "mean": 1.0,
+        "median": 1.0,
+        "min": 1.0,
+        "n": 10,
+        "status": "measured",
+        "stdev": 0.0,
+        "values": [
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "parents": [],
+      "reasons": [],
+      "seconds": {
+        "cv_percent": 1.5399067104315185,
+        "max": 7.54131649696501,
+        "mean": 7.3850797074905135,
+        "median": 7.379349410010036,
+        "min": 7.211422955035232,
+        "n": 10,
+        "status": "measured",
+        "stdev": 0.11372333798636278,
+        "values": [
+          7.4586936540436,
+          7.494231742981356,
+          7.211422955035232,
+          7.303021490981337,
+          7.367250245006289,
+          7.391448575013783,
+          7.498063006962184,
+          7.231182561954483,
+          7.354166345961858,
+          7.54131649696501
+        ]
+      },
+      "status_counts": {
+        "measured": 10
+      },
+      "timing_bases": [
+        "wall_seconds"
+      ],
+      "units": []
+    },
+    "io": {
+      "additive_to_e2e_values": [
+        true
+      ],
+      "component_n_distribution": {
+        "cv_percent": 0.0,
+        "max": 1.0,
+        "mean": 1.0,
+        "median": 1.0,
+        "min": 1.0,
+        "n": 10,
+        "status": "measured",
+        "stdev": 0.0,
+        "values": [
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "parents": [],
+      "reasons": [],
+      "seconds": {
+        "cv_percent": 2.6247389381689508,
+        "max": 0.5755916300113313,
+        "mean": 0.5619004321051762,
+        "median": 0.5683398045075592,
+        "min": 0.5332844689837657,
+        "n": 10,
+        "status": "measured",
+        "stdev": 0.014748419435204146,
+        "values": [
+          0.5658503050217405,
+          0.5551201720372774,
+          0.5719842620310374,
+          0.5708293039933778,
+          0.5745557919726707,
+          0.5434485640143976,
+          0.5755916300113313,
+          0.5332844689837657,
+          0.5741049050120637,
+          0.5542349179740995
+        ]
+      },
+      "status_counts": {
+        "measured": 10
+      },
+      "timing_bases": [
+        "wall_seconds"
+      ],
+      "units": []
+    },
+    "text_conditioning": {
+      "additive_to_e2e_values": [
+        true
+      ],
+      "component_n_distribution": {
+        "cv_percent": 0.0,
+        "max": 6.0,
+        "mean": 6.0,
+        "median": 6.0,
+        "min": 6.0,
+        "n": 10,
+        "status": "measured",
+        "stdev": 0.0,
+        "values": [
+          6.0,
+          6.0,
+          6.0,
+          6.0,
+          6.0,
+          6.0,
+          6.0,
+          6.0,
+          6.0,
+          6.0
+        ]
+      },
+      "parents": [],
+      "reasons": [],
+      "seconds": {
+        "cv_percent": 0.8308808986756977,
+        "max": 24.565106493944768,
+        "mean": 24.36162075412576,
+        "median": 24.41162363346666,
+        "min": 23.853796682087705,
+        "n": 10,
+        "status": "measured",
+        "stdev": 0.20241605345384542,
+        "values": [
+          24.525907307048328,
+          24.37755299906712,
+          24.565106493944768,
+          24.415232321014628,
+          24.408014945918694,
+          23.853796682087705,
+          24.419509783096146,
+          24.40179421706125,
+          24.203219851013273,
+          24.446072941005696
+        ]
+      },
+      "status_counts": {
+        "measured": 10
+      },
+      "timing_bases": [
+        "wall_seconds"
+      ],
+      "units": []
+    },
+    "video_vae": {
+      "additive_to_e2e_values": [
+        true
+      ],
+      "component_n_distribution": {
+        "cv_percent": null,
+        "max": 0.0,
+        "mean": 0.0,
+        "median": 0.0,
+        "min": 0.0,
+        "n": 10,
+        "status": "measured",
+        "stdev": 0.0,
+        "values": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "parents": [],
+      "reasons": [
+        "Pinned dense CUDNN sync runtime exposed no separate nested attention or split video/audio VAE timing; denoise and combined decode are recorded in container_summary.stage_duration_summary."
+      ],
+      "seconds": {
+        "n": 0,
+        "status": "missing"
+      },
+      "status_counts": {
+        "not_available_historical_evidence": 10
+      },
+      "timing_bases": [
+        "not_available"
+      ],
+      "units": []
+    }
+  },
+  "scope": "Per-lane benchmark_record.timing.components distributions across completed matched pairs."
+}
