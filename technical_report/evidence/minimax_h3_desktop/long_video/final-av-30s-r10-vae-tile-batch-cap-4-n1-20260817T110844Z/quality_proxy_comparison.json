@@ -1,0 +1,57 @@
+{
+  "automatic_red_flags": {
+    "candidate": [
+      "near_frozen_transition_fraction"
+    ],
+    "reference": [
+      "near_frozen_transition_fraction",
+      "av_sync_proxy_offset"
+    ]
+  },
+  "candidate_no_worse_flags_diagnostic": true,
+  "objective_noninferiority": {
+    "failed_metrics": [
+      "subject_identity_consistency",
+      "background_consistency"
+    ],
+    "metrics": {
+      "background_consistency": {
+        "candidate_over_dense": 0.8997555012224938,
+        "candidate_value": 0.6388888888888888,
+        "dense_value": 0.7100694444444444,
+        "higher_is_better": true,
+        "pass_5pct_noninferiority": false
+      },
+      "camera_consistency": {
+        "candidate_over_dense": 0.9920477137176937,
+        "candidate_value": 0.8663194444444444,
+        "dense_value": 0.873263888888889,
+        "higher_is_better": true,
+        "pass_5pct_noninferiority": true
+      },
+      "motion": {
+        "candidate_over_dense": 0.9722257943421594,
+        "candidate_value": 0.010088711107937912,
+        "dense_value": 0.010376921870052083,
+        "higher_is_better": true,
+        "pass_5pct_noninferiority": true
+      },
+      "subject_identity_consistency": {
+        "candidate_over_dense": 0.8997555012224938,
+        "candidate_value": 0.6388888888888888,
+        "dense_value": 0.7100694444444444,
+        "higher_is_better": true,
+        "pass_5pct_noninferiority": false
+      }
+    },
+    "relative_margin_percent": 5.0,
+    "status": "fail"
+  },
+  "schema_version": "minimax-h3-final-av-30s-r10-vae-spatial-tile-batching-n1-quality-proxy-v1",
+  "scope": "No-reference objective proxies only; no human semantic/audio quality certification.",
+  "status": "fail",
+  "strict_automatic_red_flag_gate": {
+    "requirement": "both matched lanes must have zero automatic red flags before any N=3/reviewer promotion",
+    "status": "fail"
+  }
+}

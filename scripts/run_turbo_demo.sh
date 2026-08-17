@@ -9,6 +9,7 @@ EXPECTED_UUID="${EXPECTED_UUID:-}"
 RUNTIME_IMAGE="${RUNTIME_IMAGE:-argus/minimax-h3-vllm-omni:8e2e9b6b53e8-r2}"
 MODEL_DIR="${MODEL_DIR:-$ROOT/models/MiniMax-H3-Turbo-Merged/FL2VA}"
 PROMPT_FILE="${PROMPT_FILE:-$ROOT/examples/a6000-turbo-8step-sci-fi/prompt.txt}"
+INPUT_REFERENCE="${INPUT_REFERENCE:-}"
 OUTPUT_DIR="${OUTPUT_DIR:-$ROOT/out/a6000-turbo-demo-$(date -u +%Y%m%dT%H%M%SZ)}"
 STEPS="${STEPS:-8}"
 SEEDS="${SEEDS:-42}"
@@ -32,6 +33,7 @@ Important environment options:
   RUNTIME_IMAGE=...              Local vLLM-Omni image.
   MODEL_DIR=...                  Prepared merged Turbo FL2VA directory.
   PROMPT_FILE=...                UTF-8 prompt text file.
+  INPUT_REFERENCE=...            Optional PNG/JPEG/WebP first-frame reference; enables FL2VA.
   OUTPUT_DIR=...                 New result directory.
   STEPS=8                        Practical Turbo schedule (4 or 8).
   SEEDS=42                       One seed or comma-separated seeds, e.g. 42,137.
@@ -63,6 +65,7 @@ EXPECTED_UUID=${EXPECTED_UUID:-<not-set>}
 RUNTIME_IMAGE=$RUNTIME_IMAGE
 MODEL_DIR=$MODEL_DIR
 PROMPT_FILE=$PROMPT_FILE
+INPUT_REFERENCE=${INPUT_REFERENCE:-<text-only>}
 OUTPUT_DIR=$OUTPUT_DIR
 STEPS=$STEPS
 SEEDS=$SEEDS
@@ -79,6 +82,9 @@ fi
 command -v docker >/dev/null || { echo "ERROR: docker is required" >&2; exit 2; }
 command -v nvidia-smi >/dev/null || { echo "ERROR: nvidia-smi is required" >&2; exit 2; }
 test -r "$PROMPT_FILE" || { echo "ERROR: prompt file is not readable: $PROMPT_FILE" >&2; exit 2; }
+if [[ -n "$INPUT_REFERENCE" ]]; then
+  test -r "$INPUT_REFERENCE" || { echo "ERROR: input reference is not readable: $INPUT_REFERENCE" >&2; exit 2; }
+fi
 test -r "$MODEL_DIR/merge_manifest.json" || { echo "ERROR: prepared Turbo merge manifest missing: $MODEL_DIR/merge_manifest.json" >&2; exit 2; }
 docker image inspect "$RUNTIME_IMAGE" >/dev/null 2>&1 || {
   echo "ERROR: runtime image not found: $RUNTIME_IMAGE (see README runtime build step)" >&2; exit 2;
@@ -106,6 +112,13 @@ fi
 mkdir -p "$OUTPUT_DIR/cache/hf" "$OUTPUT_DIR/cache/torchinductor" "$OUTPUT_DIR/cache/triton" "$OUTPUT_DIR/clips"
 OUTPUT_DIR="$(cd "$OUTPUT_DIR" && pwd)"
 cp "$PROMPT_FILE" "$OUTPUT_DIR/prompt.txt"
+if [[ -n "$INPUT_REFERENCE" ]]; then
+  # Keep the operator-supplied source private. The pinned runtime already ships
+  # Pillow for MiniMax-H3 preprocessing and creates the normalized condition in
+  # the isolated container without modifying the source image.
+  cp "$INPUT_REFERENCE" "$OUTPUT_DIR/input_reference_source"
+  sha256sum "$INPUT_REFERENCE" > "$OUTPUT_DIR/input_reference_source.sha256"
+fi
 printf '%s\n' "$SEEDS" | tr ',' '\n' | sed '/^[[:space:]]*$/d' > "$OUTPUT_DIR/seeds.txt"
 python3 - "$OUTPUT_DIR/seeds.txt" <<'PY'
 from pathlib import Path
@@ -125,12 +138,37 @@ cat > "$OUTPUT_DIR/container_run.sh" <<'CONTAINER'
 set -euo pipefail
 
 python3 - <<'PY' > /evidence/container_gpu_preflight.json
-import json, torch
+import hashlib, json, os, pathlib, torch
+from PIL import Image, ImageOps
 assert torch.cuda.is_available() and torch.cuda.device_count() == 1
 p = torch.cuda.get_device_properties(0)
 cap = list(torch.cuda.get_device_capability(0))
 assert cap == [8, 6] and "a6000" in p.name.lower(), (p.name, cap)
-print(json.dumps({"visible_gpu_count": 1, "name": p.name, "compute_capability": cap}, indent=2))
+reference = pathlib.Path("/evidence/input_reference_source")
+reference_meta = {"present": False}
+if reference.is_file():
+    width, height = int(os.environ["WIDTH"]), int(os.environ["HEIGHT"])
+    with Image.open(reference) as source:
+        source.load()
+        if source.width < 256 or source.height < 256:
+            raise ValueError(f"input reference is too small: {source.width}x{source.height}")
+        normalized = ImageOps.fit(
+            source.convert("RGB"),
+            (width, height),
+            method=Image.Resampling.LANCZOS,
+            centering=(0.5, 0.5),
+        )
+        normalized.save("/evidence/input_reference.png", format="PNG", optimize=True)
+        reference_meta = {
+            "present": True,
+            "source_width": source.width,
+            "source_height": source.height,
+            "normalized_width": width,
+            "normalized_height": height,
+            "source_sha256": hashlib.sha256(reference.read_bytes()).hexdigest(),
+            "normalized_sha256": hashlib.sha256(pathlib.Path("/evidence/input_reference.png").read_bytes()).hexdigest(),
+        }
+print(json.dumps({"visible_gpu_count": 1, "name": p.name, "compute_capability": cap, "input_reference": reference_meta}, indent=2))
 PY
 
 vllm-omni serve /models/Turbo/FL2VA \
@@ -181,6 +219,14 @@ done
 
 while IFS= read -r seed; do
   name="turbo_${STEPS}step_seed${seed}"
+  task=t2va
+  extra_params="{\"task\":\"t2va\",\"duration\":${DURATION},\"audio_flow_shift\":${AUDIO_FLOW_SHIFT}}"
+  reference_args=()
+  if [[ -s /evidence/input_reference.png ]]; then
+    task=fl2va
+    extra_params="{\"task\":\"fl2va\",\"duration\":${DURATION},\"audio_flow_shift\":${AUDIO_FLOW_SHIFT},\"frame_indices\":[0]}"
+    reference_args=(-F "input_reference=@/evidence/input_reference.png;type=image/png")
+  fi
   curl --fail-with-body --silent --show-error --max-time 3600 \
     --dump-header "/evidence/clips/${name}_headers.txt" \
     --write-out 'http_code=%{http_code}\ntime_total_s=%{time_total}\nsize_download=%{size_download}\n' \
@@ -188,7 +234,8 @@ while IFS= read -r seed; do
     -F 'prompt=</evidence/prompt.txt' \
     -F "width=${WIDTH}" -F "height=${HEIGHT}" -F "aspect_ratio=16:9" -F "fps=${FPS}" \
     -F "num_inference_steps=${STEPS}" -F "flow_shift=${FLOW_SHIFT}" -F "seed=${seed}" -F 'quality=lossless' \
-    -F "extra_params={\"task\":\"t2va\",\"duration\":${DURATION},\"audio_flow_shift\":${AUDIO_FLOW_SHIFT}}" \
+    "${reference_args[@]}" \
+    -F "extra_params=${extra_params}" \
     -o "/evidence/clips/${name}.mp4" > "/evidence/clips/${name}_http_metrics.txt"
 
   python3 - "$name" "$seed" <<'PY'
@@ -212,6 +259,8 @@ with av.open(str(p)) as container:
         "track": "practical_disclosed_approx",
         "schedule_steps": int(__import__("os").environ["STEPS"]),
         "seed": seed,
+        "task": "fl2va" if pathlib.Path("/evidence/input_reference.png").is_file() else "t2va",
+        "input_reference_present": pathlib.Path("/evidence/input_reference.png").is_file(),
         "sha256": hashlib.sha256(p.read_bytes()).hexdigest(),
         "bytes": p.stat().st_size,
         "width": v.codec_context.width,
@@ -282,10 +331,17 @@ for path in sorted((root / "clips").glob("*_av_validation.json")):
             k,v=line.split("=",1); metrics[k]=v
     record["http_time_total_s"]=float(metrics["time_total_s"])
     clips.append(record)
+reference = root / "input_reference.png"
 summary={
     "schema_version":"minimax-h3-a6000-public-demo-run-v1",
     "status":"pass",
     "track":"practical_disclosed_approx",
+    "task":"fl2va" if reference.is_file() else "t2va",
+    "input_reference": ({
+        "present": True,
+        "normalized_sha256": __import__("hashlib").sha256(reference.read_bytes()).hexdigest(),
+        "redistribution": "not included in the public example; operator-supplied local reference",
+    } if reference.is_file() else {"present": False}),
     "host_gpu_index":int(sys.argv[2]),
     "gpu_uuid":sys.argv[3],
     "runtime_image":sys.argv[4],

@@ -49,14 +49,19 @@ RUN set -eux; \
     python3 -m pip install --no-deps --no-build-isolation /opt/minimax_h3_a6000; \
     tmp=/tmp/vllm-omni-r9-patched; \
     patch=/opt/minimax_h3_a6000/patches/vllm_omni_h3_a6000_opt_in.patch; \
+    cache_patch=/opt/minimax_h3_a6000/patches/vllm_omni_h3_cachedit_telemetry.patch; \
     helper=/opt/minimax_h3_a6000/integration/r9/dual_install_patch_files.py; \
+    cache_helper=/opt/minimax_h3_a6000/integration/r9/install_cachedit_telemetry_patch.py; \
     rm -rf "$tmp"; \
     cp -a /app/vllm-omni "$tmp"; \
     python3 "$helper" --patch "$patch" --list-patch-files > /opt/minimax_h3_a6000/r9_patch_changed_files.txt; \
     grep -qx 'vllm_omni/diffusion/attention/backends/registry.py' /opt/minimax_h3_a6000/r9_patch_changed_files.txt; \
     grep -qx 'vllm_omni/diffusion/attention/backends/sol_attn_h3_a6000.py' /opt/minimax_h3_a6000/r9_patch_changed_files.txt; \
     grep -qx 'vllm_omni/diffusion/models/minimax_h3/minimax_h3_transformer.py' /opt/minimax_h3_a6000/r9_patch_changed_files.txt; \
+    test -f "$cache_patch"; \
+    test -f "$cache_helper"; \
     git -C "$tmp" apply "$patch"; \
+    git -C "$tmp" apply "$cache_patch"; \
     python3 "$helper" \
       --patch "$patch" \
       --patched-root "$tmp" \
@@ -64,7 +69,16 @@ RUN set -eux; \
       --manifest /opt/minimax_h3_a6000/r9_patch_changed_files.txt \
       --hash-json /opt/minimax_h3_a6000/r9_patched_source_hashes.json \
       --hash-sha256 /opt/minimax_h3_a6000/r9_patched_source_hashes.sha256; \
+    python3 "$cache_helper" \
+      --patch "$cache_patch" \
+      --patched-root "$tmp" \
+      --app-root /app/vllm-omni \
+      --manifest /opt/minimax_h3_a6000/r9_cachedit_telemetry_changed_files.txt \
+      --hash-json /opt/minimax_h3_a6000/r9_cachedit_telemetry_source_hashes.json \
+      --hash-sha256 /opt/minimax_h3_a6000/r9_cachedit_telemetry_source_hashes.sha256; \
     test -s /opt/minimax_h3_a6000/r9_patched_source_hashes.json; \
     test -s /opt/minimax_h3_a6000/r9_patched_source_hashes.sha256; \
+    test -s /opt/minimax_h3_a6000/r9_cachedit_telemetry_source_hashes.json; \
+    test -s /opt/minimax_h3_a6000/r9_cachedit_telemetry_source_hashes.sha256; \
     rm -rf "$tmp"; \
     python3 -c "import minimax_h3_a6000; from minimax_h3_a6000.env import DEFAULT_ENV_SWITCHES as d; assert d['MINIMAX_H3_A6000_ENABLE_OVERLAY'] == '0'; assert d['MINIMAX_H3_A6000_ENABLE_TELEMETRY'] == '0'; assert d['MINIMAX_H3_A6000_ENABLE_SOL_ATTN'] == '0'; assert d['MINIMAX_H3_A6000_SOL_ATTN_STRIDE_AWARE_V'] == '0'; assert d['MINIMAX_H3_A6000_SOL_ATTN_SHADOW_ROW_STATE_PROBE'] == '0'; assert d['MINIMAX_H3_A6000_SOL_ATTN_DIAGNOSTIC_OUTPUT_DIGEST'] == '0'; assert d['MINIMAX_H3_A6000_SOL_ATTN_DIAGNOSTIC_MATERIALIZE'] == '0'; print('minimax_h3_a6000_r9_overlay_import=ok')"

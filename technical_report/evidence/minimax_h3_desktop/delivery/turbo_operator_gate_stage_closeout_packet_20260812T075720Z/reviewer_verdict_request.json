@@ -1,0 +1,20 @@
+{
+  "canonical_verdict_path": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/reviewer_verdict.json",
+  "canonical_verdict_status": "accepted_current_stage_delivery_reviewer_passed",
+  "created_at_utc": "20260812T075720Z",
+  "fulfilled_at_utc": "20260812T080918Z",
+  "latest_pointer": "technical_report/evidence/minimax_h3_desktop/delivery/LATEST_TURBO_OPERATOR_GATE_REVIEWER_PACKET",
+  "latest_pointer_target": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z",
+  "must_preserve_boundaries": [
+    "The canonical latest closeout packet contains reviewer_verdict.json and manager_reviewer_handoff_crosswalk.json.",
+    "No agent subjective listening was performed or simulated.",
+    "No semantic audio, human auditory quality, or semantic AV-sync certification is made.",
+    "No GPU, Docker, model-load, benchmark, Turbo rerun, public release, tag, force-push, or history rewrite action is introduced.",
+    "Turbo remains practical_disclosed_approx and is not BF16 fidelity evidence.",
+    "Sol-Attn formal N>=10 remains limited to the formal matched 5-step opt-in lane and is not BF16 fidelity or human-auditory quality certification.",
+    "DLO remains below noise for formal promotion; DMD/DMD2 remain research-only blocked."
+  ],
+  "original_request_status": "superseded_no_longer_current_reviewer_request",
+  "schema_version": "argus-ir04-current-stage-closeout-reviewer-request-v1",
+  "status": "fulfilled_by_canonical_reviewer_verdict"
+}

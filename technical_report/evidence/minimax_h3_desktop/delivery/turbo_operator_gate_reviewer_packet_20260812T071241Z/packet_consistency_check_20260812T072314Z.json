@@ -1,0 +1,96 @@
+{
+  "case_set_consistency": {
+    "analysis_case_count": 24,
+    "case_ids_match_analysis": true,
+    "case_ids_match_plan": true,
+    "human_review_case_ids_match_manifest": true,
+    "human_review_exact_media_rows": 24,
+    "latest_quality_run_id": "gpu3_turbo_quality_20260810T005611Z",
+    "manifest_case_count": 24,
+    "manifest_case_count_field": 24,
+    "plan_case_count": 24,
+    "prompt_counts": {
+      "baseline_example_1": 8,
+      "motion_audio_stress": 8,
+      "object_temporal_consistency": 8
+    },
+    "schedule_counts": {
+      "4-step experimental": 12,
+      "8-step default candidate": 12
+    },
+    "seed_sets_by_prompt": {
+      "baseline_example_1": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "motion_audio_stress": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "object_temporal_consistency": [
+        0,
+        1,
+        2,
+        3
+      ]
+    }
+  },
+  "created_at_utc": "20260812T072314Z",
+  "delivery_gate_cross_refs": {
+    "clean_room_lifecycle_status": "pass",
+    "current_export_publication_audit_status": "pass",
+    "delivery_summary_final_gates_status": "pass",
+    "private_github_sync_status": "success",
+    "turbo_semantic_human_quality_claim_status": "blocked_human_auditory_listening_pending_semantic_quality_not_certified"
+  },
+  "errors": [],
+  "evidence_paths": {
+    "delivery_summary": "technical_report/evidence/minimax_h3_desktop/delivery/argus_ir04_delivery_summary.json",
+    "human_review": "technical_report/evidence/minimax_h3_desktop/turbo_merged/quality_suite_runs/gpu3_turbo_quality_20260810T005611Z/human_review.md",
+    "manifest": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_reviewer_packet_20260812T071241Z/media_listening_manifest.json",
+    "prior_reviewer_source": "<private-path>",
+    "quality_suite_analysis": "technical_report/evidence/minimax_h3_desktop/turbo_merged/quality_suite_runs/gpu3_turbo_quality_20260810T005611Z/quality_suite_analysis.json",
+    "quality_suite_plan": "technical_report/evidence/minimax_h3_desktop/turbo_merged/quality_suite_runs/gpu3_turbo_quality_20260810T005611Z/quality_suite_plan.json",
+    "reviewer_packet": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_reviewer_packet_20260812T071241Z/reviewer_packet.md",
+    "summary": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_reviewer_packet_20260812T071241Z/summary.json"
+  },
+  "latest_pointer": "technical_report/evidence/minimax_h3_desktop/delivery/LATEST_TURBO_OPERATOR_GATE_REVIEWER_PACKET",
+  "latest_pointer_matches_packet": true,
+  "media_structural_checks": {
+    "all_listening_and_sync_marked_operator_action_required": true,
+    "all_media_files_nontrivial_gt_1mb": true,
+    "all_media_files_present": true,
+    "all_structural_av_contract_pass": true,
+    "all_subjective_quality_certified_false": true,
+    "known_visual_failure_case": "p03-object_temporal_consistency-seed1-4step",
+    "known_visual_failure_status": "known_visual_fail_from_contact_sheet_review",
+    "media_size_mismatch_count": 0
+  },
+  "packet_dir": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_reviewer_packet_20260812T071241Z",
+  "reviewer_decision_readiness": {
+    "agent_subjective_listening_performed": false,
+    "bf16_fidelity_claim": "rejected_not_fidelity_lane",
+    "human_auditory_semantic_av_sync_review_remaining": "operator_action_required",
+    "ready_for_independent_reviewer": true,
+    "this_check_is_not_a_reviewer_acceptance": true,
+    "turbo_track": "practical_disclosed_approx"
+  },
+  "schema_version": "argus-ir04-turbo-operator-gate-packet-consistency-v1",
+  "status": "pass",
+  "warnings": [
+    {
+      "claim": "Formal DLO N10 performance promotion is complete.",
+      "scope_note": "not resolved by this Turbo operator-gate packet",
+      "status": "pending_no_formal_n10_because_current_candidate_is_below_baseline_noise"
+    },
+    {
+      "claim": "MiniMax-H3 DMD/DMD2 is a no-go after Turbo unless feasibility evidence changes.",
+      "scope_note": "research-only/blocker retained; not converted into Turbo certification",
+      "status": "blocked_research_only_no_go_after_turbo_unless_feasibility_changes"
+    }
+  ]
+}

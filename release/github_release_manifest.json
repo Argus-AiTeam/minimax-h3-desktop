@@ -43,6 +43,27 @@
       "path": "examples/a6000-turbo-8step-sci-fi/metadata.json"
     },
     {
+      "path": "release_demo_runs/a6000_turbo_8step_scifi_20260812T104042Z/run_summary.json"
+    },
+    {
+      "path": "examples/a6000-turbo-8step-niulai-inspired/niulai-inspired-forest-awakening-turbo-8step.mp4"
+    },
+    {
+      "path": "examples/a6000-turbo-8step-niulai-inspired/hero-frame.jpg"
+    },
+    {
+      "path": "examples/a6000-turbo-8step-niulai-inspired/contact-sheet.jpg"
+    },
+    {
+      "path": "examples/a6000-turbo-8step-niulai-inspired/prompt.txt"
+    },
+    {
+      "path": "examples/a6000-turbo-8step-niulai-inspired/metadata.json"
+    },
+    {
+      "path": "examples/a6000-turbo-8step-niulai-inspired/presentation_metrics.json"
+    },
+    {
       "path": "release/github_release_manifest.json"
     },
     {
@@ -59,6 +80,12 @@
     },
     {
       "path": "tools/validate_benchmark_record.py"
+    },
+    {
+      "path": "tools/final_av_30s_extension_runner.py"
+    },
+    {
+      "path": "tools/vae_bounded_tile_batching_probe.py"
     },
     {
       "path": "tools/minimax_h3_benchmark_contract.py"
@@ -94,6 +121,12 @@
       "path": "scripts/run_turbo_demo.sh"
     },
     {
+      "path": "scripts/run_vae_bounded_tile_batching_probe.sh"
+    },
+    {
+      "path": "scripts/run_final_av_30s_r10_vae_bounded_tile_batching_n1.sh"
+    },
+    {
       "path": "schemas/minimax_h3_run.schema.json"
     },
     {
@@ -127,6 +160,9 @@
       "path": "technical_report/evidence/minimax_h3_desktop/quantization_feasibility_a6000.md"
     },
     {
+      "path": "technical_report/evidence/minimax_h3_desktop/demo_niulai_public_source_note_20260817.md"
+    },
+    {
       "path": "technical_report/evidence/minimax_h3_desktop/baseline_a6000/baseline_certification.json"
     },
     {
@@ -139,10 +175,43 @@
       "path": "technical_report/evidence/minimax_h3_desktop/delivery/sol_attn_stride_aware_v_harness_export_audit_20260813T082610Z/summary.json"
     },
     {
+      "path": "technical_report/evidence/minimax_h3_desktop/turbo_merged/LATEST_QUALITY_SUITE_RUN_ID"
+    },
+    {
       "path": "technical_report/evidence/minimax_h3_desktop/turbo_merged/quality_suite_runs/gpu3_turbo_quality_20260810T005611Z/quality_suite_analysis.json"
     },
     {
       "path": "technical_report/evidence/minimax_h3_desktop/turbo_merged/quality_suite_runs/gpu3_turbo_quality_20260810T005611Z/operator_acceptance.json"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/turbo_merged/quality_suite_runs/gpu3_turbo_quality_20260810T005611Z/human_review.md"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/turbo_merged/quality_suite_runs/gpu3_turbo_quality_20260810T005611Z/baseline_seed0_quality_comparison.json"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/turbo_merged/quality_suite_runs/gpu3_turbo_quality_20260810T005611Z/audio_energy_envelopes.json"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/turbo_merged/quality_suite_runs/gpu3_turbo_quality_20260810T005611Z/quality_suite_plan.json"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/turbo_merged/quality_suite_runs/gpu3_turbo_quality_20260810T005611Z/contacts/REVIEW_baseline_example_1_4step_seeds0-3.jpg"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/turbo_merged/quality_suite_runs/gpu3_turbo_quality_20260810T005611Z/contacts/REVIEW_baseline_example_1_8step_seeds0-3.jpg"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/turbo_merged/quality_suite_runs/gpu3_turbo_quality_20260810T005611Z/contacts/REVIEW_motion_audio_stress_4step_seeds0-3.jpg"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/turbo_merged/quality_suite_runs/gpu3_turbo_quality_20260810T005611Z/contacts/REVIEW_motion_audio_stress_8step_seeds0-3.jpg"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/turbo_merged/quality_suite_runs/gpu3_turbo_quality_20260810T005611Z/contacts/REVIEW_object_temporal_consistency_4step_seeds0-3.jpg"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/turbo_merged/quality_suite_runs/gpu3_turbo_quality_20260810T005611Z/contacts/REVIEW_object_temporal_consistency_8step_seeds0-3.jpg"
     },
     {
       "path": "technical_report/evidence/minimax_h3_desktop/sol_engine_port/sol_attn_h3_matched_retest_r8_n3_20260812T013544Z/decision.json"
@@ -211,6 +280,39 @@
       "path": "technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/reviewer_verdict.json"
     },
     {
+      "path": "technical_report/evidence/minimax_h3_desktop/long_video/final-av-60s-r9-current-vs-r10-step3-sol-attn-n1-20260816T164226Z/RUN_REPORT.md"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/long_video/final-av-60s-r9-current-vs-r10-step3-sol-attn-n1-20260816T164226Z/decision.json"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/long_video/final-av-60s-r9-current-vs-r10-step3-sol-attn-n1-20260816T164226Z/reviewer_verdict.json"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-vae-spatial-tile-batching-n1-lease-20260817T033717Z/RUN_REPORT.md"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-vae-spatial-tile-batching-n1-lease-20260817T033717Z/decision.json"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-vae-tile-batch-cap-4-n1-20260817T110844Z/RUN_REPORT.md"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-vae-tile-batch-cap-4-n1-20260817T110844Z/decision.json"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-vae-tile-batch-cap-4-n1-20260817T110844Z/timing_summary.json"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-vae-tile-batch-cap-4-n1-20260817T110844Z/quality_proxy_comparison.json"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-dlo-async-sync-prefetch-n1-20260817T064200Z/RUN_REPORT.md"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-dlo-async-sync-prefetch-n1-20260817T064200Z/decision.json"
+    },
+    {
       "path": "technical_report/evidence/minimax_h3_desktop/dlo_autotune/resident_layer_candidates.json"
     },
     {
@@ -244,6 +346,9 @@
       "path": "tests/test_benchmark_contract.py"
     },
     {
+      "path": "tests/test_final_av_30s_extension_runner.py"
+    },
+    {
       "path": "tests/fixtures/minimal_av_case/run_record.json"
     }
   ],
@@ -261,6 +366,20 @@
       ]
     },
     {
+      "path": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_reviewer_packet_20260812T071241Z",
+      "include": [
+        "*.json",
+        "*.md"
+      ]
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z",
+      "include": [
+        "*.json",
+        "*.md"
+      ]
+    },
+    {
       "path": "ports/minimax_h3_a6000",
       "include": [
         "*.md",
@@ -272,12 +391,15 @@
         "src/**/*.py",
         "tests/*.py",
         "integration/*.sh",
+        "integration/*.py",
         "integration/r3/*",
         "integration/r4/*",
         "integration/r6/*",
         "integration/r7/*",
         "integration/r8/*",
-        "integration/r9/*"
+        "integration/r9/*",
+        "integration/r15/*",
+        "integration/r20/*"
       ],
       "exclude": [
         "evidence/**",

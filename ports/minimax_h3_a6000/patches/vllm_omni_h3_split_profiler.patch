@@ -1,0 +1,284 @@
+diff --git a/vllm_omni/diffusion/diffusion_engine.py b/vllm_omni/diffusion/diffusion_engine.py
+index 6bbf6cfa..eeedc622 100644
+--- a/vllm_omni/diffusion/diffusion_engine.py
++++ b/vllm_omni/diffusion/diffusion_engine.py
+@@ -6,6 +6,7 @@ from __future__ import annotations
+ import asyncio
+ import concurrent.futures
+ import inspect
++import os
+ import queue
+ import threading
+ import time
+@@ -57,6 +58,35 @@ logger = init_logger(__name__)
+ 
+ _ASYNC_OUTPUT_TIMEOUT = 30.0  # seconds
+ 
++
++def _a6000_split_profile_enabled() -> bool:
++    return str(os.environ.get("MINIMAX_H3_A6000_PROFILE_SPLIT", "0")).strip().lower() in {
++        "1",
++        "true",
++        "yes",
++        "on",
++    }
++
++
++def _internal_postprocess_stage_durations(outputs: object) -> dict[str, float]:
++    if not isinstance(outputs, dict):
++        return {}
++    metadata = outputs.get("metadata")
++    if not isinstance(metadata, dict):
++        return {}
++    internal = metadata.get("internal")
++    if not isinstance(internal, dict):
++        return {}
++    durations = internal.get("stage_durations")
++    if not isinstance(durations, dict):
++        return {}
++    parsed: dict[str, float] = {}
++    for key, value in durations.items():
++        if isinstance(key, str) and isinstance(value, (int, float)) and not isinstance(value, bool):
++            parsed[key] = float(value)
++    return parsed
++
++
+ __all__ = [
+     "DiffusionEngine",
+     "DiffusionExecutionMode",
+@@ -391,13 +421,25 @@ class DiffusionEngine:
+         if self.od_config.enable_cpu_offload:
+             output_data = _move_tensor_tree_to_cpu(output_data)
+ 
++        profile_split = _a6000_split_profile_enabled()
+         if self.post_process_func is not None:
+             # Some video pipelines need request-level controls during
+             # postprocess (for example worker-side frame interpolation).
+             postprocess_kwargs: dict[str, object] = {}
+             if self._post_process_accepts_sampling_params:
+                 postprocess_kwargs["sampling_params"] = request.sampling_params
++            postprocess_start = time.perf_counter() if profile_split else None
+             outputs = self.post_process_func(output_data, **postprocess_kwargs)
++            if profile_split and postprocess_start is not None:
++                stage_durations = dict(output.stage_durations or {})
++                stage_durations["DiffusionEngine.postprocess_func.wall"] = (
++                    stage_durations.get("DiffusionEngine.postprocess_func.wall", 0.0)
++                    + time.perf_counter()
++                    - postprocess_start
++                )
++                for key, value in _internal_postprocess_stage_durations(outputs).items():
++                    stage_durations[key] = stage_durations.get(key, 0.0) + value
++                output.stage_durations = stage_durations
+         else:
+             outputs = output_data
+ 
+diff --git a/vllm_omni/diffusion/models/minimax_h3/pipeline_minimax_h3.py b/vllm_omni/diffusion/models/minimax_h3/pipeline_minimax_h3.py
+index cac987d6..dfe17a20 100644
+--- a/vllm_omni/diffusion/models/minimax_h3/pipeline_minimax_h3.py
++++ b/vllm_omni/diffusion/models/minimax_h3/pipeline_minimax_h3.py
+@@ -7,6 +7,7 @@ import json
+ import math
+ import os
+ import tempfile
++import time
+ from collections.abc import Iterable, Mapping, Sequence
+ from contextlib import contextmanager
+ from itertools import groupby
+@@ -125,6 +126,16 @@ MINIMAX_H3_TASK_DOWNLOAD_PATTERNS = {
+     "fl2va": ["FL2VA/**"],
+     "ref2va": ["Ref2VA/**"],
+ }
++MINIMAX_H3_A6000_PROFILE_SPLIT_ENV = "MINIMAX_H3_A6000_PROFILE_SPLIT"
++
++
++def _minimax_h3_a6000_split_profile_enabled() -> bool:
++    return str(os.environ.get(MINIMAX_H3_A6000_PROFILE_SPLIT_ENV, "0")).strip().lower() in {
++        "1",
++        "true",
++        "yes",
++        "on",
++    }
+ 
+ 
+ def _minimax_h3_partition_for_task(
+@@ -186,16 +197,47 @@ def _minimax_h3_post_process(output, output_type: str = "np"):
+     video, audio = output
+     if output_type == "latent":
+         return output
++    stage_durations: dict[str, float] = {}
+     if output_type == "np":
+-        video = video.detach().float().cpu().permute(0, 2, 3, 4, 1).clamp(0, 1).numpy()
+-        audio = audio.detach().float().cpu().numpy()
++        if _minimax_h3_a6000_split_profile_enabled():
++            t0 = time.perf_counter()
++            video_cpu = video.detach().float().cpu()
++            stage_durations["MiniMaxH3Pipeline.postprocess.video_device_to_host_copy.wall"] = time.perf_counter() - t0
++            stage_durations["MiniMaxH3Pipeline.postprocess.video_device_to_host_copy.bytes"] = float(
++                video_cpu.numel() * video_cpu.element_size()
++            )
++            t0 = time.perf_counter()
++            video = video_cpu.permute(0, 2, 3, 4, 1).clamp(0, 1).numpy()
++            stage_durations["MiniMaxH3Pipeline.postprocess.video_numpy_finalize.wall"] = time.perf_counter() - t0
++            t0 = time.perf_counter()
++            audio_cpu = audio.detach().float().cpu()
++            stage_durations["MiniMaxH3Pipeline.postprocess.audio_device_to_host_copy.wall"] = time.perf_counter() - t0
++            stage_durations["MiniMaxH3Pipeline.postprocess.audio_device_to_host_copy.bytes"] = float(
++                audio_cpu.numel() * audio_cpu.element_size()
++            )
++            t0 = time.perf_counter()
++            audio = audio_cpu.numpy()
++            stage_durations["MiniMaxH3Pipeline.postprocess.audio_numpy_finalize.wall"] = time.perf_counter() - t0
++        else:
++            video = video.detach().float().cpu().permute(0, 2, 3, 4, 1).clamp(0, 1).numpy()
++            audio = audio.detach().float().cpu().numpy()
+         video = [sample for sample in video]
+-    return {
++    payload = {
+         "video": video,
+         "audio": audio,
+         "audio_sample_rate": MINIMAX_H3_AUDIO_SAMPLE_RATE,
+         "fps": MINIMAX_H3_FPS,
+     }
++    if stage_durations:
++        return {
++            "payload": {"video": video, "audio": audio},
++            "metadata": {
++                "video": {"fps": MINIMAX_H3_FPS},
++                "audio": {"sample_rate": MINIMAX_H3_AUDIO_SAMPLE_RATE},
++                "internal": {"stage_durations": stage_durations},
++            },
++        }
++    return payload
+ 
+ 
+ def get_minimax_h3_post_process_func(
+@@ -1129,6 +1171,47 @@ class MiniMaxH3Pipeline(
+             or getattr(od_config, "enable_distributed_layerwise_offload", False)
+         )
+ 
++    def _record_a6000_profile_duration(self, key: str, value: float) -> None:
++        if not _minimax_h3_a6000_split_profile_enabled():
++            return
++        if not getattr(self, "enable_diffusion_pipeline_profiler", False):
++            return
++        durations = getattr(self, "_stage_durations", None)
++        lock = getattr(self, "_profiler_lock", None)
++        if not isinstance(durations, dict) or lock is None:
++            return
++        with lock:
++            durations[key] = float(durations.get(key, 0.0)) + float(value)
++
++    @contextmanager
++    def _a6000_profile_span(self, key: str, *, device_timed: bool = True):
++        if not _minimax_h3_a6000_split_profile_enabled():
++            yield
++            return
++        use_cuda = bool(
++            device_timed
++            and self.device.type == "cuda"
++            and torch.cuda.is_available()
++        )
++        start_event = end_event = None
++        if use_cuda:
++            torch.cuda.synchronize(self.device)
++            start_event = torch.cuda.Event(enable_timing=True)
++            end_event = torch.cuda.Event(enable_timing=True)
++            start_event.record()
++        start = time.perf_counter()
++        try:
++            yield
++        finally:
++            if use_cuda and start_event is not None and end_event is not None:
++                end_event.record()
++                torch.cuda.synchronize(self.device)
++                self._record_a6000_profile_duration(
++                    f"{key}.device",
++                    float(start_event.elapsed_time(end_event)) / 1000.0,
++                )
++            self._record_a6000_profile_duration(f"{key}.wall", time.perf_counter() - start)
++
+     @contextmanager
+     def _component_on_device(self, component: nn.Module):
+         staged = self._uses_manual_component_offload()
+@@ -1548,16 +1631,19 @@ class MiniMaxH3Pipeline(
+         height: int,
+         width: int,
+     ) -> tuple[torch.Tensor, torch.Tensor]:
+-        with self._component_on_device(self.video_vae):
+-            with current_omni_platform.create_autocast_context(
+-                device_type=self.device.type,
+-                dtype=torch.float16,
+-                enabled=True,
+-            ):
+-                video = self.video_vae.decode_latent(video_latent)
+-        video = video[..., :height, :width].contiguous()
+-        with self._component_on_device(self.audio_vae):
+-            audio = self.audio_vae.decode_latent(audio_latent)
++        with self._a6000_profile_span("MiniMaxH3Pipeline.decode.video_vae"):
++            with self._component_on_device(self.video_vae):
++                with current_omni_platform.create_autocast_context(
++                    device_type=self.device.type,
++                    dtype=torch.float16,
++                    enabled=True,
++                ):
++                    video = self.video_vae.decode_latent(video_latent)
++        with self._a6000_profile_span("MiniMaxH3Pipeline.decode.video_crop_contiguous"):
++            video = video[..., :height, :width].contiguous()
++        with self._a6000_profile_span("MiniMaxH3Pipeline.decode.audio_vae"):
++            with self._component_on_device(self.audio_vae):
++                audio = self.audio_vae.decode_latent(audio_latent)
+         return video, audio
+ 
+     @torch.no_grad()
+diff --git a/vllm_omni/entrypoints/openai/serving_video.py b/vllm_omni/entrypoints/openai/serving_video.py
+index 3a25283c..1ce42b5f 100644
+--- a/vllm_omni/entrypoints/openai/serving_video.py
++++ b/vllm_omni/entrypoints/openai/serving_video.py
+@@ -4,6 +4,7 @@
+ from __future__ import annotations
+ 
+ import copy
++import os
+ import time
+ from collections.abc import Mapping
+ from dataclasses import dataclass
+@@ -39,6 +40,15 @@ from vllm_omni.outputs.output_metadata import (
+ logger = init_logger(__name__)
+ 
+ 
++def _a6000_split_profile_enabled() -> bool:
++    return str(os.environ.get("MINIMAX_H3_A6000_PROFILE_SPLIT", "0")).strip().lower() in {
++        "1",
++        "true",
++        "yes",
++        "on",
++    }
++
++
+ @dataclass
+ class ReferenceImage:
+     """Reference class for tracking additional metadata if needed"""
+@@ -326,6 +336,11 @@ class OmniOpenAIServingVideo:
+         ]
+         _t_encode_ms = (time.perf_counter() - _t_encode_start) * 1000
+         logger.info("Video response encoding (MP4+base64): %.2f ms", _t_encode_ms)
++        if _a6000_split_profile_enabled():
++            artifacts.stage_durations["OmniOpenAIServingVideo.response_encoding_base64_mp4.wall"] = (
++                artifacts.stage_durations.get("OmniOpenAIServingVideo.response_encoding_base64_mp4.wall", 0.0)
++                + _t_encode_ms / 1000.0
++            )
+         return VideoGenerationResponse(
+             created=int(time.time()),
+             data=video_data,
+@@ -377,6 +392,11 @@ class OmniOpenAIServingVideo:
+         )
+         _t_encode_ms = (time.perf_counter() - _t_encode_start) * 1000
+         logger.info("Video response encoding (MP4 bytes): %.2f ms", _t_encode_ms)
++        if _a6000_split_profile_enabled():
++            artifacts.stage_durations["OmniOpenAIServingVideo.response_encoding_mp4_bytes.wall"] = (
++                artifacts.stage_durations.get("OmniOpenAIServingVideo.response_encoding_mp4_bytes.wall", 0.0)
++                + _t_encode_ms / 1000.0
++            )
+         return video_bytes, artifacts.stage_durations, artifacts.peak_memory_mb, artifacts.actions[0]
+ 
+     @staticmethod

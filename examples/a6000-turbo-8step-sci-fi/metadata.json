@@ -20,8 +20,10 @@
   "measurement": {
     "http_time_total_seconds": 291.626602,
     "peak_gpu_memory_mib_for_two_candidate_session": 26664.0,
+    "peak_host_memory_gib_for_two_candidate_session": 175.94968032836914,
     "peak_power_w_for_two-candidate_session": 301.09,
-    "peak_temperature_c_for_two-candidate_session": 83.0
+    "peak_temperature_c_for_two-candidate_session": 83.0,
+    "resource_evidence": "release_demo_runs/a6000_turbo_8step_scifi_20260812T104042Z/run_summary.json"
   },
   "validation": {
     "structural_av_contract_pass": true,

@@ -1,0 +1,16 @@
+{
+  "frame_count": 124,
+  "hero_frame_index": 72,
+  "contact_sheet_indices": [
+    0,
+    24,
+    48,
+    72,
+    96,
+    123
+  ],
+  "mean_luma": 74.64054107666016,
+  "near_black_pixel_fraction": 0.0071190806211597546,
+  "near_white_pixel_fraction": 0.0,
+  "mean_gradient_energy": 297.36101175123645
+}

@@ -1,0 +1,179 @@
+diff --git a/vllm_omni/diffusion/models/minimax_h3/vae.py b/vllm_omni/diffusion/models/minimax_h3/vae.py
+index e28450c9..9496f7b9 100644
+--- a/vllm_omni/diffusion/models/minimax_h3/vae.py
++++ b/vllm_omni/diffusion/models/minimax_h3/vae.py
+@@ -5,6 +5,7 @@ from __future__ import annotations
+ 
+ import importlib
+ import json
++import os
+ from contextlib import AbstractContextManager
+ from pathlib import Path
+ from typing import Any
+@@ -26,6 +27,141 @@ from .packed_tokens import minimax_h3_patchify_video_latent
+ MINIMAX_H3_KEYFRAME_ENCODE_SEED = 42
+ MINIMAX_H3_AUDIO_SAMPLE_RATE = 32000
+ MINIMAX_H3_AUDIO_CHANNELS = 2
++MINIMAX_H3_A6000_VIDEO_VAE_SPATIAL_TILE_BATCHING_ENV = "MINIMAX_H3_A6000_VIDEO_VAE_SPATIAL_TILE_BATCHING"
++MINIMAX_H3_A6000_VIDEO_VAE_TILE_BATCH_SIZE_ENV = "MINIMAX_H3_A6000_VIDEO_VAE_TILE_BATCH_SIZE"
++MINIMAX_H3_A6000_VIDEO_VAE_GRAPH_SAFE_REVERT_ENV = "MINIMAX_H3_A6000_VIDEO_VAE_GRAPH_SAFE_REVERT"
++_GRAPH_SAFE_NORMALIZE_DTYPES = (torch.float16, torch.bfloat16, torch.float32, torch.float64)
++
++
++def _env_enabled(name: str) -> bool:
++    return str(os.environ.get(name, "0")).strip().lower() in {"1", "true", "yes", "on"}
++
++
++def _env_nonnegative_int(name: str) -> int:
++    raw = str(os.environ.get(name, "0")).strip()
++    try:
++        value = int(raw)
++    except ValueError as exc:
++        raise RuntimeError(f"{name} must be a non-negative integer, got {raw!r}") from exc
++    if value < 0:
++        raise RuntimeError(f"{name} must be a non-negative integer, got {raw!r}")
++    return value
++
++
++def _configure_video_vae_spatial_tile_batching(model: nn.Module) -> bool:
++    if not _env_enabled(MINIMAX_H3_A6000_VIDEO_VAE_SPATIAL_TILE_BATCHING_ENV):
++        return False
++    if not hasattr(model, "stack_tiling"):
++        raise RuntimeError(
++            "MINIMAX_H3_A6000_VIDEO_VAE_SPATIAL_TILE_BATCHING=1 was requested, "
++            "but the MiniMax-H3 video VAE remote model has no stack_tiling switch"
++        )
++    model.stack_tiling = True
++    return True
++
++
++def _configure_video_vae_bounded_tile_batching(model: nn.Module) -> int:
++    tile_batch_size = _env_nonnegative_int(MINIMAX_H3_A6000_VIDEO_VAE_TILE_BATCH_SIZE_ENV)
++    original = getattr(model, "_a6000_original_run_tile_tasks", None)
++    if callable(original):
++        model._run_tile_tasks = original
++        delattr(model, "_a6000_original_run_tile_tasks")
++    if tile_batch_size == 0:
++        if hasattr(model, "_a6000_video_vae_tile_batch_size"):
++            delattr(model, "_a6000_video_vae_tile_batch_size")
++        return 0
++    if not hasattr(model, "stack_tiling"):
++        raise RuntimeError(
++            "MINIMAX_H3_A6000_VIDEO_VAE_TILE_BATCH_SIZE was requested, "
++            "but the MiniMax-H3 video VAE remote model has no stack_tiling switch"
++        )
++    original_run_tile_tasks = getattr(model, "_run_tile_tasks", None)
++    if not callable(original_run_tile_tasks):
++        raise RuntimeError(
++            "MINIMAX_H3_A6000_VIDEO_VAE_TILE_BATCH_SIZE was requested, "
++            "but the MiniMax-H3 video VAE remote model has no callable _run_tile_tasks"
++        )
++
++    def run_tile_tasks(tiles, tile_indices, forward_fn, stack_tiling, cls_agg=None):
++        if not stack_tiling or len(tile_indices) <= tile_batch_size:
++            return original_run_tile_tasks(tiles, tile_indices, forward_fn, stack_tiling, cls_agg)
++        outputs = []
++        for start in range(0, len(tile_indices), tile_batch_size):
++            chunk_indices = tile_indices[start : start + tile_batch_size]
++            outputs.extend(original_run_tile_tasks(tiles, chunk_indices, forward_fn, True, cls_agg))
++        return outputs
++
++    model.stack_tiling = True
++    model._a6000_original_run_tile_tasks = original_run_tile_tasks
++    model._run_tile_tasks = run_tile_tasks
++    model._a6000_video_vae_tile_batch_size = tile_batch_size
++    return tile_batch_size
++
++
++class _A6000GraphSafeNormalize:
++    """Normalize-compatible callable with long-lived device constants.
++
++    torchvision.transforms.Normalize materializes mean/std inside forward with
++    torch.as_tensor(..., device=tensor.device).  That is exact eager behavior,
++    but it performs a host-to-device copy when tensor is CUDA and therefore is
++    not CUDA-Graph capturable.  This opt-in replacement preloads the same
++    constants on the target CUDA device for the dtypes used by the video VAE.
++    """
++
++    def __init__(self, source: Any, *, device: torch.device) -> None:
++        if device.type != "cuda":
++            raise RuntimeError(
++                "MINIMAX_H3_A6000_VIDEO_VAE_GRAPH_SAFE_REVERT=1 requires a CUDA target device"
++            )
++        mean = getattr(source, "mean", None)
++        std = getattr(source, "std", None)
++        if mean is None or std is None:
++            raise RuntimeError("processor.transform_rev does not expose Normalize mean/std")
++        self.mean = tuple(float(x) for x in mean)
++        self.std = tuple(float(x) for x in std)
++        if len(self.mean) != len(self.std):
++            raise RuntimeError("processor.transform_rev mean/std channel counts differ")
++        self.inplace = bool(getattr(source, "inplace", False))
++        self.device = torch.device(device)
++        self._constants = {
++            dtype: (
++                torch.tensor(self.mean, device=self.device, dtype=dtype).view(-1, 1, 1),
++                torch.tensor(self.std, device=self.device, dtype=dtype).view(-1, 1, 1),
++            )
++            for dtype in _GRAPH_SAFE_NORMALIZE_DTYPES
++        }
++
++    def __call__(self, tensor: torch.Tensor) -> torch.Tensor:
++        if tensor.device != self.device:
++            raise RuntimeError(
++                "graph-safe VAE revert Normalize expected tensor on "
++                f"{self.device}, got {tensor.device}"
++            )
++        constants = self._constants.get(tensor.dtype)
++        if constants is None:
++            raise RuntimeError(f"unsupported graph-safe VAE revert Normalize dtype {tensor.dtype}")
++        mean, std = constants
++        output = tensor if self.inplace else tensor.clone()
++        output.sub_(mean).div_(std)
++        return output
++
++
++def _configure_video_vae_graph_safe_revert(model: nn.Module, device: torch.device) -> bool:
++    if not _env_enabled(MINIMAX_H3_A6000_VIDEO_VAE_GRAPH_SAFE_REVERT_ENV):
++        return False
++    processor = getattr(model, "processor", None)
++    if processor is None or not hasattr(processor, "transform_rev"):
++        raise RuntimeError(
++            "MINIMAX_H3_A6000_VIDEO_VAE_GRAPH_SAFE_REVERT=1 was requested, "
++            "but the MiniMax-H3 video VAE model has no processor.transform_rev"
++        )
++    transform_rev = processor.transform_rev
++    if isinstance(transform_rev, _A6000GraphSafeNormalize):
++        return True
++    original = getattr(processor, "_a6000_original_transform_rev", transform_rev)
++    processor._a6000_original_transform_rev = original
++    processor.transform_rev = _A6000GraphSafeNormalize(original, device=torch.device(device))
++    return True
+ 
+ 
+ def _load_component_config(component_path: str) -> dict[str, Any]:
+@@ -132,6 +268,12 @@ class MiniMaxH3VideoVAE(nn.Module, DistributedVaeMixin):
+                 pin_memory=True,
+             )
+         self.model = self.remote.model
++        self.a6000_video_vae_spatial_tile_batching = _configure_video_vae_spatial_tile_batching(self.model)
++        self.a6000_video_vae_tile_batch_size = _configure_video_vae_bounded_tile_batching(self.model)
++        self.a6000_video_vae_graph_safe_revert = _configure_video_vae_graph_safe_revert(
++            self.model,
++            torch.device(device),
++        )
+         self.use_tiling = True
+         self.use_slicing = False
+         self.parallel_size = 1
+@@ -142,6 +284,11 @@ class MiniMaxH3VideoVAE(nn.Module, DistributedVaeMixin):
+             self._stager.load()
+         else:
+             self.remote.to(self._device_target)
++        if _env_enabled(MINIMAX_H3_A6000_VIDEO_VAE_GRAPH_SAFE_REVERT_ENV):
++            self.a6000_video_vae_graph_safe_revert = _configure_video_vae_graph_safe_revert(
++                self.model,
++                torch.device(self._device_target),
++            )
+ 
+     def offload_to_cpu(self) -> None:
+         if self._stager is not None:

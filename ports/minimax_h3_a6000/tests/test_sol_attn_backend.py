@@ -102,6 +102,7 @@ def test_env_switches_are_default_off():
     assert DEFAULT_ENV_SWITCHES.get("MINIMAX_H3_A6000_SOL_ATTN_ADAPTIVE_STEP_MAX") == ""
     assert DEFAULT_ENV_SWITCHES.get("MINIMAX_H3_A6000_SOL_ATTN_ADAPTIVE_LAYER_MIN") == ""
     assert DEFAULT_ENV_SWITCHES.get("MINIMAX_H3_A6000_SOL_ATTN_ADAPTIVE_LAYER_MAX") == ""
+    assert DEFAULT_ENV_SWITCHES.get("MINIMAX_H3_A6000_SOL_ATTN_ADAPTIVE_LAYER_RANGE_SCOPE") == "all_adaptive_steps"
     assert DEFAULT_ENV_SWITCHES.get("MINIMAX_H3_A6000_SOL_ATTN_STRIDE_AWARE_V") == "0"
     assert DEFAULT_ENV_SWITCHES.get("MINIMAX_H3_A6000_SOL_ATTN_EXACT_PREFIX_QUERY") == "0"
     assert DEFAULT_ENV_SWITCHES.get("MINIMAX_H3_A6000_SOL_ATTN_SKIP_FULL_PREFIX_BLOCKS") == "0"
@@ -133,6 +134,7 @@ def test_sol_attn_policy_from_env_reads_diagnostic_dense_gate_override():
         "MINIMAX_H3_A6000_SOL_ATTN_ADAPTIVE_STEP_MAX": "6",
         "MINIMAX_H3_A6000_SOL_ATTN_ADAPTIVE_LAYER_MIN": "8",
         "MINIMAX_H3_A6000_SOL_ATTN_ADAPTIVE_LAYER_MAX": "47",
+        "MINIMAX_H3_A6000_SOL_ATTN_ADAPTIVE_LAYER_RANGE_SCOPE": "step_min_only",
         "MINIMAX_H3_A6000_SOL_ATTN_EXACT_PREFIX_QUERY": "1",
         "MINIMAX_H3_A6000_SOL_ATTN_SKIP_FULL_PREFIX_BLOCKS": "1",
         "MINIMAX_H3_A6000_SOL_ATTN_STATIC_PREFIX_SINK": "1",
@@ -155,6 +157,7 @@ def test_sol_attn_policy_from_env_reads_diagnostic_dense_gate_override():
     assert policy.adaptive_step_max == 6
     assert policy.adaptive_layer_min == 8
     assert policy.adaptive_layer_max == 47
+    assert policy.adaptive_layer_range_scope == "step_min_only"
     assert policy.exact_prefix_query is True
     assert policy.skip_full_prefix_blocks is True
     assert policy.static_prefix_sink is True
@@ -187,6 +190,7 @@ def test_adaptive_routing_env_is_default_off_and_invalid_values_fail_closed():
         "MINIMAX_H3_A6000_SOL_ATTN_ADAPTIVE_STEP_MIN": "7",
         "MINIMAX_H3_A6000_SOL_ATTN_ADAPTIVE_STEP_MAX": "2",
         "MINIMAX_H3_A6000_SOL_ATTN_ADAPTIVE_LAYER_MIN": "-1",
+        "MINIMAX_H3_A6000_SOL_ATTN_ADAPTIVE_LAYER_RANGE_SCOPE": "bad",
     }
     policy = SolAttnPolicy.from_env(env)
     q, k, v = _qkv(tokens=6)
@@ -203,7 +207,7 @@ def test_adaptive_routing_env_is_default_off_and_invalid_values_fail_closed():
     )
     assert reason == (
         "unsupported_adaptive_routing_policy:"
-        "tau_not_finite;unsupported_threshold_type;adaptive_layer_min_negative;adaptive_step_range_invalid"
+        "tau_not_finite;unsupported_threshold_type;adaptive_layer_min_negative;adaptive_step_range_invalid;unsupported_adaptive_layer_range_scope"
     )
 
 
@@ -232,6 +236,38 @@ def test_guarded_adaptive_routing_uses_retained_tau_outside_guard_and_records_ac
     assert active.adaptive_routing is True and active.tau == 1.5
     assert layer_reason == "layer_before_adaptive_min"
     assert protected_layer.adaptive_routing is False and protected_layer.tau == 1.0
+
+
+def test_step_min_only_layer_scope_preserves_r10_after_step2():
+    policy = SolAttnPolicy.from_env(
+        {
+            "MINIMAX_H3_A6000_ENABLE_OVERLAY": "1",
+            "MINIMAX_H3_A6000_ENABLE_TRITON_CANDIDATES": "1",
+            "MINIMAX_H3_A6000_ENABLE_SOL_ATTN": "1",
+            "MINIMAX_H3_A6000_SOL_ATTN_ADAPTIVE_ROUTING": "1",
+            "MINIMAX_H3_A6000_SOL_ATTN_TAU": "1.5",
+            "MINIMAX_H3_A6000_SOL_ATTN_THRESH_TYPE": "diag",
+            "MINIMAX_H3_A6000_SOL_ATTN_ADAPTIVE_PROFILE": "r12_adaptive_tau1_5_step2_layers34_49_diag",
+            "MINIMAX_H3_A6000_SOL_ATTN_ADAPTIVE_STEP_MIN": "2",
+            "MINIMAX_H3_A6000_SOL_ATTN_ADAPTIVE_LAYER_MIN": "34",
+            "MINIMAX_H3_A6000_SOL_ATTN_ADAPTIVE_LAYER_MAX": "49",
+            "MINIMAX_H3_A6000_SOL_ATTN_ADAPTIVE_LAYER_RANGE_SCOPE": "step_min_only",
+        }
+    )
+
+    early_step, early_reason = effective_sol_attn_policy_for_call(policy, step_index=1, layer_index=40)
+    protected_step2, protected_reason = effective_sol_attn_policy_for_call(policy, step_index=2, layer_index=20)
+    active_step2, active_step2_reason = effective_sol_attn_policy_for_call(policy, step_index=2, layer_index=40)
+    r10_preserved_after_step2, after_reason = effective_sol_attn_policy_for_call(policy, step_index=3, layer_index=20)
+
+    assert early_reason == "step_before_adaptive_min"
+    assert early_step.adaptive_routing is False and early_step.tau == 1.0
+    assert protected_reason == "layer_before_adaptive_min"
+    assert protected_step2.adaptive_routing is False and protected_step2.tau == 1.0
+    assert active_step2_reason is None
+    assert active_step2.adaptive_routing is True and active_step2.tau == 1.5
+    assert after_reason is None
+    assert r10_preserved_after_step2.adaptive_routing is True and r10_preserved_after_step2.tau == 1.5
 
 
 def test_guarded_adaptive_routing_telemetry_marks_guard_active_and_inactive(monkeypatch):

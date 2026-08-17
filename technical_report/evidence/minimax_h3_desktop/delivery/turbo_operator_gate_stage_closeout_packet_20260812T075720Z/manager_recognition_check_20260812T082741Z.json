@@ -1,0 +1,508 @@
+{
+  "canonical_paths": {
+    "canonical_closeout_packet": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z",
+    "delivery_summary": "technical_report/evidence/minimax_h3_desktop/delivery/argus_ir04_delivery_summary.json",
+    "final_report": "technical_report/final_technical_report.md",
+    "latest_pointer": "technical_report/evidence/minimax_h3_desktop/delivery/LATEST_TURBO_OPERATOR_GATE_REVIEWER_PACKET",
+    "latest_pointer_target": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z",
+    "manager_reviewer_handoff_crosswalk": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/manager_reviewer_handoff_crosswalk.json",
+    "manager_stage_closeout_crosswalk": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/manager_stage_closeout_crosswalk.json",
+    "manager_visibility_resolution": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/manager_visibility_resolution.json",
+    "media_listening_manifest": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/media_listening_manifest.json",
+    "package_manifest": "technical_report/evidence/minimax_h3_desktop/delivery/package_manifest.json",
+    "reviewer_verdict": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/reviewer_verdict.json",
+    "sealed_reviewer_handoff": "<private-path>"
+  },
+  "diagnosis": "No project-local recognition mismatch was found across the canonical packet, reviewer verdict, sealed Reviewer handoff, Manager crosswalks, delivery summary, final report, package manifest, export/audit/private-sync evidence, and 24-case Turbo operator-listening manifest. If Manager still rejects the stage transition, the missing recognized field is outside this checked local evidence chain and should be identified by the independent Reviewer/Manager.",
+  "failed_requirements": [],
+  "generated_at_utc": "20260812T082741Z",
+  "manager_must_recognize": [
+    "latest_pointer_resolves_to_canonical_packet",
+    "canonical_packet_core_files_present",
+    "packet_summary_accepts_current_stage_boundary",
+    "reviewer_verdict_is_current_stage_accepted_and_independent",
+    "sealed_reviewer_handoff_source_valid",
+    "manager_crosswalks_are_pass_and_visible",
+    "delivery_summary_recognizes_operator_gate",
+    "final_report_references_canonical_boundary",
+    "package_manifest_includes_recognized_chain",
+    "formal_export_publication_private_sync_pass",
+    "turbo_listening_manifest_is_operator_only_24_case",
+    "operator_only_boundary_not_overclaimed"
+  ],
+  "manager_rejection_fingerprint": "Manager reports delivery-stage transition rejected because required Reviewer evidence is incomplete, despite local reports pointing to an accepted Turbo operator-only residual closeout packet.",
+  "mismatch_count": 0,
+  "non_claims": [
+    "No GPU, Docker, model-load, benchmark, Turbo rerun, Sol-Attn rerun, DLO/DMD exploration, public release, public tag, force-push, or subjective listening is performed by this check.",
+    "This check does not certify human auditory quality, semantic AV quality, or semantic AV-sync.",
+    "Turbo remains practical_disclosed_approx and is not BF16 fidelity evidence.",
+    "The check is an Engineer-side recognition/crosswalk verifier, not an independent Reviewer verdict."
+  ],
+  "operator_only_residual": {
+    "agent_subjective_listening_performed": false,
+    "av_sync_certified": false,
+    "engineer_can_complete_remaining_gate": false,
+    "only_remaining_gate": "operator_human_auditory_listening_and_semantic_av_sync_review_for_Turbo_quality_certification",
+    "semantic_av_quality_certified": false,
+    "status": "operator_action_required"
+  },
+  "ready_for_manager_recognition": true,
+  "recognition_requirements": [
+    {
+      "description": "Manager must resolve the canonical latest Turbo operator-gate packet from the project-local pointer.",
+      "evidence_paths": [
+        "technical_report/evidence/minimax_h3_desktop/delivery/LATEST_TURBO_OPERATOR_GATE_REVIEWER_PACKET",
+        "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z"
+      ],
+      "expected": {
+        "latest_pointer_resolves_to_existing_directory": true,
+        "resolved_packet": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z"
+      },
+      "key": "latest_pointer_resolves_to_canonical_packet",
+      "observed": {
+        "latest_pointer_text": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z",
+        "resolved_packet": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z"
+      },
+      "status": "pass"
+    },
+    {
+      "description": "The canonical packet must contain the closeout summary, reviewer verdict, reviewer packet, Manager crosswalks, and 24-case listening manifest.",
+      "evidence_paths": [
+        "technical_report/evidence/minimax_h3_desktop/delivery/LATEST_TURBO_OPERATOR_GATE_REVIEWER_PACKET",
+        "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/summary.json",
+        "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/reviewer_verdict.json",
+        "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/manager_reviewer_handoff_crosswalk.json",
+        "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/manager_stage_closeout_crosswalk.json",
+        "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/manager_visibility_resolution.json",
+        "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/media_listening_manifest.json",
+        "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/reviewer_packet.md"
+      ],
+      "expected": [
+        "technical_report/evidence/minimax_h3_desktop/delivery/LATEST_TURBO_OPERATOR_GATE_REVIEWER_PACKET",
+        "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/summary.json",
+        "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/reviewer_verdict.json",
+        "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/manager_reviewer_handoff_crosswalk.json",
+        "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/manager_stage_closeout_crosswalk.json",
+        "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/manager_visibility_resolution.json",
+        "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/media_listening_manifest.json",
+        "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/reviewer_packet.md"
+      ],
+      "key": "canonical_packet_core_files_present",
+      "observed": {
+        "technical_report/evidence/minimax_h3_desktop/delivery/LATEST_TURBO_OPERATOR_GATE_REVIEWER_PACKET": true,
+        "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/manager_reviewer_handoff_crosswalk.json": true,
+        "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/manager_stage_closeout_crosswalk.json": true,
+        "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/manager_visibility_resolution.json": true,
+        "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/media_listening_manifest.json": true,
+        "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/reviewer_packet.md": true,
+        "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/reviewer_verdict.json": true,
+        "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/summary.json": true
+      },
+      "status": "pass"
+    },
+    {
+      "description": "Packet summary must accept the current delivery boundary while leaving subjective quality operator-only.",
+      "evidence_paths": [
+        "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/summary.json"
+      ],
+      "expected": {
+        "accepted_for_current_stage_closing": true,
+        "automatable_delivery_gates_complete": true,
+        "status": "accepted_current_stage_delivery_boundary"
+      },
+      "key": "packet_summary_accepts_current_stage_boundary",
+      "observed": {
+        "accepted_for_current_stage_closing": true,
+        "automatable_delivery_gates_complete": true,
+        "status": "accepted_current_stage_delivery_boundary"
+      },
+      "status": "pass"
+    },
+    {
+      "description": "Reviewer verdict must be the current-stage accepted verdict and must not be an Engineer self-approval.",
+      "evidence_paths": [
+        "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/reviewer_verdict.json"
+      ],
+      "expected": {
+        "status": "accepted_current_stage_delivery_reviewer_passed",
+        "verdict_is_independent": true
+      },
+      "key": "reviewer_verdict_is_current_stage_accepted_and_independent",
+      "observed": {
+        "status": "accepted_current_stage_delivery_reviewer_passed",
+        "verdict_is_independent": true
+      },
+      "status": "pass"
+    },
+    {
+      "description": "The repo verdict must point to an actual sealed Reviewer handoff with review.status=done.",
+      "evidence_paths": [
+        "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/reviewer_verdict.json",
+        "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/manager_reviewer_handoff_crosswalk.json",
+        "<private-path>"
+      ],
+      "expected": {
+        "kind": "round_reviewed_handoff",
+        "producer_role": "reviewer",
+        "review_status": "done",
+        "source_file_exists": true
+      },
+      "key": "sealed_reviewer_handoff_source_valid",
+      "observed": {
+        "sealed_file_kind": "round_reviewed_handoff",
+        "sealed_file_producer_role": "reviewer",
+        "sealed_file_review_status": "done",
+        "source": {
+          "frontier_disposition": "continue",
+          "kind": "round_reviewed_handoff",
+          "mission_id": "a0499db4322d",
+          "path": "<private-path>",
+          "producer_role": "reviewer",
+          "review_status": "done",
+          "round": 1,
+          "summary": "Current-stage delivery Reviewer evidence is now complete for the automatable Turbo operator-gate boundary; the only residual Turbo quality-certification gate is operator human auditory/semantic AV-sync review."
+        },
+        "source_file_exists": true
+      },
+      "status": "pass"
+    },
+    {
+      "description": "Manager-facing crosswalks must expose the repaired Reviewer chain and recognition fields in the canonical packet.",
+      "evidence_paths": [
+        "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/manager_reviewer_handoff_crosswalk.json",
+        "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/manager_stage_closeout_crosswalk.json",
+        "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/manager_visibility_resolution.json"
+      ],
+      "expected": {
+        "canonical_latest_packet_has_complete_reviewer_verdict": true,
+        "manager_reviewer_handoff_crosswalk.status": "pass",
+        "manager_stage_closeout_crosswalk.status": "pass_*",
+        "manager_visibility_resolution.status": "pass_*"
+      },
+      "key": "manager_crosswalks_are_pass_and_visible",
+      "observed": {
+        "manager_reviewer_handoff_crosswalk.status": "pass",
+        "manager_stage_closeout_crosswalk.status": "pass_canonical_latest_closeout_packet_has_reviewer_verdict",
+        "manager_visibility_resolution.status": "pass_canonical_latest_closeout_packet_has_complete_reviewer_verdict",
+        "stage_fields": {
+          "agent_subjective_listening_performed": false,
+          "automatable_delivery_evidence_complete": true,
+          "av_sync_certified": false,
+          "current_manager_visible_packet_has_complete_reviewer_verdict": true,
+          "current_manager_visible_packet_has_valid_sealed_reviewer_handoff_crosswalk": true,
+          "engineer_can_complete_remaining_gate": false,
+          "no_automatable_delivery_evidence_missing": true,
+          "only_remaining_gate": "operator_human_auditory_listening_and_semantic_av_sync_review_for_Turbo_quality_certification",
+          "remaining_gate_is_operator_only": true,
+          "semantic_av_quality_certified": false
+        },
+        "visibility_fields": {
+          "agent_subjective_listening_performed": false,
+          "automatable_delivery_evidence_complete": true,
+          "av_sync_certified": false,
+          "canonical_latest_packet_has_complete_reviewer_verdict": true,
+          "canonical_latest_packet_has_valid_sealed_reviewer_handoff_crosswalk": true,
+          "only_remaining_gate": "operator_human_auditory_listening_and_semantic_av_sync_review_for_Turbo_quality_certification",
+          "remaining_gate_is_operator_only": true,
+          "semantic_av_quality_certified": false
+        }
+      },
+      "status": "pass"
+    },
+    {
+      "description": "Strict delivery summary must surface the same accepted current-stage Reviewer packet and final gates pass.",
+      "evidence_paths": [
+        "technical_report/evidence/minimax_h3_desktop/delivery/argus_ir04_delivery_summary.json"
+      ],
+      "expected": {
+        "agent_subjective_listening_performed": false,
+        "final_gates.status": "pass",
+        "reviewer_status": "accepted_current_stage_delivery_reviewer_passed",
+        "status": "pass_strict_evidence_grounded",
+        "turbo_operator_gate_reviewer_packet.accepted_for_current_stage_closing": true
+      },
+      "key": "delivery_summary_recognizes_operator_gate",
+      "observed": {
+        "final_gates.status": "pass",
+        "gate": {
+          "accepted_for_current_stage_closing": true,
+          "agent_subjective_listening_performed": false,
+          "automatable_delivery_gates_complete": true,
+          "av_sync_certified": false,
+          "claim_boundary": "current delivery-stage automatable evidence crosswalk: strict delivery summary, final report boundary, CPU/static/export/publication/private-sync gates, Turbo 24-case operator-listening manifest, canonical closeout reviewer_verdict.json, sealed Reviewer handoff crosswalk, and package manifest inclusion after regeneration; no GPU, Docker, model load, subjective listening, public release, tag, or force push is introduced",
+          "exact_manager_hold_repair": "The timestamp-latest closeout packet now directly contains reviewer_verdict.json with status accepted_current_stage_delivery_reviewer_passed and manager_reviewer_handoff_crosswalk.json linking that verdict to the sealed independent Reviewer handoff. The LATEST_TURBO_OPERATOR_GATE_REVIEWER_PACKET pointer resolves to this closeout packet, eliminating the previous request-only/latest-packet ambiguity.",
+          "human_auditory_semantic_av_sync_gate": "operator_action_required",
+          "latest_pointer": "technical_report/evidence/minimax_h3_desktop/delivery/LATEST_TURBO_OPERATOR_GATE_REVIEWER_PACKET",
+          "manager_hold_diagnosis": "A timestamp-latest closeout directory existed with only reviewer_verdict_request.json, so a Manager could classify current-stage Reviewer evidence as incomplete even though the prior stage-closing packet had accepted Reviewer evidence. This repair makes the closeout packet itself canonical and gives it a complete reviewer_verdict.json plus sealed handoff crosswalk.",
+          "manager_recognition_check_mismatch_count": 0,
+          "manager_recognition_check_path": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/manager_recognition_check_20260812T082741Z.json",
+          "manager_recognition_check_ready": true,
+          "manager_recognition_check_status": "pass",
+          "manager_recognition_repair_path": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/manager_reviewer_handoff_crosswalk.json",
+          "manager_stage_closeout_crosswalk_path": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/manager_stage_closeout_crosswalk.json",
+          "manager_visibility_resolution_path": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/manager_visibility_resolution.json",
+          "media_listening_manifest_path": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/media_listening_manifest.json",
+          "operator_listening_manifest_case_count": 24,
+          "packet_dir": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z",
+          "reviewer_handoff_source": {
+            "frontier_disposition": "continue",
+            "kind": "round_reviewed_handoff",
+            "mission_id": "a0499db4322d",
+            "path": "<private-path>",
+            "producer_role": "reviewer",
+            "review_status": "done",
+            "round": 1,
+            "summary": "Current-stage delivery Reviewer evidence is now complete for the automatable Turbo operator-gate boundary; the only residual Turbo quality-certification gate is operator human auditory/semantic AV-sync review."
+          },
+          "reviewer_handoff_source_valid": true,
+          "reviewer_packet_path": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/reviewer_packet.md",
+          "reviewer_status": "accepted_current_stage_delivery_reviewer_passed",
+          "reviewer_verdict_independent": true,
+          "reviewer_verdict_path": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/reviewer_verdict.json",
+          "reviewer_verdict_request_path": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/reviewer_verdict_request.json",
+          "semantic_av_quality_certified": false,
+          "status": "accepted_current_stage_delivery_boundary",
+          "summary_path": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/summary.json"
+        },
+        "status": "pass_strict_evidence_grounded"
+      },
+      "status": "pass"
+    },
+    {
+      "description": "Final report must name the canonical packet, accepted reviewer status, and operator-only residual without certifying subjective quality.",
+      "evidence_paths": [
+        "technical_report/final_technical_report.md"
+      ],
+      "expected": {
+        "agent_subjective_listening_performed=False": true,
+        "av_sync_certified=False": true,
+        "canonical_packet_path_present": true,
+        "operator_action_required_present": true,
+        "reviewer_status_present": "accepted_current_stage_delivery_reviewer_passed",
+        "semantic_av_quality_certified=False": true
+      },
+      "key": "final_report_references_canonical_boundary",
+      "observed": {
+        "agent_subjective_listening_performed=False": true,
+        "av_sync_certified=False": true,
+        "canonical_packet_path_present": true,
+        "operator_action_required_present": true,
+        "reviewer_status_present": true,
+        "semantic_av_quality_certified=False": true
+      },
+      "status": "pass"
+    },
+    {
+      "description": "Package manifest must include the canonical pointer, packet files, delivery summary, and final report after regeneration.",
+      "evidence_paths": [
+        "technical_report/evidence/minimax_h3_desktop/delivery/package_manifest.json",
+        "technical_report/evidence/minimax_h3_desktop/delivery/LATEST_TURBO_OPERATOR_GATE_REVIEWER_PACKET",
+        "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/summary.json",
+        "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/reviewer_verdict.json",
+        "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/manager_reviewer_handoff_crosswalk.json",
+        "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/manager_stage_closeout_crosswalk.json",
+        "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/manager_visibility_resolution.json",
+        "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/media_listening_manifest.json",
+        "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/reviewer_packet.md",
+        "technical_report/evidence/minimax_h3_desktop/delivery/argus_ir04_delivery_summary.json",
+        "technical_report/final_technical_report.md"
+      ],
+      "expected": [
+        "technical_report/evidence/minimax_h3_desktop/delivery/LATEST_TURBO_OPERATOR_GATE_REVIEWER_PACKET",
+        "technical_report/evidence/minimax_h3_desktop/delivery/argus_ir04_delivery_summary.json",
+        "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/manager_reviewer_handoff_crosswalk.json",
+        "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/manager_stage_closeout_crosswalk.json",
+        "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/manager_visibility_resolution.json",
+        "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/media_listening_manifest.json",
+        "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/reviewer_packet.md",
+        "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/reviewer_verdict.json",
+        "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/summary.json",
+        "technical_report/final_technical_report.md"
+      ],
+      "key": "package_manifest_includes_recognized_chain",
+      "observed": {
+        "entry_count": 120,
+        "missing": []
+      },
+      "status": "pass"
+    },
+    {
+      "description": "Strict audit/export/package/private sync evidence must remain pass, private, non-force, and no public tag/release.",
+      "evidence_paths": [
+        "technical_report/evidence/minimax_h3_desktop/delivery/argus_ir04_delivery_summary.json",
+        "technical_report/evidence/minimax_h3_desktop/delivery/formal_n10_cpu_sync_export_audit_20260812T065502Z/summary.json",
+        "technical_report/evidence/minimax_h3_desktop/delivery/private_github_sync_push_20260812T065721Z/summary.json"
+      ],
+      "expected": {
+        "formal_gate.status": "pass",
+        "no_public_release_or_tag": true,
+        "private_push_mode": "non_force",
+        "private_push_status": "success",
+        "publication_audit_status": "pass",
+        "publication_issue_count": 0,
+        "push_performed": true,
+        "reviewer_status": "accepted_independent_reviewer_passed"
+      },
+      "key": "formal_export_publication_private_sync_pass",
+      "observed": {
+        "delivery_summary_formal_gate": {
+          "dir": "delivery/formal_n10_cpu_sync_export_audit_20260812T065502Z",
+          "export_file_count": 89,
+          "publication_audit_status": "pass",
+          "publication_issue_count": 0,
+          "push_performed": true,
+          "reviewer_status": "accepted_independent_reviewer_passed",
+          "status": "pass",
+          "summary_path": "delivery/formal_n10_cpu_sync_export_audit_20260812T065502Z/summary.json"
+        },
+        "formal_summary": {
+          "export_file_count": 89,
+          "formal_n10_release_evidence_paths": [
+            "technical_report/evidence/minimax_h3_desktop/sol_engine_port/sol_attn_h3_formal_n10_r8_n10_20260812T031757Z/formal_n10_decision.json",
+            "technical_report/evidence/minimax_h3_desktop/sol_engine_port/sol_attn_h3_formal_n10_r8_n10_20260812T031757Z/formal_n10_summary.json",
+            "technical_report/evidence/minimax_h3_desktop/sol_engine_port/sol_attn_h3_formal_n10_r8_n10_20260812T031757Z/timing_summary.json",
+            "technical_report/evidence/minimax_h3_desktop/sol_engine_port/sol_attn_h3_formal_n10_r8_n10_20260812T031757Z/quality_proxy_comparison.json",
+            "technical_report/evidence/minimax_h3_desktop/sol_engine_port/sol_attn_h3_formal_n10_r8_n10_20260812T031757Z/resource_summary.json"
+          ],
+          "formal_n10_status": "accepted_formal_n10_same_gpu_sol_attn_speed_candidate",
+          "publication_audit_status": "pass",
+          "publication_issue_count": 0,
+          "push_mode": "non_force",
+          "push_performed": true,
+          "push_scope": "existing_private_github_main_after_fresh_zero_issue_export_publication_audit",
+          "release_tree_contains_formal_n10_evidence": true,
+          "release_tree_contains_matched_route_evidence": true,
+          "reviewer_status": "accepted_independent_reviewer_passed",
+          "reviewer_verdict": {
+            "handoff_id": "09c04530aea3",
+            "round": 10,
+            "status": "done",
+            "summary": "Formal r8 Sol-Attn N>=10 independently accepted with lane boundaries preserved"
+          },
+          "schema_version": "argus_ir04_formal_n10_cpu_sync_export_audit_v2",
+          "scope": "post-review formal-N10 report-sync export/publication audit plus non-force private-main sync; no GPU, Docker, model-load, new fidelity claim, public release, tag, force-push, or history rewrite action",
+          "status": "pass",
+          "terminal_classification_path": "technical_report/evidence/minimax_h3_desktop/delivery/formal_n10_terminal_sync_20260812T063558Z/formal_n10_terminal_classification.json"
+        },
+        "private_sync": {
+          "branch": "main",
+          "checks": [
+            {
+              "name": "publication_audit_on_fresh_export",
+              "path": "technical_report/evidence/minimax_h3_desktop/delivery/formal_n10_cpu_sync_export_audit_20260812T065502Z/private_sync_publication_audit.json",
+              "status": "pass"
+            },
+            {
+              "name": "publication_audit_on_private_release_tree",
+              "path": "technical_report/evidence/minimax_h3_desktop/delivery/formal_n10_cpu_sync_export_audit_20260812T065502Z/private_tree_publication_audit.json",
+              "status": "pass"
+            },
+            {
+              "name": "release_tree_py_compile",
+              "status": "pass"
+            },
+            {
+              "name": "release_tree_focused_pytest",
+              "status": "pass",
+              "summary": "18 passed"
+            },
+            {
+              "name": "remote_fast_forward_sync",
+              "status": "pass",
+              "summary": "origin/main...main counts 0/0 after non-force push"
+            }
+          ],
+          "clean_status": "clean",
+          "formal_n10_post_review_audit": "technical_report/evidence/minimax_h3_desktop/delivery/formal_n10_cpu_sync_export_audit_20260812T065502Z",
+          "no_public_release_or_tag": true,
+          "opaque_identifier_policy": "No commit IDs, checksums, digests, or object identifiers are recorded as evidence in this push provenance.",
+          "push_command": "git push origin main",
+          "push_mode": "non_force",
+          "push_status": "success",
+          "recorded_at_utc": "20260812T065721Z",
+          "release_marker_present": true,
+          "release_tree_file_count_excluding_git": 89,
+          "remote_branch": "main",
+          "remote_name": "origin",
+          "remote_sync_counts": {
+            "local_only": 0,
+            "origin_only": 0,
+            "raw": "0\t0"
+          },
+          "remote_url": "https://github.com/Argus-AiTeam/minimax-h3-desktop.git",
+          "schema_version": "argus-ir04-private-github-sync-provenance-v2",
+          "worktree": "<private-path>"
+        }
+      },
+      "status": "pass"
+    },
+    {
+      "description": "Turbo listening manifest must cover all 24 structural AV cases while leaving listening and semantic AV-sync as operator action.",
+      "evidence_paths": [
+        "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/media_listening_manifest.json"
+      ],
+      "expected": {
+        "all_cases_structural_av_pass": true,
+        "all_media_files_nontrivial": true,
+        "all_media_files_present": true,
+        "audio_semantic_listening_status": "operator_action_required for every case",
+        "case_count": 24,
+        "listed_cases": 24,
+        "semantic_av_sync_status": "operator_action_required for every case",
+        "subjective_quality_certified_any_case": false
+      },
+      "key": "turbo_listening_manifest_is_operator_only_24_case",
+      "observed": {
+        "case_count": 24,
+        "declared_all_cases_structural_av_pass": true,
+        "declared_all_media_files_nontrivial": true,
+        "declared_all_media_files_present": true,
+        "listed_cases": 24,
+        "missing_or_trivial_media_case_ids": [],
+        "semantic_or_sync_not_operator_required_case_ids": [],
+        "structural_fail_case_ids": [],
+        "subjective_certified_case_ids": []
+      },
+      "status": "pass"
+    },
+    {
+      "description": "The chain must state agent_subjective_listening_performed=false and must not certify semantic AV, AV-sync, human auditory quality, BF16 Turbo fidelity, or public release.",
+      "evidence_paths": [
+        "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/summary.json",
+        "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/reviewer_verdict.json"
+      ],
+      "expected": {
+        "agent_subjective_listening_performed": false,
+        "av_sync_certified": false,
+        "semantic_av_quality_certified": false,
+        "turbo_track": "practical_disclosed_approx"
+      },
+      "key": "operator_only_boundary_not_overclaimed",
+      "observed": {
+        "packet_summary": {
+          "agent_subjective_listening_performed": false,
+          "av_sync_certified": false,
+          "semantic_av_quality_certified": false,
+          "turbo_track": "practical_disclosed_approx"
+        },
+        "reviewer_verdict_boundary_covered": {
+          "agent_subjective_listening_performed": false,
+          "automatable_delivery_gates_complete": true,
+          "av_sync_certified": false,
+          "delivery_summary_final_gates_pass": true,
+          "delivery_summary_strict_pass": true,
+          "final_report_preserves_operator_only_boundary": true,
+          "formal_sync_export_publication_private_sync_pass": true,
+          "operator_human_auditory_semantic_av_sync_review_remains_pending": true,
+          "package_manifest_includes_canonical_closeout_packet_after_regeneration": true,
+          "private_github_sync_non_force_private_no_tag": true,
+          "semantic_av_quality_certified": false,
+          "turbo_track_practical_disclosed_approx": true
+        }
+      },
+      "status": "pass"
+    }
+  ],
+  "schema_version": "argus-ir04-delivery-reviewer-recognition-check-v1",
+  "status": "pass"
+}

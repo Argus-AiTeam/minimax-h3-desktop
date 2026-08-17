@@ -1,0 +1,44 @@
+diff --git a/vllm_omni/diffusion/models/minimax_h3/vae.py b/vllm_omni/diffusion/models/minimax_h3/vae.py
+index e28450c9..63a7ddcd 100644
+--- a/vllm_omni/diffusion/models/minimax_h3/vae.py
++++ b/vllm_omni/diffusion/models/minimax_h3/vae.py
+@@ -5,6 +5,7 @@ from __future__ import annotations
+ 
+ import importlib
+ import json
++import os
+ from contextlib import AbstractContextManager
+ from pathlib import Path
+ from typing import Any
+@@ -26,6 +27,23 @@ from .packed_tokens import minimax_h3_patchify_video_latent
+ MINIMAX_H3_KEYFRAME_ENCODE_SEED = 42
+ MINIMAX_H3_AUDIO_SAMPLE_RATE = 32000
+ MINIMAX_H3_AUDIO_CHANNELS = 2
++MINIMAX_H3_A6000_VIDEO_VAE_SPATIAL_TILE_BATCHING_ENV = "MINIMAX_H3_A6000_VIDEO_VAE_SPATIAL_TILE_BATCHING"
++
++
++def _env_enabled(name: str) -> bool:
++    return str(os.environ.get(name, "0")).strip().lower() in {"1", "true", "yes", "on"}
++
++
++def _configure_video_vae_spatial_tile_batching(model: nn.Module) -> bool:
++    if not _env_enabled(MINIMAX_H3_A6000_VIDEO_VAE_SPATIAL_TILE_BATCHING_ENV):
++        return False
++    if not hasattr(model, "stack_tiling"):
++        raise RuntimeError(
++            "MINIMAX_H3_A6000_VIDEO_VAE_SPATIAL_TILE_BATCHING=1 was requested, "
++            "but the MiniMax-H3 video VAE remote model has no stack_tiling switch"
++        )
++    model.stack_tiling = True
++    return True
+ 
+ 
+ def _load_component_config(component_path: str) -> dict[str, Any]:
+@@ -132,6 +150,7 @@ class MiniMaxH3VideoVAE(nn.Module, DistributedVaeMixin):
+                 pin_memory=True,
+             )
+         self.model = self.remote.model
++        self.a6000_video_vae_spatial_tile_batching = _configure_video_vae_spatial_tile_batching(self.model)
+         self.use_tiling = True
+         self.use_slicing = False
+         self.parallel_size = 1

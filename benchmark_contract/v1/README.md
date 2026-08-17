@@ -22,7 +22,7 @@ The pinned open-source path does **not** currently support native 30- or 60-seco
 - [`../../tools/validate_benchmark_record.py`](../../tools/validate_benchmark_record.py): fail-closed semantic validator.
 - [`lane-manifests/native-short-1344x768-124f-24fps-v1.json`](lane-manifests/native-short-1344x768-124f-24fps-v1.json): accepted short-cell identity, no rerun.
 - [`lane-manifests/final-av-30s-1344x768-24fps-v1.json`](lane-manifests/final-av-30s-1344x768-24fps-v1.json): 30-second extension workload/assembly manifest; the accepted r10 formal result is recorded separately.
-- [`lane-manifests/final-av-60s-1344x768-24fps-v1.json`](lane-manifests/final-av-60s-1344x768-24fps-v1.json): **unmeasured** 60-second extension lane.
+- [`lane-manifests/final-av-60s-1344x768-24fps-v1.json`](lane-manifests/final-av-60s-1344x768-24fps-v1.json): 60-second extension workload manifest; a separate matched N=1 run completed as **descriptive/no-promotion** evidence, not a formal speedup.
 - [`normalized-records/`](normalized-records/): bounded normalized records derived from accepted BF16, Turbo, Sol-Attn short-clip, and r10 30-second final-AV evidence. Explicit unavailable fields are not measurements.
 
 ## Frozen lanes / 冻结路线
@@ -31,7 +31,7 @@ The pinned open-source path does **not** currently support native 30- or 60-seco
 |---|---:|---:|---|---|
 | Native short | 1344×768, 124 frames, 24 FPS | 32 kHz stereo; historical AAC decode count 166,912 samples/channel | `native_short_clip` | accepted historical evidence exists |
 | Final AV 30 s | 1344×768, exactly 720 frames | exactly 960,000 effective samples/channel | `extension`, 6 source chunks | accepted bounded r10 formal N=10 timing/structural result exists; not native long context or human-quality certification |
-| Final AV 60 s | 1344×768, exactly 1,440 frames | exactly 1,920,000 effective samples/channel | `extension`, 12 source chunks | **unmeasured** |
+| Final AV 60 s | 1344×768, exactly 1,440 frames | exactly 1,920,000 effective samples/channel | `extension`, 12 source chunks | matched N=1 complete: r10 2682.008 s vs r9 2802.991 s; descriptive/no-promotion because both lanes triggered the frozen-transition proxy flag |
 
 For extension assembly, chunk 1 retains source frames `[0,120)`; later chunks retain `[1,121)` because source frame 0 is the prior terminal-frame condition. Each chunk contributes exactly 120 final frames and 160,000 effective PCM samples per channel. AAC priming and end padding must be reported separately. Missing audio, unknown padding, wrong frame count, or decode failure is incomplete final AV and fails closed.
 
@@ -94,6 +94,10 @@ A speedup denominator must match track, workload fingerprint, physical GPU UUID,
 - Final-AV 30 s r10: reviewer-accepted formal N=10 matched warm-E2E improvement **4.326262968%** versus retained `r9_current_sol_attn`; candidate warm median **1333.5752375 s** vs reference **1394.0061285 s**, cold median **1814.1335341 s** vs **1884.1419612 s**, six-chunk `extension`, complete 720-frame / 960,000-sample-per-channel accounting.
 
 The normalized Turbo records intentionally do not create a new cross-track speedup claim. The r8 and r10 comparisons are valid only because each comparison keeps the same practical track, workload, physical GPU, timing boundary, and quality threshold inside its own lane. The 30-second r10 result is not native long context, not BF16 fidelity, not human semantic/audio/AV quality certification, not product readiness, and not public-comparison/SOTA evidence.
+
+## Descriptive measured evidence, not promoted / 已测但未晋级
+
+- Final-AV 60 s matched N=1 completed on one A6000: retained r9 warm E2E **2802.991 s**, r10 guarded-adaptive warm E2E **2682.008 s**, a **4.316% single-sample route signal**. Both outputs completed 1,440-frame / 1,920,000-effective-sample-per-channel accounting, but both carried the `near_frozen_transition_fraction` automatic flag. The independent Reviewer accepted only the bounded descriptive/no-promotion classification. No N=3/N≥10 or formal speedup claim exists for 60 seconds.
 
 ## Validation / 验证
 

@@ -1,0 +1,916 @@
+diff --git a/vllm_omni/diffusion/offloader/distributed_layerwise_backend.py b/vllm_omni/diffusion/offloader/distributed_layerwise_backend.py
+index 7da7c8d3..0d7d9f2f 100644
+--- a/vllm_omni/diffusion/offloader/distributed_layerwise_backend.py
++++ b/vllm_omni/diffusion/offloader/distributed_layerwise_backend.py
+@@ -17,6 +17,7 @@ This module implements the RFC-1 "Distributed Layerwise Offload" mechanism that:
+ from __future__ import annotations
+ 
+ import os
++import time
+ from itertools import chain
+ from typing import Any
+ 
+@@ -35,6 +36,7 @@ from .offload_plan import OffloadPlan, get_offload_plan, supports_mmap_loading
+ from .tensor_utils import (
+     dtype_size as _dtype_size,
+ )
++from .offload_telemetry import cpu_shard_bytes, get_offload_telemetry
+ from .tensor_utils import (
+     is_materialized_tensor,
+     make_offload_placeholder,
+@@ -95,6 +97,7 @@ class DistributedLayerwiseOffloadHook(ModelHook):
+             self.gpu_buffers = [None, None]
+             self._owns_buffers = True
+         self.ready_events: list[Any | None] = [None, None]
++        self.ready_prefetch_ids: list[int | None] = [None, None]
+ 
+         # Sharded host weights for the next block, keyed by dtype
+         self.cpu_shards: dict[torch.dtype, torch.Tensor] = {}
+@@ -133,6 +136,7 @@ class DistributedLayerwiseOffloadHook(ModelHook):
+ 
+         # Per-block synchronization primitive: set after H2D copy completes.
+         self._prefetch_done: Any | None = None
++        self._prefetch_done_id: int | None = None
+ 
+         # Shared shard (AllGather input) buffers — assigned by backend.
+         self.gpu_shard_buffers: list[dict[torch.dtype, torch.Tensor] | None] = [None, None]
+@@ -140,6 +144,10 @@ class DistributedLayerwiseOffloadHook(ModelHook):
+         # Pending async AllGather work (prevent GC before completion).
+         self._pending_work: Any | None = None
+         self._cached_repoint: list | None = None
++        self._dlo_telemetry_backend = "distributed_layerwise"
++        self._dlo_telemetry_module = "unknown"
++        self._dlo_telemetry_current_block_index: int | None = None
++        self._dlo_telemetry_next_block_index: int | None = None
+ 
+     # ------------------------------------------------------------------ #
+     #  DTensor helpers (shared with LayerwiseOffloadHook)                 #
+@@ -307,21 +315,39 @@ class DistributedLayerwiseOffloadHook(ModelHook):
+     # ------------------------------------------------------------------ #
+ 
+     @torch.compiler.disable
+-    def prefetch_layer(self, slot: int, non_blocking: bool = True) -> None:
++    def prefetch_layer(self, slot: int, non_blocking: bool = True, reason: str = "async_next") -> None:
+         """Prepare next block's weights into the shared device buffer for *slot*.
+ 
+         Uses the pre-allocated ``self.gpu_buffers[slot]`` instead of
+         allocating fresh tensors every layer.  This enforces the fixed
+         double-buffer memory bound (exactly 2 blocks on device).
+         """
++        telemetry = get_offload_telemetry()
++        h2d_bytes = cpu_shard_bytes(self.cpu_shards)
++        allgather_output_bytes = 0
++        if self.dp_size > 1 and self.dp_group is not None:
++            allgather_output_bytes = int(
++                sum(int(size) * _dtype_size(dtype) for dtype, size in self._ag_output_sizes.items())
++            )
++        telemetry_record = telemetry.begin_prefetch(
++            hook=self,
++            slot=slot,
++            reason=reason,
++            non_blocking=non_blocking,
++            h2d_bytes=h2d_bytes,
++            allgather_output_bytes=allgather_output_bytes,
++        )
++        host_enqueue_start = time.perf_counter()
+         self.copy_stream.wait_stream(current_omni_platform.current_stream())
+ 
+         evt = current_omni_platform.Event()
+         gpu_weights = self.gpu_buffers[slot]
+         assert gpu_weights is not None, f"gpu_buffers[{slot}] not allocated"
+ 
++        finish_stream = self.copy_stream
+         if self.dp_size <= 1 or self.dp_group is None:
+             with current_omni_platform.stream(self.copy_stream):
++                telemetry.record_prefetch_start(telemetry_record, self.copy_stream)
+                 for dtype, cpu_shard in self.cpu_shards.items():
+                     gw = gpu_weights[dtype]
+                     gw[: cpu_shard.numel()].copy_(cpu_shard, non_blocking=non_blocking)
+@@ -331,6 +357,7 @@ class DistributedLayerwiseOffloadHook(ModelHook):
+             shard_bufs = self.gpu_shard_buffers[slot]
+             assert shard_bufs is not None, f"gpu_shard_buffers[{slot}] not allocated"
+             with current_omni_platform.stream(self.copy_stream):
++                telemetry.record_prefetch_start(telemetry_record, self.copy_stream)
+                 for dtype, cpu_shard in self.cpu_shards.items():
+                     gpu_shard = shard_bufs[dtype][: cpu_shard.numel()]
+                     gpu_shard.copy_(cpu_shard, non_blocking=non_blocking)
+@@ -354,6 +381,8 @@ class DistributedLayerwiseOffloadHook(ModelHook):
+                         group=self.dp_group,
+                     )
+                 evt.record(self.comm_stream)
++            finish_stream = self.comm_stream
++        host_enqueue_ms = (time.perf_counter() - host_enqueue_start) * 1000.0
+ 
+         self.ready_events[slot] = evt
+         self._prefetch_done = evt
+@@ -365,11 +394,21 @@ class DistributedLayerwiseOffloadHook(ModelHook):
+             self._shared_slot_group[slot] = self._group_id
+ 
+         # Re-point using cached metadata (avoids per-layer dict lookups).
++        repoint_start = time.perf_counter()
+         for target, dtype, offset, numel, shape in self._cached_repoint[slot]:
+             set_tensor_storage(
+                 target,
+                 gpu_weights[dtype][offset : offset + numel].view(shape),
+             )
++        repoint_ms = (time.perf_counter() - repoint_start) * 1000.0
++        prefetch_id = telemetry.finish_prefetch(
++            telemetry_record,
++            stream=finish_stream,
++            host_enqueue_ms=host_enqueue_ms,
++            repoint_host_ms=repoint_ms,
++        )
++        self.ready_prefetch_ids[slot] = prefetch_id
++        self._prefetch_done_id = prefetch_id
+ 
+     def get_weights(self, slot: int) -> dict[torch.dtype, torch.Tensor] | None:
+         """Wait for AllGather completion and return full weights for the slot.
+@@ -382,10 +421,20 @@ class DistributedLayerwiseOffloadHook(ModelHook):
+         AllGather (or H2D) to complete before reading the buffer.
+         """
+         evt = self.ready_events[slot]
++        prefetch_id = self.ready_prefetch_ids[slot]
++        event_owner = self
+         if evt is None and self._prev_hook is not None:
+             evt = self._prev_hook.ready_events[slot]
++            prefetch_id = self._prev_hook.ready_prefetch_ids[slot]
++            event_owner = self._prev_hook
+         if evt is not None:
+-            current_omni_platform.current_stream().wait_event(evt)
++            get_offload_telemetry().record_wait_event(
++                hook=event_owner,
++                prefetch_id=prefetch_id,
++                slot=slot,
++                reason="get_weights",
++                wait_callable=lambda: current_omni_platform.current_stream().wait_event(evt),
++            )
+         return self.gpu_buffers[slot]
+ 
+     # ------------------------------------------------------------------ #
+@@ -397,13 +446,26 @@ class DistributedLayerwiseOffloadHook(ModelHook):
+         """Free GPU memory for current block by replacing tensors with placeholders."""
+         evt = self._prefetch_done
+         if evt is not None:
+-            current_omni_platform.current_stream().wait_event(evt)
++            get_offload_telemetry().record_wait_event(
++                hook=self,
++                prefetch_id=self._prefetch_done_id,
++                slot=self._prefetched_slot,
++                reason="offload_prefetch_done",
++                wait_callable=lambda: current_omni_platform.current_stream().wait_event(evt),
++            )
+         self._prefetch_done = None
++        self._prefetch_done_id = None
+ 
++        offload_start = time.perf_counter()
+         for _, param in self.block_parameters.items():
+             set_tensor_storage(param, make_offload_placeholder(param))
+         for _, buf in self.block_buffers.items():
+             set_tensor_storage(buf, make_offload_placeholder(buf))
++        get_offload_telemetry().record_offload_placeholders(
++            hook=self,
++            reason="streamed_block_offload_placeholders",
++            host_ms=(time.perf_counter() - offload_start) * 1000.0,
++        )
+ 
+     # ------------------------------------------------------------------ #
+     #  ModelHook interface                                                #
+@@ -426,14 +488,27 @@ class DistributedLayerwiseOffloadHook(ModelHook):
+             slot_contaminated = True
+             if self._shared_slot_group is not None:
+                 slot_contaminated = self._shared_slot_group[self.current_slot] != self._group_id
++            get_offload_telemetry().record_group_first(
++                hook=self,
++                slot=self.current_slot,
++                contaminated=slot_contaminated,
++            )
+             if slot_contaminated:
+                 # Another group (or no group) wrote to our slot — re-fetch
+-                self._prev_hook.prefetch_layer(self.current_slot, non_blocking=False)
++                self._prev_hook.prefetch_layer(
++                    self.current_slot,
++                    non_blocking=False,
++                    reason="group_first_sync_prefetch",
++                )
+             # Always wait for data to be ready (handles both sync and async paths)
+             self._prev_hook.get_weights(self.current_slot)
+         elif not self.is_materialized and self._prev_hook is not None:
+             # Previous hook was skipped (e.g. by cache-dit), sync-prefetch
+-            self._prev_hook.prefetch_layer(self.current_slot, non_blocking=False)
++            self._prev_hook.prefetch_layer(
++                self.current_slot,
++                non_blocking=False,
++                reason="fallback_sync_prefetch",
++            )
+             self._prev_hook.get_weights(self.current_slot)
+ 
+         # Prefetch next layer into the other slot (overlapped with compute).
+@@ -443,7 +518,7 @@ class DistributedLayerwiseOffloadHook(ModelHook):
+         # waits for weights before reading them.  The redundant wait_event
+         # caused cascading NPU stream synchronization stalls (~10ms/layer).
+         next_slot = 1 - self.current_slot
+-        self.prefetch_layer(next_slot, non_blocking=True)
++        self.prefetch_layer(next_slot, non_blocking=True, reason="async_next")
+ 
+         return args, kwargs
+ 
+@@ -524,6 +599,10 @@ class PinnedResidentLayerGroup:
+         self.loaded = False
+         self._states: list[dict[str, Any]] = []
+         self._gpu_buffers: list[dict[torch.dtype, torch.Tensor]] = []
++        self._dlo_telemetry_backend = "resident_layer_group"
++        self._dlo_telemetry_module = "resident_dit_layers"
++        self._dlo_telemetry_current_block_index: int | None = None
++        self._dlo_telemetry_next_block_index: int | None = None
+ 
+         for block in blocks:
+             params = dict(block.named_parameters())
+@@ -562,14 +641,27 @@ class PinnedResidentLayerGroup:
+                 )
+             gpu_buffers.append(block_buffers)
+ 
++        telemetry = get_offload_telemetry()
++        h2d_bytes = int(sum(cpu_shard_bytes(state["cpu_shards"]) for state in self._states))
++        telemetry_record = telemetry.begin_prefetch(
++            hook=self,
++            slot=None,
++            reason="resident_group_load",
++            non_blocking=True,
++            h2d_bytes=h2d_bytes,
++        )
++        enqueue_start = time.perf_counter()
+         self.copy_stream.wait_stream(current_omni_platform.current_stream())
+         ready = current_omni_platform.Event()
+         with current_omni_platform.stream(self.copy_stream):
++            telemetry.record_prefetch_start(telemetry_record, self.copy_stream)
+             for state, block_buffers in zip(self._states, gpu_buffers):
+                 for dtype, cpu_shard in state["cpu_shards"].items():
+                     block_buffers[dtype].copy_(cpu_shard, non_blocking=True)
+             ready.record(self.copy_stream)
++        enqueue_ms = (time.perf_counter() - enqueue_start) * 1000.0
+ 
++        repoint_start = time.perf_counter()
+         for state, block_buffers in zip(self._states, gpu_buffers):
+             targets = state["targets"]
+             for dtype, metas in state["metadata"].items():
+@@ -579,8 +671,20 @@ class PinnedResidentLayerGroup:
+                         targets[meta["name"]],
+                         gpu_buffer[meta["offset"] : meta["offset"] + meta["numel"]].view(meta["shape"]),
+                     )
+-
+-        current_omni_platform.current_stream().wait_event(ready)
++        repoint_ms = (time.perf_counter() - repoint_start) * 1000.0
++        prefetch_id = telemetry.finish_prefetch(
++            telemetry_record,
++            stream=self.copy_stream,
++            host_enqueue_ms=enqueue_ms,
++            repoint_host_ms=repoint_ms,
++        )
++        telemetry.record_wait_event(
++            hook=self,
++            prefetch_id=prefetch_id,
++            slot=None,
++            reason="resident_group_load_wait",
++            wait_callable=lambda: current_omni_platform.current_stream().wait_event(ready),
++        )
+         self._gpu_buffers = gpu_buffers
+         self.loaded = True
+ 
+@@ -591,10 +695,22 @@ class PinnedResidentLayerGroup:
+         # Denoise kernels consume these buffers on the current compute stream.
+         # Synchronize once at the stage boundary; no D2H copy is necessary
+         # because the pinned CPU master weights were never overwritten.
++        offload_start = time.perf_counter()
+         current_omni_platform.synchronize()
++        sync_done = time.perf_counter()
+         for state in self._states:
+             for target in state["targets"].values():
+                 set_tensor_storage(target, make_offload_placeholder(target))
++        get_offload_telemetry().record_lifecycle(
++            event="resident_group_offload_synchronize",
++            host_ms=(sync_done - offload_start) * 1000.0,
++            block_count=len(self._states),
++        )
++        get_offload_telemetry().record_lifecycle(
++            event="resident_group_offload_placeholders",
++            host_ms=(time.perf_counter() - sync_done) * 1000.0,
++            block_count=len(self._states),
++        )
+         self._gpu_buffers.clear()
+         self.loaded = False
+ 
+@@ -1164,13 +1280,17 @@ class DistributedLayerwiseOffloadBackend(OffloadBackend):
+             if not isinstance(blocks, nn.ModuleList) or len(blocks) <= 1:
+                 logger.warning("Encoder offload path %s.%s is not a streamable block list", name, block_path)
+                 continue
+-            group_hooks = [
+-                apply_block_hook(blocks[-1], blocks[0], self.device, copy_stream, self.config.pin_cpu_memory)
+-            ]
+-            group_hooks.extend(
+-                apply_block_hook(block, blocks[index + 1], self.device, copy_stream, self.config.pin_cpu_memory)
+-                for index, block in enumerate(blocks[:-1])
+-            )
++            last_hook = apply_block_hook(blocks[-1], blocks[0], self.device, copy_stream, self.config.pin_cpu_memory)
++            last_hook._dlo_telemetry_module = f"{name}.{block_path}"
++            last_hook._dlo_telemetry_current_block_index = len(blocks) - 1
++            last_hook._dlo_telemetry_next_block_index = 0
++            group_hooks = [last_hook]
++            for index, block in enumerate(blocks[:-1]):
++                hook = apply_block_hook(block, blocks[index + 1], self.device, copy_stream, self.config.pin_cpu_memory)
++                hook._dlo_telemetry_module = f"{name}.{block_path}"
++                hook._dlo_telemetry_current_block_index = index
++                hook._dlo_telemetry_next_block_index = index + 1
++                group_hooks.append(hook)
+             for index, hook in enumerate(group_hooks):
+                 hook._prev_hook = group_hooks[index - 1]
+             hooks.extend(group_hooks)
+@@ -1529,6 +1649,9 @@ class DistributedLayerwiseOffloadBackend(OffloadBackend):
+                 self.config.pin_cpu_memory,
+                 shared_buffers=[None, None],
+             )
++            last_hook._dlo_telemetry_module = dit_name
++            last_hook._dlo_telemetry_current_block_index = resident_count + num_blocks - 1
++            last_hook._dlo_telemetry_next_block_index = resident_count
+ 
+             block_hooks: list[DistributedLayerwiseOffloadHook] = [last_hook]
+             for i, block in enumerate(blocks[:-1]):
+@@ -1545,6 +1668,9 @@ class DistributedLayerwiseOffloadBackend(OffloadBackend):
+                     self.config.pin_cpu_memory,
+                     shared_buffers=[None, None],
+                 )
++                hook._dlo_telemetry_module = dit_name
++                hook._dlo_telemetry_current_block_index = resident_count + i
++                hook._dlo_telemetry_next_block_index = resident_count + i + 1
+                 block_hooks.append(hook)
+ 
+             # Wire backward references for cache-dit fallback
+@@ -1616,7 +1742,7 @@ class DistributedLayerwiseOffloadBackend(OffloadBackend):
+         if self._all_hook_groups:
+             group = self._all_hook_groups[0]
+             first_slot = group[0].current_slot
+-            group[-1].prefetch_layer(slot=first_slot, non_blocking=False)
++            group[-1].prefetch_layer(slot=first_slot, non_blocking=False, reason="initial_sync_prefetch")
+             group[-1].get_weights(first_slot)
+ 
+         total_blocks = sum(len(b) for b in self._blocks)
+diff --git a/vllm_omni/diffusion/offloader/layerwise_backend.py b/vllm_omni/diffusion/offloader/layerwise_backend.py
+index 9979d01b..99b245be 100644
+--- a/vllm_omni/diffusion/offloader/layerwise_backend.py
++++ b/vllm_omni/diffusion/offloader/layerwise_backend.py
+@@ -2,6 +2,7 @@
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
+ from __future__ import annotations
+ 
++import time
+ from itertools import chain
+ from typing import Any
+ 
+@@ -15,6 +16,7 @@ from vllm_omni.platforms import current_omni_platform
+ 
+ from .base import OffloadBackend, OffloadConfig
+ from .module_collector import ModuleDiscovery
++from .offload_telemetry import cpu_shard_bytes, get_offload_telemetry
+ 
+ logger = init_logger(__name__)
+ 
+@@ -51,6 +53,7 @@ class LayerwiseOffloadHook(ModelHook):
+ 
+         # Per-block synchronization primitive: set after H2D copy completes.
+         self._prefetch_done: current_omni_platform.Event | None = None
++        self._prefetch_done_id: int | None = None
+ 
+         # Backward link to the hook that is responsible for prefetching *this* block's weights
+         self._prev_hook: LayerwiseOffloadHook | None = None
+@@ -59,6 +62,10 @@ class LayerwiseOffloadHook(ModelHook):
+         self.next_block_buffers: dict[str, torch.Tensor] = {}
+         self.dtype_cpu_flattened_weights: dict[torch.dtype, torch.Tensor] = {}
+         self.dtype_metadata: dict[torch.dtype, list[dict[str, Any]]] = {}
++        self._dlo_telemetry_backend = "layerwise"
++        self._dlo_telemetry_module = "unknown"
++        self._dlo_telemetry_current_block_index: int | None = None
++        self._dlo_telemetry_next_block_index: int | None = None
+ 
+     @staticmethod
+     def _is_dtensor(t: torch.Tensor) -> bool:
+@@ -176,12 +183,21 @@ class LayerwiseOffloadHook(ModelHook):
+         return True
+ 
+     @torch.compiler.disable
+-    def prefetch_layer(self, non_blocking: bool = True) -> None:
++    def prefetch_layer(self, non_blocking: bool = True, reason: str = "async_next") -> None:
+         """Copy layer weights from CPU -> GPU.
+ 
+         Pre-fetch target block in an asynchronous way with compute - memory copy overlap,
+         with non_blocking set to True.
+         """
++        telemetry = get_offload_telemetry()
++        telemetry_record = telemetry.begin_prefetch(
++            hook=self,
++            slot=None,
++            reason=reason,
++            non_blocking=non_blocking,
++            h2d_bytes=cpu_shard_bytes(self.dtype_cpu_flattened_weights),
++        )
++        host_enqueue_start = time.perf_counter()
+         self.copy_stream.wait_stream(current_omni_platform.current_stream())
+ 
+         layer_params = self.next_block_parameters
+@@ -191,13 +207,16 @@ class LayerwiseOffloadHook(ModelHook):
+         gpu_weights: dict[torch.dtype, torch.Tensor] = {}
+ 
+         with current_omni_platform.stream(self.copy_stream):
++            telemetry.record_prefetch_start(telemetry_record, self.copy_stream)
+             for dtype, cpu_weight in self.dtype_cpu_flattened_weights.items():
+                 gpu_weight = torch.empty(cpu_weight.shape, dtype=dtype, device=self.device)
+                 gpu_weight.copy_(cpu_weight, non_blocking=non_blocking)
+                 gpu_weights[dtype] = gpu_weight
+ 
+             evt.record(self.copy_stream)
++        host_enqueue_ms = (time.perf_counter() - host_enqueue_start) * 1000.0
+ 
++        repoint_start = time.perf_counter()
+         for dtype, ordered_metadata in self.dtype_metadata.items():
+             # ordered_metadata: list[dict[str, Any]]
+             gpu_weight = gpu_weights[dtype]
+@@ -212,8 +231,15 @@ class LayerwiseOffloadHook(ModelHook):
+                     target_param_or_buf,
+                     gpu_weight[metadata["offset"] : metadata["offset"] + metadata["numel"]].view(metadata["shape"]),
+                 )
++        repoint_ms = (time.perf_counter() - repoint_start) * 1000.0
+ 
+         self._prefetch_done = evt
++        self._prefetch_done_id = telemetry.finish_prefetch(
++            telemetry_record,
++            stream=self.copy_stream,
++            host_enqueue_ms=host_enqueue_ms,
++            repoint_host_ms=repoint_ms,
++        )
+ 
+     @torch.compiler.disable
+     def offload_layer(self) -> None:
+@@ -222,24 +248,37 @@ class LayerwiseOffloadHook(ModelHook):
+         """
+         evt = self._prefetch_done
+         if evt is not None:
+-            current_omni_platform.current_stream().wait_event(evt)
++            get_offload_telemetry().record_wait_event(
++                hook=self,
++                prefetch_id=self._prefetch_done_id,
++                slot=None,
++                reason="offload_prefetch_done",
++                wait_callable=lambda: current_omni_platform.current_stream().wait_event(evt),
++            )
+ 
+         self._prefetch_done = None
++        self._prefetch_done_id = None
+ 
+         # free GPU residency
++        offload_start = time.perf_counter()
+         for _, param in self.block_parameters.items():
+             LayerwiseOffloadHook._set_tensor_storage(param, LayerwiseOffloadHook._make_offload_placeholder(param))
+         for _, buf in self.block_buffers.items():
+             LayerwiseOffloadHook._set_tensor_storage(buf, LayerwiseOffloadHook._make_offload_placeholder(buf))
++        get_offload_telemetry().record_offload_placeholders(
++            hook=self,
++            reason="layerwise_block_offload_placeholders",
++            host_ms=(time.perf_counter() - offload_start) * 1000.0,
++        )
+ 
+     def pre_forward(self, module: nn.Module, *args: Any, **kwargs: Any) -> tuple[tuple, dict]:
+         # if the previous hook was skipped and the weights are not on device,
+         # (e.g. by cache-dit block caching), ask the previous hook to
+         # synchronously prefetch *this* block's weights before computation
+         if not self.is_materialized and self._prev_hook is not None:
+-            self._prev_hook.prefetch_layer(non_blocking=False)
++            self._prev_hook.prefetch_layer(non_blocking=False, reason="fallback_sync_prefetch")
+ 
+-        self.prefetch_layer(non_blocking=True)
++        self.prefetch_layer(non_blocking=True, reason="async_next")
+ 
+         return args, kwargs
+ 
+@@ -369,7 +408,10 @@ class LayerWiseOffloadBackend(OffloadBackend):
+                 self.copy_stream,
+                 self.config.pin_cpu_memory,
+             )
+-            last_hook.prefetch_layer(non_blocking=False)
++            last_hook._dlo_telemetry_module = dit_name
++            last_hook._dlo_telemetry_current_block_index = num_blocks - 1
++            last_hook._dlo_telemetry_next_block_index = 0
++            last_hook.prefetch_layer(non_blocking=False, reason="initial_sync_prefetch")
+ 
+             block_hooks: list[LayerwiseOffloadHook] = [last_hook]
+             # Register hook for each of blocks
+@@ -382,6 +424,9 @@ class LayerWiseOffloadBackend(OffloadBackend):
+                     self.copy_stream,
+                     self.config.pin_cpu_memory,
+                 )
++                hook._dlo_telemetry_module = dit_name
++                hook._dlo_telemetry_current_block_index = i
++                hook._dlo_telemetry_next_block_index = i + 1
+                 block_hooks.append(hook)
+ 
+             # NOTE(yuanheng-zhao): We make each hook gets a backward reference to the hook
+diff --git a/vllm_omni/diffusion/offloader/offload_telemetry.py b/vllm_omni/diffusion/offloader/offload_telemetry.py
+new file mode 100644
+index 00000000..ef542464
+--- /dev/null
++++ b/vllm_omni/diffusion/offloader/offload_telemetry.py
+@@ -0,0 +1,397 @@
++# SPDX-License-Identifier: Apache-2.0
++# SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++"""Default-off offload telemetry for MiniMax-H3 A6000 profiling.
++
++The telemetry is enabled only when ``MINIMAX_H3_A6000_DLO_TELEMETRY`` is true
++and ``MINIMAX_H3_A6000_DLO_TELEMETRY_JSON`` points at an evidence-local JSON
++file.  It records timings, byte counts, stream-event waits, and sanitized
++module/layer labels; it never serializes tensors, parameter values, checkpoint
++paths, prompts, media, or raw logs.
++"""
++
++from __future__ import annotations
++
++import atexit
++import json
++import math
++import os
++import statistics
++import threading
++import time
++from collections.abc import Mapping
++from pathlib import Path
++from typing import Any
++
++import torch
++
++_TRUE_VALUES = {"1", "true", "yes", "on"}
++
++
++def _env_flag(name: str, default: bool = False) -> bool:
++    raw = os.environ.get(name)
++    if raw is None:
++        return default
++    return raw.strip().lower() in _TRUE_VALUES
++
++
++def _finite_float(value: Any) -> float | None:
++    if isinstance(value, bool):
++        return None
++    if isinstance(value, (int, float)):
++        out = float(value)
++        return out if math.isfinite(out) else None
++    return None
++
++
++def _stats(values: list[float]) -> dict[str, Any]:
++    finite = [float(v) for v in values if math.isfinite(float(v))]
++    if not finite:
++        return {"n": 0, "status": "missing"}
++    out: dict[str, Any] = {
++        "n": len(finite),
++        "status": "measured",
++        "min": min(finite),
++        "max": max(finite),
++        "mean": statistics.mean(finite),
++        "median": statistics.median(finite),
++    }
++    if len(finite) > 1:
++        out["sample_std"] = statistics.stdev(finite)
++        out["cv_percent"] = out["sample_std"] / out["mean"] * 100.0 if abs(out["mean"]) > 1e-12 else None
++    else:
++        out["sample_std"] = 0.0
++        out["cv_percent"] = 0.0
++    return out
++
++
++def _tensor_bytes(tensor: torch.Tensor) -> int:
++    try:
++        return int(tensor.numel() * tensor.element_size())
++    except Exception:
++        return 0
++
++
++def cpu_shard_bytes(cpu_shards: Mapping[torch.dtype, torch.Tensor]) -> int:
++    return int(sum(_tensor_bytes(tensor) for tensor in cpu_shards.values()))
++
++
++def _make_timing_event(device: torch.device | None = None) -> torch.cuda.Event | None:
++    try:
++        if device is not None and device.type != "cuda":
++            return None
++        if not torch.cuda.is_available():
++            return None
++        return torch.cuda.Event(enable_timing=True)
++    except Exception:
++        return None
++
++
++def _record_event(event: torch.cuda.Event | None, stream: Any | None = None) -> None:
++    if event is None:
++        return
++    try:
++        if stream is None:
++            event.record()
++        else:
++            event.record(stream)
++    except Exception:
++        return
++
++
++def _elapsed_ms(start: torch.cuda.Event | None, end: torch.cuda.Event | None) -> float | None:
++    if start is None or end is None:
++        return None
++    try:
++        value = float(start.elapsed_time(end))
++        return value if math.isfinite(value) else None
++    except Exception:
++        return None
++
++
++def sanitized_hook_label(hook: Any) -> dict[str, Any]:
++    """Return only topology labels, never tensor names or checkpoint paths."""
++    return {
++        "backend": str(getattr(hook, "_dlo_telemetry_backend", hook.__class__.__name__)),
++        "module": str(getattr(hook, "_dlo_telemetry_module", "unknown")),
++        "group_id": int(getattr(hook, "_group_id", -1)) if isinstance(getattr(hook, "_group_id", -1), int) else -1,
++        "current_block_index": getattr(hook, "_dlo_telemetry_current_block_index", None),
++        "next_block_index": getattr(hook, "_dlo_telemetry_next_block_index", None),
++    }
++
++
++class OffloadTelemetry:
++    def __init__(self) -> None:
++        self.enabled = _env_flag("MINIMAX_H3_A6000_DLO_TELEMETRY", False)
++        self.output_path = os.environ.get("MINIMAX_H3_A6000_DLO_TELEMETRY_JSON") or ""
++        if not self.output_path:
++            self.enabled = False
++        self._lock = threading.Lock()
++        self._next_id = 1
++        self.prefetches: list[dict[str, Any]] = []
++        self.waits: list[dict[str, Any]] = []
++        self.offloads: list[dict[str, Any]] = []
++        self.group_first_events: list[dict[str, Any]] = []
++        self.lifecycle_events: list[dict[str, Any]] = []
++        self.created_utc = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
++        if self.enabled:
++            atexit.register(self.dump)
++
++    def _alloc_id(self) -> int:
++        with self._lock:
++            value = self._next_id
++            self._next_id += 1
++        return value
++
++    def begin_prefetch(
++        self,
++        *,
++        hook: Any,
++        slot: int | None,
++        reason: str,
++        non_blocking: bool,
++        h2d_bytes: int,
++        allgather_output_bytes: int = 0,
++    ) -> dict[str, Any] | None:
++        if not self.enabled:
++            return None
++        device = getattr(hook, "device", None)
++        rec: dict[str, Any] = {
++            "id": self._alloc_id(),
++            "slot": slot,
++            "reason": str(reason),
++            "non_blocking": bool(non_blocking),
++            "h2d_bytes": int(h2d_bytes),
++            "allgather_output_bytes": int(allgather_output_bytes),
++            "host_started_perf_counter": time.perf_counter(),
++            **sanitized_hook_label(hook),
++            "_device_start_event": _make_timing_event(device),
++            "_device_end_event": _make_timing_event(device),
++        }
++        return rec
++
++    def record_prefetch_start(self, rec: dict[str, Any] | None, stream: Any | None) -> None:
++        if rec is not None:
++            _record_event(rec.get("_device_start_event"), stream)
++
++    def finish_prefetch(
++        self,
++        rec: dict[str, Any] | None,
++        *,
++        stream: Any | None,
++        host_enqueue_ms: float,
++        repoint_host_ms: float,
++    ) -> int | None:
++        if rec is None:
++            return None
++        _record_event(rec.get("_device_end_event"), stream)
++        rec["host_enqueue_ms"] = float(host_enqueue_ms)
++        rec["repoint_host_ms"] = float(repoint_host_ms)
++        rec["host_finished_perf_counter"] = time.perf_counter()
++        with self._lock:
++            self.prefetches.append(rec)
++        return int(rec["id"])
++
++    def record_wait_event(
++        self,
++        *,
++        hook: Any,
++        prefetch_id: int | None,
++        slot: int | None,
++        reason: str,
++        wait_callable,
++    ) -> None:
++        """Record compute-stream wait duration without adding a host synchronize."""
++        if not self.enabled:
++            wait_callable()
++            return
++        device = getattr(hook, "device", None)
++        start_event = _make_timing_event(device)
++        end_event = _make_timing_event(device)
++        try:
++            current_stream = torch.cuda.current_stream(device) if device is not None and device.type == "cuda" and torch.cuda.is_available() else None
++        except Exception:
++            current_stream = None
++        host_start = time.perf_counter()
++        _record_event(start_event, current_stream)
++        wait_callable()
++        _record_event(end_event, current_stream)
++        host_ms = (time.perf_counter() - host_start) * 1000.0
++        rec: dict[str, Any] = {
++            "id": self._alloc_id(),
++            "prefetch_id": prefetch_id,
++            "slot": slot,
++            "reason": str(reason),
++            "host_enqueue_ms": host_ms,
++            **sanitized_hook_label(hook),
++            "_device_start_event": start_event,
++            "_device_end_event": end_event,
++        }
++        with self._lock:
++            self.waits.append(rec)
++
++    def record_offload_placeholders(self, *, hook: Any, reason: str, host_ms: float) -> None:
++        if not self.enabled:
++            return
++        rec = {
++            "id": self._alloc_id(),
++            "reason": str(reason),
++            "host_ms": float(host_ms),
++            **sanitized_hook_label(hook),
++        }
++        with self._lock:
++            self.offloads.append(rec)
++
++    def record_group_first(self, *, hook: Any, slot: int | None, contaminated: bool) -> None:
++        if not self.enabled:
++            return
++        rec = {
++            "id": self._alloc_id(),
++            "slot": slot,
++            "contaminated": bool(contaminated),
++            **sanitized_hook_label(hook),
++        }
++        with self._lock:
++            self.group_first_events.append(rec)
++
++    def record_lifecycle(self, *, event: str, host_ms: float, bytes_moved: int = 0, block_count: int | None = None) -> None:
++        if not self.enabled:
++            return
++        rec = {
++            "id": self._alloc_id(),
++            "event": str(event),
++            "host_ms": float(host_ms),
++            "bytes_moved": int(bytes_moved),
++            "block_count": block_count,
++        }
++        with self._lock:
++            self.lifecycle_events.append(rec)
++
++    def _finalize_records(self) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
++        prefetches: list[dict[str, Any]] = []
++        waits: list[dict[str, Any]] = []
++        with self._lock:
++            raw_prefetches = list(self.prefetches)
++            raw_waits = list(self.waits)
++        for rec in raw_prefetches:
++            out = {k: v for k, v in rec.items() if not k.startswith("_") and k not in {"host_started_perf_counter", "host_finished_perf_counter"}}
++            elapsed = _elapsed_ms(rec.get("_device_start_event"), rec.get("_device_end_event"))
++            if elapsed is not None:
++                out["h2d_device_ms"] = elapsed
++            prefetches.append(out)
++        for rec in raw_waits:
++            out = {k: v for k, v in rec.items() if not k.startswith("_")}
++            elapsed = _elapsed_ms(rec.get("_device_start_event"), rec.get("_device_end_event"))
++            if elapsed is not None:
++                out["wait_device_ms"] = elapsed
++            waits.append(out)
++        return prefetches, waits
++
++    @staticmethod
++    def _by_key_stats(records: list[dict[str, Any]], value_key: str, group_keys: tuple[str, ...]) -> dict[str, Any]:
++        grouped: dict[str, list[float]] = {}
++        for rec in records:
++            value = _finite_float(rec.get(value_key))
++            if value is None:
++                continue
++            parts = [str(rec.get(key, "unknown")) for key in group_keys]
++            grouped["|".join(parts)] = grouped.get("|".join(parts), []) + [value]
++        return {key: _stats(values) for key, values in sorted(grouped.items())}
++
++    def _memory_summary(self) -> dict[str, Any]:
++        if not torch.cuda.is_available():
++            return {"status": "not_available_no_cuda"}
++        try:
++            free, total = torch.cuda.mem_get_info()
++            return {
++                "status": "measured_at_dump_after_synchronize",
++                "max_memory_allocated_mib": torch.cuda.max_memory_allocated() / 1048576.0,
++                "max_memory_reserved_mib": torch.cuda.max_memory_reserved() / 1048576.0,
++                "free_memory_mib": free / 1048576.0,
++                "total_memory_mib": total / 1048576.0,
++            }
++        except Exception as exc:
++            return {"status": "error", "error_type": exc.__class__.__name__}
++
++    def summarize(self, prefetches: list[dict[str, Any]], waits: list[dict[str, Any]]) -> dict[str, Any]:
++        h2d_ms = [float(v) for rec in prefetches if (v := _finite_float(rec.get("h2d_device_ms"))) is not None]
++        wait_ms = [float(v) for rec in waits if (v := _finite_float(rec.get("wait_device_ms"))) is not None]
++        h2d_total_s = sum(h2d_ms) / 1000.0
++        wait_total_s = sum(wait_ms) / 1000.0
++        return {
++            "schema_version": "minimax_h3_a6000_dlo_offload_telemetry_summary_v1",
++            "enabled": self.enabled,
++            "created_utc": self.created_utc,
++            "prefetch_count": len(prefetches),
++            "wait_event_count": len(waits),
++            "offload_placeholder_count": len(self.offloads),
++            "group_first_event_count": len(self.group_first_events),
++            "group_first_contaminated_count": sum(1 for rec in self.group_first_events if rec.get("contaminated")),
++            "sync_prefetch_count": sum(1 for rec in prefetches if not rec.get("non_blocking")),
++            "async_prefetch_count": sum(1 for rec in prefetches if rec.get("non_blocking")),
++            "h2d_bytes_total": int(sum(int(rec.get("h2d_bytes") or 0) for rec in prefetches)),
++            "allgather_output_bytes_total": int(sum(int(rec.get("allgather_output_bytes") or 0) for rec in prefetches)),
++            "h2d_copy_device_seconds_total": h2d_total_s,
++            "wait_event_device_seconds_total": wait_total_s,
++            "estimated_copy_overlap_seconds": max(0.0, h2d_total_s - wait_total_s),
++            "h2d_copy_host_enqueue_seconds_total": sum(float(rec.get("host_enqueue_ms") or 0.0) for rec in prefetches) / 1000.0,
++            "repoint_host_seconds_total": sum(float(rec.get("repoint_host_ms") or 0.0) for rec in prefetches) / 1000.0,
++            "offload_placeholder_host_seconds_total": sum(float(rec.get("host_ms") or 0.0) for rec in self.offloads) / 1000.0,
++            "lifecycle_host_seconds_total": sum(float(rec.get("host_ms") or 0.0) for rec in self.lifecycle_events) / 1000.0,
++            "lifecycle_bytes_total": int(sum(int(rec.get("bytes_moved") or 0) for rec in self.lifecycle_events)),
++            "h2d_device_ms_stats": _stats(h2d_ms),
++            "wait_device_ms_stats": _stats(wait_ms),
++            "h2d_device_ms_by_reason": self._by_key_stats(prefetches, "h2d_device_ms", ("reason",)),
++            "wait_device_ms_by_reason": self._by_key_stats(waits, "wait_device_ms", ("reason",)),
++            "h2d_device_ms_by_module_layer": self._by_key_stats(prefetches, "h2d_device_ms", ("module", "next_block_index")),
++            "wait_device_ms_by_module_layer": self._by_key_stats(waits, "wait_device_ms", ("module", "next_block_index")),
++            "memory": self._memory_summary(),
++            "claim_boundary": "DLO/offload telemetry only: timings, byte counts, stream events, and sanitized layer labels; no raw tensors, weights, prompts, media, private paths, quality claim, or speedup claim.",
++        }
++
++    def dump(self) -> None:
++        if not self.enabled or not self.output_path:
++            return
++        with self._lock:
++            has_records = bool(
++                self.prefetches
++                or self.waits
++                or self.offloads
++                or self.group_first_events
++                or self.lifecycle_events
++            )
++        if not has_records:
++            # Server/orchestrator helper processes may import the offloader but
++            # never execute hooks.  Do not let such empty processes clobber the
++            # worker process's telemetry file at interpreter shutdown.
++            return
++        try:
++            if torch.cuda.is_available():
++                torch.cuda.synchronize()
++        except Exception:
++            pass
++        prefetches, waits = self._finalize_records()
++        with self._lock:
++            offloads = list(self.offloads)
++            group_first_events = list(self.group_first_events)
++            lifecycle_events = list(self.lifecycle_events)
++        payload = {
++            "schema_version": "minimax_h3_a6000_dlo_offload_telemetry_v1",
++            "summary": self.summarize(prefetches, waits),
++            "prefetches": prefetches,
++            "wait_events": waits,
++            "offload_placeholders": offloads,
++            "group_first_events": group_first_events,
++            "lifecycle_events": lifecycle_events,
++        }
++        path = Path(self.output_path)
++        path.parent.mkdir(parents=True, exist_ok=True)
++        tmp = path.with_suffix(path.suffix + ".tmp")
++        tmp.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
++        tmp.replace(path)
++
++
++_TELEMETRY = OffloadTelemetry()
++
++
++def get_offload_telemetry() -> OffloadTelemetry:
++    return _TELEMETRY

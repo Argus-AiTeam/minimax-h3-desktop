@@ -5,7 +5,7 @@
     "virtual environments, caches, pycache, PID files, raw logs, non-curated generated media/audio, Docker layers, archives, and credentials",
     "Git remotes, tags, releases, and publication actions"
   ],
-  "file_count": 149,
+  "file_count": 215,
   "files": [
     {
       "path": ".argus_release_tree",
@@ -21,8 +21,8 @@
     },
     {
       "path": "CURRENT_WORK.md",
-      "sha256": "445cadfac0aedffb3d2d4199008284db5f04926c7bd0a6d0ab14f55bd34adc6f",
-      "size_bytes": 7011,
+      "sha256": "79aaec9c7b6eabd7e581de33101d36fbe2f29c6d41aee7d7e47cf8032c1f3b06",
+      "size_bytes": 7204,
       "source": "CURRENT_WORK.md"
     },
     {
@@ -45,26 +45,26 @@
     },
     {
       "path": "README.md",
-      "sha256": "8f96eb17466d2aa1611bb5d6e6a2d0a6e95bc9a1c7b567cd13f8e9cc7b275b98",
-      "size_bytes": 15641,
+      "sha256": "382344e625b4c99ff10abc07a820fd3c1ec54a446d881455ac9bea8a1b8f2197",
+      "size_bytes": 23855,
       "source": "README.md"
     },
     {
       "path": "README_EN.md",
-      "sha256": "3ac00c9d3ba4cb82eaad9deda07365f37b4ae4f24e15b6e4df8a8614952b4f89",
-      "size_bytes": 15141,
+      "sha256": "aa2fc6b57792b71b1cd51a344ca65f7df5b99a99e3f2d396db7f8cd51488897e",
+      "size_bytes": 23643,
       "source": "README_EN.md"
     },
     {
       "path": "RESEARCH_DASHBOARD.md",
-      "sha256": "a71dd1590df26eb2ae85562e25934c7acfd5499da50510342a8a73c74a480c68",
-      "size_bytes": 9540,
+      "sha256": "2e57f240ecb988c89ae7365f83f5ff0683cd5102d94760ef8723aa35dbf9199e",
+      "size_bytes": 10164,
       "source": "RESEARCH_DASHBOARD.md"
     },
     {
       "path": "benchmark_contract/v1/README.md",
-      "sha256": "0dc84265d2f2d277c4baa4fca216e546178ee1127b8323721e0e663927ea2503",
-      "size_bytes": 9127,
+      "sha256": "72f493f30cb82edbcfefb85d973173a3dd6d7574958e214f14e4799a328775db",
+      "size_bytes": 9911,
       "source": "benchmark_contract/v1/README.md"
     },
     {
@@ -81,8 +81,8 @@
     },
     {
       "path": "benchmark_contract/v1/lane-manifests/final-av-60s-1344x768-24fps-v1.json",
-      "sha256": "bff6452744e4acdf52f205caa6ffedc689fe2b5dcfbf60a6d0014d82be4fb7b5",
-      "size_bytes": 3275,
+      "sha256": "2aeda6a0a058eed549ccde034ae05088ac43445faa5392f317cdd7cb4f1eb93d",
+      "size_bytes": 4161,
       "source": "benchmark_contract/v1/lane-manifests/final-av-60s-1344x768-24fps-v1.json"
     },
     {
@@ -134,6 +134,42 @@
       "source": "code/pytest.py"
     },
     {
+      "path": "examples/a6000-turbo-8step-niulai-inspired/contact-sheet.jpg",
+      "sha256": "534fcea9c85600e8874d6400293bd9b1df11e0bd8bd67501af7b2d59365835d7",
+      "size_bytes": 264574,
+      "source": "examples/a6000-turbo-8step-niulai-inspired/contact-sheet.jpg"
+    },
+    {
+      "path": "examples/a6000-turbo-8step-niulai-inspired/hero-frame.jpg",
+      "sha256": "7b60103f8c13427cc2aeb1ad09d76fd142cf42eb3674b09527143a77b97a293f",
+      "size_bytes": 255691,
+      "source": "examples/a6000-turbo-8step-niulai-inspired/hero-frame.jpg"
+    },
+    {
+      "path": "examples/a6000-turbo-8step-niulai-inspired/metadata.json",
+      "sha256": "ae90b551ccb34feb4e8e28b98e1df512f7b89fc1d119d4c43170df96f27e8976",
+      "size_bytes": 4338,
+      "source": "examples/a6000-turbo-8step-niulai-inspired/metadata.json"
+    },
+    {
+      "path": "examples/a6000-turbo-8step-niulai-inspired/niulai-inspired-forest-awakening-turbo-8step.mp4",
+      "sha256": "a0d5c6774091bf8a529f95c7ab3ece4840569f96247b2f2e8fda8384b254d9f5",
+      "size_bytes": 10045025,
+      "source": "examples/a6000-turbo-8step-niulai-inspired/niulai-inspired-forest-awakening-turbo-8step.mp4"
+    },
+    {
+      "path": "examples/a6000-turbo-8step-niulai-inspired/presentation_metrics.json",
+      "sha256": "92c75e187465fbdb6a783b34577d7a163ef0d303451abef5529fb14defadf63a",
+      "size_bytes": 302,
+      "source": "examples/a6000-turbo-8step-niulai-inspired/presentation_metrics.json"
+    },
+    {
+      "path": "examples/a6000-turbo-8step-niulai-inspired/prompt.txt",
+      "sha256": "db71096b0e39a22dc4c13009bc46a3ca5d8b05f9cee46ec8fc81e6a825fead94",
+      "size_bytes": 1829,
+      "source": "examples/a6000-turbo-8step-niulai-inspired/prompt.txt"
+    },
+    {
       "path": "examples/a6000-turbo-8step-sci-fi/contact-sheet.jpg",
       "sha256": "d340eec35a645fd407f3be2f5527ef840cdad74272e825b948c7b718413ab273",
       "size_bytes": 236670,
@@ -141,8 +177,8 @@
     },
     {
       "path": "examples/a6000-turbo-8step-sci-fi/metadata.json",
-      "sha256": "17d29060699d6116b686ef9b4085e2987b11a3287b4c0abaf080dbfa7edf4d41",
-      "size_bytes": 2105,
+      "sha256": "3c68ccdbd9a3418ec7031452d7562a9ca5119a5fc49e408db510f31a785e277f",
+      "size_bytes": 2283,
       "source": "examples/a6000-turbo-8step-sci-fi/metadata.json"
     },
     {
@@ -204,6 +240,60 @@
       "sha256": "9ca0cb409a427798b16997f99e0446f27413ce312db53a3f4aaa4c624f1c7d21",
       "size_bytes": 6162,
       "source": "ports/minimax_h3_a6000/gpu_test_plan.md"
+    },
+    {
+      "path": "ports/minimax_h3_a6000/integration/finalize_sol_attn_adaptive_routing_diagnostic.py",
+      "sha256": "f1c77b6b3265816618430548fb4510615f963cc617ba36e9f75628f1006fd9c7",
+      "size_bytes": 17419,
+      "source": "ports/minimax_h3_a6000/integration/finalize_sol_attn_adaptive_routing_diagnostic.py"
+    },
+    {
+      "path": "ports/minimax_h3_a6000/integration/finalize_sol_attn_pair_value_halves_diagnostic.py",
+      "sha256": "8495be2c6f3a1852f0c40999370a90f8769076589974762492e2423c4cca6a2d",
+      "size_bytes": 56264,
+      "source": "ports/minimax_h3_a6000/integration/finalize_sol_attn_pair_value_halves_diagnostic.py"
+    },
+    {
+      "path": "ports/minimax_h3_a6000/integration/finalize_sol_attn_prefix_skip_diagnostic.py",
+      "sha256": "c79d76ddfa770fb9bb2fb041dc97c47eeda5f8ec59eefce36889da7535a3f6b9",
+      "size_bytes": 33296,
+      "source": "ports/minimax_h3_a6000/integration/finalize_sol_attn_prefix_skip_diagnostic.py"
+    },
+    {
+      "path": "ports/minimax_h3_a6000/integration/localize_sol_attn_pair_value_halves_shadow.py",
+      "sha256": "c51ffaee3cd917dc46b378c7daef97efc7e24b5235e8e608731652fd95ffcb3f",
+      "size_bytes": 20588,
+      "source": "ports/minimax_h3_a6000/integration/localize_sol_attn_pair_value_halves_shadow.py"
+    },
+    {
+      "path": "ports/minimax_h3_a6000/integration/r15/Dockerfile",
+      "sha256": "b74466dcbd4c7731bdcc2cc640ee9dd2c91aaa8d9d24edae28722c5dea0ca526",
+      "size_bytes": 2247,
+      "source": "ports/minimax_h3_a6000/integration/r15/Dockerfile"
+    },
+    {
+      "path": "ports/minimax_h3_a6000/integration/r15/build_r15_vae_spatial_tile_batching_image.sh",
+      "sha256": "1487513aaa19e2469f48f83f5bad76b02459a11838b7b68f9290778ee8678b10",
+      "size_bytes": 5788,
+      "source": "ports/minimax_h3_a6000/integration/r15/build_r15_vae_spatial_tile_batching_image.sh"
+    },
+    {
+      "path": "ports/minimax_h3_a6000/integration/r15/install_vae_spatial_tile_batching_patch.py",
+      "sha256": "fdb5825491fb218aa985bbc0523c02d6c1f6ba3c02dde24b227c6ba45bf549ff",
+      "size_bytes": 3648,
+      "source": "ports/minimax_h3_a6000/integration/r15/install_vae_spatial_tile_batching_patch.py"
+    },
+    {
+      "path": "ports/minimax_h3_a6000/integration/r20/Dockerfile",
+      "sha256": "716b59714e87f329ad44dc44b6bd31ca4f419cdf9074c2117206f58e3b6777bf",
+      "size_bytes": 2394,
+      "source": "ports/minimax_h3_a6000/integration/r20/Dockerfile"
+    },
+    {
+      "path": "ports/minimax_h3_a6000/integration/r20/build_r20_vae_bounded_tile_batching_image.sh",
+      "sha256": "d686ca035c6f39998df26050fbdf8c2b5875da13f31dc3518f3d7d153de32a24",
+      "size_bytes": 5804,
+      "source": "ports/minimax_h3_a6000/integration/r20/build_r20_vae_bounded_tile_batching_image.sh"
     },
     {
       "path": "ports/minimax_h3_a6000/integration/r3/Dockerfile",
@@ -285,14 +375,14 @@
     },
     {
       "path": "ports/minimax_h3_a6000/integration/r9/Dockerfile",
-      "sha256": "946cf98cff663fbb86d6fe25d50c5b0f5316a456e981a75cfbd65812dc3a15da",
-      "size_bytes": 4373,
+      "sha256": "75bf6bab49c05fef158d1000873f336cabecce0b6836c54b9148b4727d1bc38d",
+      "size_bytes": 5191,
       "source": "ports/minimax_h3_a6000/integration/r9/Dockerfile"
     },
     {
       "path": "ports/minimax_h3_a6000/integration/r9/build_r9_overlay_image.sh",
-      "sha256": "6d18adc939fd21c2e9384f99bd29854e828438c8839744ab4d0b42f7ccb81ffe",
-      "size_bytes": 6425,
+      "sha256": "f583bc41521abe0f72b9e4fc8432878c5e7e4c2c0e95244ef496e9abc7fc98a7",
+      "size_bytes": 7496,
       "source": "ports/minimax_h3_a6000/integration/r9/build_r9_overlay_image.sh"
     },
     {
@@ -300,6 +390,12 @@
       "sha256": "302f87f902e6f0fd9e5bef4737ac22871bd9981fa517548fb92c269255adab55",
       "size_bytes": 6204,
       "source": "ports/minimax_h3_a6000/integration/r9/dual_install_patch_files.py"
+    },
+    {
+      "path": "ports/minimax_h3_a6000/integration/r9/install_cachedit_telemetry_patch.py",
+      "sha256": "1da18dd2739edaf6ccce2c82c5b05aa0135beec6b2b747ee110a5797f4b0fc68",
+      "size_bytes": 3825,
+      "source": "ports/minimax_h3_a6000/integration/r9/install_cachedit_telemetry_patch.py"
     },
     {
       "path": "ports/minimax_h3_a6000/integration/run_gpu2_exact_ablation_5step_r4.sh",
@@ -368,6 +464,42 @@
       "source": "ports/minimax_h3_a6000/patches/vllm_omni_h3_a6000_opt_in.patch"
     },
     {
+      "path": "ports/minimax_h3_a6000/patches/vllm_omni_h3_cachedit_telemetry.patch",
+      "sha256": "c5c0df1a80c4b43089837a05ab19f08273f66172b400ed583715af87e87ad022",
+      "size_bytes": 7679,
+      "source": "ports/minimax_h3_a6000/patches/vllm_omni_h3_cachedit_telemetry.patch"
+    },
+    {
+      "path": "ports/minimax_h3_a6000/patches/vllm_omni_h3_dlo_offload_telemetry.patch",
+      "sha256": "360fe8f71e6a0fd30d27aaa9cabce960e06578a5202b90215238fe9aa1d6908c",
+      "size_bytes": 41671,
+      "source": "ports/minimax_h3_a6000/patches/vllm_omni_h3_dlo_offload_telemetry.patch"
+    },
+    {
+      "path": "ports/minimax_h3_a6000/patches/vllm_omni_h3_regional_compile_fail_closed.patch",
+      "sha256": "caf994b52d67a1d4462d97a8bf6867e14fcdde9e9d880ddd156be8a7d3d605ee",
+      "size_bytes": 8659,
+      "source": "ports/minimax_h3_a6000/patches/vllm_omni_h3_regional_compile_fail_closed.patch"
+    },
+    {
+      "path": "ports/minimax_h3_a6000/patches/vllm_omni_h3_split_profiler.patch",
+      "sha256": "6554d2b0c58b1fdc3a1f6a46b791b54f93b9967ff9e1b34427ff4f7afb39c99d",
+      "size_bytes": 11888,
+      "source": "ports/minimax_h3_a6000/patches/vllm_omni_h3_split_profiler.patch"
+    },
+    {
+      "path": "ports/minimax_h3_a6000/patches/vllm_omni_h3_vae_bounded_tile_batching.patch",
+      "sha256": "c884232f620bef21d6c1353842a77eb0bcceec98bd8ddccf6b7ab444c89a9d66",
+      "size_bytes": 8281,
+      "source": "ports/minimax_h3_a6000/patches/vllm_omni_h3_vae_bounded_tile_batching.patch"
+    },
+    {
+      "path": "ports/minimax_h3_a6000/patches/vllm_omni_h3_vae_spatial_tile_batching.patch",
+      "sha256": "e3693d1265a49700e8ca285c05a2fbb6805831e3a6980993504a7b2ff99741b8",
+      "size_bytes": 1779,
+      "source": "ports/minimax_h3_a6000/patches/vllm_omni_h3_vae_spatial_tile_batching.patch"
+    },
+    {
       "path": "ports/minimax_h3_a6000/pyproject.toml",
       "sha256": "208ef81a5323f80205a076b26a467a1fb12427ec04bec542f16f3b218319a04c",
       "size_bytes": 371,
@@ -381,8 +513,8 @@
     },
     {
       "path": "ports/minimax_h3_a6000/src/minimax_h3_a6000/env.py",
-      "sha256": "6b60dcc122e3faabd6260f73e87e503a1078f53a0ca39a3579a47d7dd85b061c",
-      "size_bytes": 2653,
+      "sha256": "32ea9f58a1c9b361917002d40109b33c960fafa3c2a3c73ab3b517df12dbb9c4",
+      "size_bytes": 2853,
       "source": "ports/minimax_h3_a6000/src/minimax_h3_a6000/env.py"
     },
     {
@@ -405,8 +537,8 @@
     },
     {
       "path": "ports/minimax_h3_a6000/src/minimax_h3_a6000/sol_attn_backend.py",
-      "sha256": "3b92b5adf8cdf47962ef65d559640ed50a5873aeaeb95900ab0e7b7d423022b9",
-      "size_bytes": 71506,
+      "sha256": "d1e794bcce20c40e21e3f886f730b262c6a22b18b53747129e4330804113d9ac",
+      "size_bytes": 72579,
       "source": "ports/minimax_h3_a6000/src/minimax_h3_a6000/sol_attn_backend.py"
     },
     {
@@ -435,14 +567,14 @@
     },
     {
       "path": "ports/minimax_h3_a6000/tests/test_patch_and_guards.py",
-      "sha256": "65874cdcf2506623984869612ff8111ad5248ac8544d1f0fb34a6ca6f4fa0579",
-      "size_bytes": 8176,
+      "sha256": "c16506faaf846627863f86fe506e66265b3708cad8af136050d3e56186f0a082",
+      "size_bytes": 9293,
       "source": "ports/minimax_h3_a6000/tests/test_patch_and_guards.py"
     },
     {
       "path": "ports/minimax_h3_a6000/tests/test_r3_integration_static.py",
-      "sha256": "1a175f012293bddf074418ee1c3dabe201022e6419b3c7cef698cdfccba48074",
-      "size_bytes": 6740,
+      "sha256": "368d366b4a591fd536b1cf93d3dd69b7f15ab8205534127ddf313b8202d00f75",
+      "size_bytes": 7806,
       "source": "ports/minimax_h3_a6000/tests/test_r3_integration_static.py"
     },
     {
@@ -459,15 +591,21 @@
     },
     {
       "path": "ports/minimax_h3_a6000/tests/test_sol_attn_backend.py",
-      "sha256": "ae3fd67eeca8c648b54a7744015f25e5f8c40b85bb8ff1d98d7da9e6baebe13a",
-      "size_bytes": 44815,
+      "sha256": "f82e4a0d674e8194a92772bc0bd0c1f677e60a8b5487b84af905d4bdb9f65fa6",
+      "size_bytes": 47016,
       "source": "ports/minimax_h3_a6000/tests/test_sol_attn_backend.py"
     },
     {
       "path": "release/github_release_manifest.json",
-      "sha256": "a3a0c4a3b85a3c7997eea1a2a88f2e5987c6a694b62ee11019d4883d36451b2e",
-      "size_bytes": 9570,
+      "sha256": "25387631741750fc6571a58b825133a20d29432e00a17ef517e2f814a7be6bea",
+      "size_bytes": 15015,
       "source": "release/github_release_manifest.json"
+    },
+    {
+      "path": "release_demo_runs/a6000_turbo_8step_scifi_20260812T104042Z/run_summary.json",
+      "sha256": "e5e31ddaa11d02a02c06132c0d855abe66ef083321ca35f838d64c370b90eeec",
+      "size_bytes": 1807,
+      "source": "release_demo_runs/a6000_turbo_8step_scifi_20260812T104042Z/run_summary.json"
     },
     {
       "path": "runtime/single_a6000_bf16/container_image.digest",
@@ -530,10 +668,22 @@
       "source": "scripts/prepare_models.sh"
     },
     {
+      "path": "scripts/run_final_av_30s_r10_vae_bounded_tile_batching_n1.sh",
+      "sha256": "46ed6f8d112a7679a1add71cf90d43140567ffd7154e612d0d82f33c89e86048",
+      "size_bytes": 7648,
+      "source": "scripts/run_final_av_30s_r10_vae_bounded_tile_batching_n1.sh"
+    },
+    {
       "path": "scripts/run_turbo_demo.sh",
-      "sha256": "4008af5c350d0787803059d5621bad44c09ee58b2dd528781056994fd70034b3",
-      "size_bytes": 13560,
+      "sha256": "68ba8851ae3a2d641441b3f1bd41ecbeb62a6d3c43d2aa24851a213c05a42933",
+      "size_bytes": 16461,
       "source": "scripts/run_turbo_demo.sh"
+    },
+    {
+      "path": "scripts/run_vae_bounded_tile_batching_probe.sh",
+      "sha256": "2ca0f55ac2eb786a723dca50201bdb9cbd2d85dc013ca08367fd4967a0f49adb",
+      "size_bytes": 9354,
+      "source": "scripts/run_vae_bounded_tile_batching_probe.sh"
     },
     {
       "path": "technical_report/evidence/minimax_h3_desktop/baseline_a6000/baseline_certification.json",
@@ -558,6 +708,102 @@
       "sha256": "102a895efd877b3a06afc171be8c386f64d13e000320a5f7b574a2db9baf6f21",
       "size_bytes": 812,
       "source": "technical_report/evidence/minimax_h3_desktop/delivery/sol_attn_stride_aware_v_harness_export_audit_20260813T082610Z/summary.json"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_reviewer_packet_20260812T071241Z/media_listening_manifest.json",
+      "sha256": "a891fc4f4e75348d5760a389cb4d4f19f5b2ba373879238319ff6eb56e5a50bf",
+      "size_bytes": 28862,
+      "source": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_reviewer_packet_20260812T071241Z/media_listening_manifest.json"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_reviewer_packet_20260812T071241Z/packet_consistency_check_20260812T072314Z.json",
+      "sha256": "1da97784fcf2f5e2fd99753c98a4912e6e2beb930da0b556768df30d1897da79",
+      "size_bytes": 4244,
+      "source": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_reviewer_packet_20260812T071241Z/packet_consistency_check_20260812T072314Z.json"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_reviewer_packet_20260812T071241Z/reviewer_packet.md",
+      "sha256": "c29917c24d6c0f8dabe7acb4cb5d7940c93f7b2df7dc944f76bf92fd328b8c2e",
+      "size_bytes": 3000,
+      "source": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_reviewer_packet_20260812T071241Z/reviewer_packet.md"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_reviewer_packet_20260812T071241Z/reviewer_verdict.json",
+      "sha256": "d374ca51310f62928b33252769341666c55acde069c567c13d7c9f8f8b91a039",
+      "size_bytes": 2054,
+      "source": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_reviewer_packet_20260812T071241Z/reviewer_verdict.json"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_reviewer_packet_20260812T071241Z/summary.json",
+      "sha256": "3d7ed94693824e64ad45b365ee1fdf2d8ad5c8cd41ed7286f0ddcaf0d7377aaf",
+      "size_bytes": 8729,
+      "source": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_reviewer_packet_20260812T071241Z/summary.json"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/manager_recognition_check_20260812T082741Z.json",
+      "sha256": "da48347cf2559590a74c682f56f5dbc0ee15f23f20327ae202d3e5c24204887f",
+      "size_bytes": 33374,
+      "source": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/manager_recognition_check_20260812T082741Z.json"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/manager_reviewer_handoff_crosswalk.json",
+      "sha256": "b5ac19d4e26b87feadb3a0404e3becb1f8008e642d1ada0ff1a2f4400e735032",
+      "size_bytes": 3386,
+      "source": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/manager_reviewer_handoff_crosswalk.json"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/manager_stage_closeout_crosswalk.json",
+      "sha256": "6fbe354a0d5f0b3e2beb9086b51a5c8375f2392f05a207e7632b6d2140e4bfe7",
+      "size_bytes": 5342,
+      "source": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/manager_stage_closeout_crosswalk.json"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/manager_visibility_resolution.json",
+      "sha256": "cfacbcf0908c7213d2739dcb63021b4ee0263f9a8c4716570638d5bda9ebb64b",
+      "size_bytes": 2796,
+      "source": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/manager_visibility_resolution.json"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/media_listening_manifest.json",
+      "sha256": "a891fc4f4e75348d5760a389cb4d4f19f5b2ba373879238319ff6eb56e5a50bf",
+      "size_bytes": 28862,
+      "source": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/media_listening_manifest.json"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/reviewer_packet.md",
+      "sha256": "0d39dd612e6a25a9e354f80311b4deeaec2595bde5e80fcaf39bddb6e8d5508a",
+      "size_bytes": 3500,
+      "source": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/reviewer_packet.md"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/reviewer_verdict.json",
+      "sha256": "90f8d99825012dda7dd0984fbcf5680cf0707bef41c9559a3aa0e2a03af1d061",
+      "size_bytes": 5561,
+      "source": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/reviewer_verdict.json"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/reviewer_verdict_request.json",
+      "sha256": "7025ad868ed255eb6766818ce2e28b6f848ffa0d24d63bdf3d13fe4ce1fed96c",
+      "size_bytes": 1579,
+      "source": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/reviewer_verdict_request.json"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/stage_closeout_consistency_check_20260812T075720Z.json",
+      "sha256": "58fb6f49b7bac6dc95d09d1582a83e7f3449e96e52e36e519042965fa8bcde3d",
+      "size_bytes": 3195,
+      "source": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/stage_closeout_consistency_check_20260812T075720Z.json"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/summary.json",
+      "sha256": "7dfd18244e84de919ff2f713534b309b29593d0f3116270d8b2405639009a361",
+      "size_bytes": 6540,
+      "source": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/summary.json"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/demo_niulai_public_source_note_20260817.md",
+      "sha256": "db8a85c5d7487eac068fec75db0b45f8d3f6e1853cbe5c35b5c587dd53a28bc8",
+      "size_bytes": 1605,
+      "source": "technical_report/evidence/minimax_h3_desktop/demo_niulai_public_source_note_20260817.md"
     },
     {
       "path": "technical_report/evidence/minimax_h3_desktop/dlo_autotune/detached_continuation/capacity_selection.json",
@@ -588,6 +834,18 @@
       "sha256": "2058b1cf0bf95c57e329e77f6fbe8b366844c8c9fc15e5fde5724dc83c2cd715",
       "size_bytes": 1547,
       "source": "technical_report/evidence/minimax_h3_desktop/hidden_cache_policy.json"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-dlo-async-sync-prefetch-n1-20260817T064200Z/RUN_REPORT.md",
+      "sha256": "65dde92dbd13b5edf793fec947c1744cd4e5c09009049082486d3d4de3483840",
+      "size_bytes": 1270,
+      "source": "technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-dlo-async-sync-prefetch-n1-20260817T064200Z/RUN_REPORT.md"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-dlo-async-sync-prefetch-n1-20260817T064200Z/decision.json",
+      "sha256": "ffe9747f070a92f77b2d144e5090e8d6209ad3ad884602b2e629d6f594c40bfe",
+      "size_bytes": 5484,
+      "source": "technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-dlo-async-sync-prefetch-n1-20260817T064200Z/decision.json"
     },
     {
       "path": "technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/RUN_REPORT.md",
@@ -642,6 +900,60 @@
       "sha256": "fceb3ce2606c2e243834234c2534e551cf9d3ca30f4a2a13d413ec6c619d0970",
       "size_bytes": 23331,
       "source": "technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-step3-guarded-adaptive-sol-attn-formal-n10-20260816T052452Z/timing_summary.json"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-vae-spatial-tile-batching-n1-lease-20260817T033717Z/RUN_REPORT.md",
+      "sha256": "5e6c7cfb5ce2f10ef1914f119b2b8ff75112af7e7587ca8bc79cd694062de387",
+      "size_bytes": 1460,
+      "source": "technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-vae-spatial-tile-batching-n1-lease-20260817T033717Z/RUN_REPORT.md"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-vae-spatial-tile-batching-n1-lease-20260817T033717Z/decision.json",
+      "sha256": "8b4df2c3e7da4817cb697a76acb4fe0821923d03a1bb53b51aa5b39e9f7d72a7",
+      "size_bytes": 21831,
+      "source": "technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-vae-spatial-tile-batching-n1-lease-20260817T033717Z/decision.json"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-vae-tile-batch-cap-4-n1-20260817T110844Z/RUN_REPORT.md",
+      "sha256": "fdc9345ba291ff96bacad91f93f27cdb9dfbfe757601047bf145bcc6134ff95f",
+      "size_bytes": 1681,
+      "source": "technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-vae-tile-batch-cap-4-n1-20260817T110844Z/RUN_REPORT.md"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-vae-tile-batch-cap-4-n1-20260817T110844Z/decision.json",
+      "sha256": "e7c82dd1dd4289cd52e9f00831c977142b630afba04ff73e165a84faeb2da5f0",
+      "size_bytes": 22501,
+      "source": "technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-vae-tile-batch-cap-4-n1-20260817T110844Z/decision.json"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-vae-tile-batch-cap-4-n1-20260817T110844Z/quality_proxy_comparison.json",
+      "sha256": "523bec61d758a3355ff612b903ec114519d7e7ea1f5d7b1cb14001dcfd1f6ae4",
+      "size_bytes": 1880,
+      "source": "technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-vae-tile-batch-cap-4-n1-20260817T110844Z/quality_proxy_comparison.json"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-vae-tile-batch-cap-4-n1-20260817T110844Z/timing_summary.json",
+      "sha256": "bcca0e686dafb59973bbe3f813ca1b9c39a1d40cf371dc6d64d5ccc9cedd63ae",
+      "size_bytes": 593,
+      "source": "technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-vae-tile-batch-cap-4-n1-20260817T110844Z/timing_summary.json"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/long_video/final-av-60s-r9-current-vs-r10-step3-sol-attn-n1-20260816T164226Z/RUN_REPORT.md",
+      "sha256": "57f84efb6e4f3ccd66f8f8dbf8e2744bc2dad5394935665479ffe720623ee69b",
+      "size_bytes": 3063,
+      "source": "technical_report/evidence/minimax_h3_desktop/long_video/final-av-60s-r9-current-vs-r10-step3-sol-attn-n1-20260816T164226Z/RUN_REPORT.md"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/long_video/final-av-60s-r9-current-vs-r10-step3-sol-attn-n1-20260816T164226Z/decision.json",
+      "sha256": "e10f873101f21dc4edcc3d136831369ae01af768adb010380b126218f88fc6f5",
+      "size_bytes": 17486,
+      "source": "technical_report/evidence/minimax_h3_desktop/long_video/final-av-60s-r9-current-vs-r10-step3-sol-attn-n1-20260816T164226Z/decision.json"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/long_video/final-av-60s-r9-current-vs-r10-step3-sol-attn-n1-20260816T164226Z/reviewer_verdict.json",
+      "sha256": "0a22066761911fbf18aa06849bd2523852023a422e7ed8425be174229884ed9a",
+      "size_bytes": 3659,
+      "source": "technical_report/evidence/minimax_h3_desktop/long_video/final-av-60s-r9-current-vs-r10-step3-sol-attn-n1-20260816T164226Z/reviewer_verdict.json"
     },
     {
       "path": "technical_report/evidence/minimax_h3_desktop/metadata/checkpoint_size_summary.json",
@@ -734,6 +1046,66 @@
       "source": "technical_report/evidence/minimax_h3_desktop/sol_engine_port/sol_attn_stride_aware_v_harness_20260813T082456Z/summary.json"
     },
     {
+      "path": "technical_report/evidence/minimax_h3_desktop/turbo_merged/LATEST_QUALITY_SUITE_RUN_ID",
+      "sha256": "5765581c66241b03193d01be39cde18c4014c74bf4950703f92237300b0c0b61",
+      "size_bytes": 36,
+      "source": "technical_report/evidence/minimax_h3_desktop/turbo_merged/LATEST_QUALITY_SUITE_RUN_ID"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/turbo_merged/quality_suite_runs/gpu3_turbo_quality_20260810T005611Z/audio_energy_envelopes.json",
+      "sha256": "6f1eaf1526dd72932d9b80f71b73c64ce3d57b63890210ad011decd8bb17a568",
+      "size_bytes": 11700,
+      "source": "technical_report/evidence/minimax_h3_desktop/turbo_merged/quality_suite_runs/gpu3_turbo_quality_20260810T005611Z/audio_energy_envelopes.json"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/turbo_merged/quality_suite_runs/gpu3_turbo_quality_20260810T005611Z/baseline_seed0_quality_comparison.json",
+      "sha256": "c762a8c6bc084584b0e441a6aa0d8f3b93749651dddb93bbde4a1757cbe42832",
+      "size_bytes": 788,
+      "source": "technical_report/evidence/minimax_h3_desktop/turbo_merged/quality_suite_runs/gpu3_turbo_quality_20260810T005611Z/baseline_seed0_quality_comparison.json"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/turbo_merged/quality_suite_runs/gpu3_turbo_quality_20260810T005611Z/contacts/REVIEW_baseline_example_1_4step_seeds0-3.jpg",
+      "sha256": "44ebdde772fe83d1fcf97e605558f4a5623ea761d0572fc40ac88479d952e84c",
+      "size_bytes": 345218,
+      "source": "technical_report/evidence/minimax_h3_desktop/turbo_merged/quality_suite_runs/gpu3_turbo_quality_20260810T005611Z/contacts/REVIEW_baseline_example_1_4step_seeds0-3.jpg"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/turbo_merged/quality_suite_runs/gpu3_turbo_quality_20260810T005611Z/contacts/REVIEW_baseline_example_1_8step_seeds0-3.jpg",
+      "sha256": "5c9fb737ba8222cf88e8a80774d1d3eb7e003cb5def1b73267298dd1db69ad39",
+      "size_bytes": 347018,
+      "source": "technical_report/evidence/minimax_h3_desktop/turbo_merged/quality_suite_runs/gpu3_turbo_quality_20260810T005611Z/contacts/REVIEW_baseline_example_1_8step_seeds0-3.jpg"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/turbo_merged/quality_suite_runs/gpu3_turbo_quality_20260810T005611Z/contacts/REVIEW_motion_audio_stress_4step_seeds0-3.jpg",
+      "sha256": "3ebdb80ca7fa9560051a3500478d18bd3a61c56f56b0f9b9c50e2e16a0a1f869",
+      "size_bytes": 270794,
+      "source": "technical_report/evidence/minimax_h3_desktop/turbo_merged/quality_suite_runs/gpu3_turbo_quality_20260810T005611Z/contacts/REVIEW_motion_audio_stress_4step_seeds0-3.jpg"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/turbo_merged/quality_suite_runs/gpu3_turbo_quality_20260810T005611Z/contacts/REVIEW_motion_audio_stress_8step_seeds0-3.jpg",
+      "sha256": "5c7127d1a90cd412ec70d5ac14ca71204bdae7e6a5bfb8f9bd76cf40871b28be",
+      "size_bytes": 299582,
+      "source": "technical_report/evidence/minimax_h3_desktop/turbo_merged/quality_suite_runs/gpu3_turbo_quality_20260810T005611Z/contacts/REVIEW_motion_audio_stress_8step_seeds0-3.jpg"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/turbo_merged/quality_suite_runs/gpu3_turbo_quality_20260810T005611Z/contacts/REVIEW_object_temporal_consistency_4step_seeds0-3.jpg",
+      "sha256": "62d80374b55bf37210d373444dee29bc2380e3954bfd07b61fd4b495f36cee15",
+      "size_bytes": 276631,
+      "source": "technical_report/evidence/minimax_h3_desktop/turbo_merged/quality_suite_runs/gpu3_turbo_quality_20260810T005611Z/contacts/REVIEW_object_temporal_consistency_4step_seeds0-3.jpg"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/turbo_merged/quality_suite_runs/gpu3_turbo_quality_20260810T005611Z/contacts/REVIEW_object_temporal_consistency_8step_seeds0-3.jpg",
+      "sha256": "763166d2c2f8c86c176e2eff308e14ad57336953d94665cc0e8dfea1f8cfbe4e",
+      "size_bytes": 307356,
+      "source": "technical_report/evidence/minimax_h3_desktop/turbo_merged/quality_suite_runs/gpu3_turbo_quality_20260810T005611Z/contacts/REVIEW_object_temporal_consistency_8step_seeds0-3.jpg"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/turbo_merged/quality_suite_runs/gpu3_turbo_quality_20260810T005611Z/human_review.md",
+      "sha256": "996274ad7b3b351f2de86e422639f843afe17a10f5df860dc2d9802345a1bfa5",
+      "size_bytes": 15777,
+      "source": "technical_report/evidence/minimax_h3_desktop/turbo_merged/quality_suite_runs/gpu3_turbo_quality_20260810T005611Z/human_review.md"
+    },
+    {
       "path": "technical_report/evidence/minimax_h3_desktop/turbo_merged/quality_suite_runs/gpu3_turbo_quality_20260810T005611Z/operator_acceptance.json",
       "sha256": "2cabc8b9083643e57ab8371c656061343c2a575ebac062ab9a5ebb6c2af0f089",
       "size_bytes": 1075,
@@ -744,6 +1116,12 @@
       "sha256": "7fcd0f18cc3c73842faca2c431feb31883a15e4e067320be545c599c954cee52",
       "size_bytes": 38141,
       "source": "technical_report/evidence/minimax_h3_desktop/turbo_merged/quality_suite_runs/gpu3_turbo_quality_20260810T005611Z/quality_suite_analysis.json"
+    },
+    {
+      "path": "technical_report/evidence/minimax_h3_desktop/turbo_merged/quality_suite_runs/gpu3_turbo_quality_20260810T005611Z/quality_suite_plan.json",
+      "sha256": "fda05231945f3564ef3500abdd09063a548b9bf89953e1c2347451bc579c35ce",
+      "size_bytes": 24107,
+      "source": "technical_report/evidence/minimax_h3_desktop/turbo_merged/quality_suite_runs/gpu3_turbo_quality_20260810T005611Z/quality_suite_plan.json"
     },
     {
       "path": "technical_report/final_technical_report.md",
@@ -759,8 +1137,8 @@
     },
     {
       "path": "technical_report/progress_update.md",
-      "sha256": "0bcdd6136b29daf9b6bf0d79cf9b1b8693f4bfa5e5e90f51acd0fdbecb5a0f63",
-      "size_bytes": 4557,
+      "sha256": "0f5146bd898230bc930ebaf1a850b92d35b68463032c4ad59098f80b05dc004e",
+      "size_bytes": 6268,
       "source": "technical_report/progress_update.md"
     },
     {
@@ -807,9 +1185,15 @@
     },
     {
       "path": "tests/test_benchmark_contract.py",
-      "sha256": "15764cedb17924a023ee7ae6fe42ab19449fdfe17b135a8331e2e704a7e639f8",
-      "size_bytes": 7063,
+      "sha256": "068213fcf983203fe04e7590f874d8ef0c825bce227ccebb405dda4f603257cb",
+      "size_bytes": 7334,
       "source": "tests/test_benchmark_contract.py"
+    },
+    {
+      "path": "tests/test_final_av_30s_extension_runner.py",
+      "sha256": "dabc6550742f23e1041101d1bd5e23353982c5164a57df0f4b451839d2088581",
+      "size_bytes": 39494,
+      "source": "tests/test_final_av_30s_extension_runner.py"
     },
     {
       "path": "tests/test_github_release_tree_builder.py",
@@ -825,8 +1209,8 @@
     },
     {
       "path": "tests/test_public_quickstart.py",
-      "sha256": "f3b3ac3cba0cf6a6642311a9d615f7ebb9e847d47e20ac72309ff4a8a01538cb",
-      "size_bytes": 3027,
+      "sha256": "4a7c2678e1796c307b302960d6b49fb9897329a1e97c1929e8e8f47d8a49bbac",
+      "size_bytes": 4175,
       "source": "tests/test_public_quickstart.py"
     },
     {
@@ -860,6 +1244,12 @@
       "source": "tools/build_periodic_progress.py"
     },
     {
+      "path": "tools/final_av_30s_extension_runner.py",
+      "sha256": "ba195a2b63d2082c6dd447eb276725688822501b9db35e7e0295fe9d6f35fb1e",
+      "size_bytes": 261810,
+      "source": "tools/final_av_30s_extension_runner.py"
+    },
+    {
       "path": "tools/minimax_h3_a6000_performance_report.py",
       "sha256": "01f152d525265839266c9d6c1c6e07263bfeb5d80ae7326ec552c8d156e966d9",
       "size_bytes": 103477,
@@ -888,6 +1278,12 @@
       "sha256": "7ad8703407f0f8d9f250ee2c47c0175eab7ce9c1d061b8ed4816febe0d424352",
       "size_bytes": 25646,
       "source": "tools/turbo_lora_peft.py"
+    },
+    {
+      "path": "tools/vae_bounded_tile_batching_probe.py",
+      "sha256": "33e74f1e495f9451eefb80f55e1b6b0ddc6d3d13f7e9ac1a25f37892f785746b",
+      "size_bytes": 19005,
+      "source": "tools/vae_bounded_tile_batching_probe.py"
     },
     {
       "path": "tools/validate_benchmark_record.py",

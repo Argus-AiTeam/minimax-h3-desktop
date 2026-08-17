@@ -1,0 +1,113 @@
+{
+  "schema_version": "minimax-h3-a6000-public-fl2va-showcase-v1",
+  "title": "Forest Awakening — an original Niu Lai-inspired FL2VA demonstration",
+  "disclosure": "Unofficial, independently generated demonstration. It is not a clip from, reproduction of, or collaboration with the film Niu Lai.",
+  "track": "practical_disclosed_approx",
+  "model_path": "MiniMax-H3 FL2VA with statically merged Turbo LoRA",
+  "platform": "single NVIDIA RTX A6000 48GB (SM86)",
+  "reference": {
+    "kind": "operator-supplied local first-frame image",
+    "source_sha256": "832386ec405468c418087a2ccf806af8edf79f4ea78742b1df7fb91959120f1d",
+    "normalized_sha256": "5b42628b2d988b8d481c6098886f37225713d1d29ec94cc83f4b642ff091757b",
+    "source_dimensions": [
+      1080,
+      740
+    ],
+    "normalized_dimensions": [
+      1344,
+      768
+    ],
+    "included_in_public_release": false,
+    "normalization": "center-crop to 16:9 with Lanczos resampling inside the pinned isolated runtime"
+  },
+  "workload": {
+    "task": "fl2va",
+    "width": 1344,
+    "height": 768,
+    "decoded_video_frames": 124,
+    "fps": 24,
+    "duration_seconds": 5.166667,
+    "audio_sample_rate_hz": 32000,
+    "audio_channels": 2,
+    "decoded_audio_samples_per_channel": 166912,
+    "num_inference_steps": 8,
+    "seed": 42,
+    "flow_shift": 12,
+    "audio_flow_shift": 3.0
+  },
+  "selection": {
+    "candidate_seeds": [
+      17,
+      42,
+      137
+    ],
+    "selected_seed": 42,
+    "policy": "manual contact-sheet review after all candidates completed; select for character stability, focal lighting, readable composition, and motion rather than timing",
+    "agent_visual_review": "selected: both bovine identities and horn silhouettes remain stable; the glowing seedling creates the clearest focal point; progressive volumetric light and hand gesture form a coherent single-shot story",
+    "operator_subjective_review": "pending"
+  },
+  "measurement": {
+    "http_time_total_seconds": 305.385832,
+    "peak_gpu_memory_mib_for_three_candidate_session": 27410.0,
+    "peak_host_memory_gib_for_three_candidate_session": 185.95085525512695,
+    "peak_power_w_for_three_candidate_session": 301.16,
+    "peak_temperature_c_for_three_candidate_session": 79.0
+  },
+  "validation": {
+    "structural_av_contract_pass": true,
+    "decoded_video_frames": 124,
+    "decoded_audio_samples_per_channel": 166912,
+    "near_frozen_transition_count_below_0_05": 0,
+    "near_frozen_transition_count_below_0_5": 1,
+    "adjacent_frame_absdiff_mean": 2.6283493972406156,
+    "adjacent_frame_absdiff_min": 0.39376652240753174,
+    "audio_rms": 0.08630525320768356,
+    "audio_peak_abs": 0.4115533232688904,
+    "audio_nonzero_fraction": 0.9999940088190185,
+    "presentation": {
+      "frame_count": 124,
+      "hero_frame_index": 72,
+      "contact_sheet_indices": [
+        0,
+        24,
+        48,
+        72,
+        96,
+        123
+      ],
+      "mean_luma": 74.64054107666016,
+      "near_black_pixel_fraction": 0.0071190806211597546,
+      "near_white_pixel_fraction": 0.0,
+      "mean_gradient_energy": 297.36101175123645
+    },
+    "subjective_audio_semantic_quality_certified": false
+  },
+  "files": {
+    "video": {
+      "path": "niulai-inspired-forest-awakening-turbo-8step.mp4",
+      "bytes": 10045025,
+      "sha256": "a0d5c6774091bf8a529f95c7ab3ece4840569f96247b2f2e8fda8384b254d9f5"
+    },
+    "hero_frame": {
+      "path": "hero-frame.jpg",
+      "bytes": 255691,
+      "sha256": "7b60103f8c13427cc2aeb1ad09d76fd142cf42eb3674b09527143a77b97a293f"
+    },
+    "contact_sheet": {
+      "path": "contact-sheet.jpg",
+      "bytes": 264574,
+      "sha256": "534fcea9c85600e8874d6400293bd9b1df11e0bd8bd67501af7b2d59365835d7"
+    },
+    "prompt": {
+      "path": "prompt.txt",
+      "bytes": 1829,
+      "sha256": "db71096b0e39a22dc4c13009bc46a3ca5d8b05f9cee46ec8fc81e6a825fead94"
+    },
+    "presentation_metrics": {
+      "path": "presentation_metrics.json",
+      "bytes": 302,
+      "sha256": "92c75e187465fbdb6a783b34577d7a163ef0d303451abef5529fb14defadf63a"
+    }
+  },
+  "claim_boundary": "Measured single-A6000 Turbo 8-step FL2VA showcase selected from three seeds. Turbo is approximate. The source reference is not redistributed. Automated checks certify structure and active stereo, not subjective semantic audio quality or affiliation with the film."
+}

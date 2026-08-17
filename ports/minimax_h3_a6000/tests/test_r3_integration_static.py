@@ -126,3 +126,21 @@ def test_gpu_harness_regression_for_prior_path_and_permissions_bugs() -> None:
     assert "parents[" not in source
     assert "args.output.parent.mkdir(parents=True, exist_ok=True)" in source
     assert "chmod" not in source
+
+
+def test_r15_vae_spatial_tile_batching_overlay_is_default_off_build_only() -> None:
+    dockerfile = (PORT / "integration" / "r15" / "Dockerfile").read_text(encoding="utf-8")
+    build_script = (PORT / "integration" / "r15" / "build_r15_vae_spatial_tile_batching_image.sh").read_text(encoding="utf-8")
+    helper = (PORT / "integration" / "r15" / "install_vae_spatial_tile_batching_patch.py").read_text(encoding="utf-8")
+    patch = (PORT / "patches" / "vllm_omni_h3_vae_spatial_tile_batching.patch").read_text(encoding="utf-8")
+
+    assert "r13-split-profiler" in dockerfile
+    assert "MINIMAX_H3_A6000_VIDEO_VAE_SPATIAL_TILE_BATCHING=0" in dockerfile
+    assert "git -C \"$tmp\" apply" in dockerfile
+    assert "docker build" in build_script
+    assert "--network=none" in build_script
+    assert "docker run" not in build_script
+    assert "--gpus" not in build_script
+    assert "vllm_omni/diffusion/models/minimax_h3/vae.py" in helper
+    assert "MINIMAX_H3_A6000_VIDEO_VAE_SPATIAL_TILE_BATCHING_ENV" in patch
+    assert "model.stack_tiling = True" in patch

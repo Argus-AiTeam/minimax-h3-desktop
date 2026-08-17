@@ -1,0 +1,55 @@
+{
+  "claim_boundary": "Public demo artifacts only; Turbo is a disclosed practical approximation, not BF16-exact fidelity.",
+  "clips": [
+    {
+      "audio_channels": 2,
+      "audio_sample_rate_hz": 32000,
+      "average_rate": "24",
+      "bytes": 10418383,
+      "decoded_audio_frames": 163,
+      "decoded_audio_samples": 166912,
+      "decoded_video_frames": 124,
+      "height": 768,
+      "http_time_total_s": 287.343146,
+      "schedule_steps": 8,
+      "schema_version": "minimax-h3-a6000-public-demo-v1",
+      "seed": 137,
+      "sha256": "192549392c1502c867ce12b5f3380466a22eeb8a147acc59371e2381c298c3e7",
+      "structural_av_contract_pass": true,
+      "track": "practical_disclosed_approx",
+      "width": 1344
+    },
+    {
+      "audio_channels": 2,
+      "audio_sample_rate_hz": 32000,
+      "average_rate": "24",
+      "bytes": 11252694,
+      "decoded_audio_frames": 163,
+      "decoded_audio_samples": 166912,
+      "decoded_video_frames": 124,
+      "height": 768,
+      "http_time_total_s": 291.626602,
+      "schedule_steps": 8,
+      "schema_version": "minimax-h3-a6000-public-demo-v1",
+      "seed": 42,
+      "sha256": "454fceb57b1daf60dc5db1ade9aae295cee2ecd16fd90ab2c2f16c7b626db69a",
+      "structural_av_contract_pass": true,
+      "track": "practical_disclosed_approx",
+      "width": 1344
+    }
+  ],
+  "gpu_uuid": "GPU-ff0c8d25-2652-ce58-3ef7-e3a9aeeb3334",
+  "host_gpu_index": 3,
+  "resource": {
+    "peak_gpu_memory_mib": 26664.0,
+    "peak_host_memory_used_gib": 175.94968032836914,
+    "peak_power_w": 301.09,
+    "peak_temperature_c": 83.0,
+    "sample_count": 239
+  },
+  "runtime_image": "argus/minimax-h3-vllm-omni:8e2e9b6b53e8-r2",
+  "schema_version": "minimax-h3-a6000-public-demo-run-v1",
+  "status": "pass",
+  "steps": 8,
+  "track": "practical_disclosed_approx"
+}

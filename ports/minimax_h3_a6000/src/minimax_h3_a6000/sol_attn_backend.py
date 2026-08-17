@@ -242,6 +242,7 @@ class SolAttnPolicy:
     adaptive_step_max: int | None = None
     adaptive_layer_min: int | None = None
     adaptive_layer_max: int | None = None
+    adaptive_layer_range_scope: str = "all_adaptive_steps"
     allow_sparse: bool = False
     sink_start: int = 0
     sink_tokens: int | None = None
@@ -272,6 +273,7 @@ class SolAttnPolicy:
         adaptive_step_max = None
         adaptive_layer_min = None
         adaptive_layer_max = None
+        adaptive_layer_range_scope = "all_adaptive_steps"
         routing_errors: list[str] = []
         if adaptive_routing:
             tau, tau_error = _read_env_float_with_error(
@@ -311,6 +313,14 @@ class SolAttnPolicy:
                 routing_errors.append("adaptive_step_range_invalid")
             if adaptive_layer_min is not None and adaptive_layer_max is not None and adaptive_layer_min > adaptive_layer_max:
                 routing_errors.append("adaptive_layer_range_invalid")
+            adaptive_layer_range_scope = (
+                _read_env_str_or_none(env, "MINIMAX_H3_A6000_SOL_ATTN_ADAPTIVE_LAYER_RANGE_SCOPE")
+                or "all_adaptive_steps"
+            )
+            if adaptive_layer_range_scope not in ("all_adaptive_steps", "step_min_only"):
+                routing_errors.append("unsupported_adaptive_layer_range_scope")
+            if adaptive_layer_range_scope == "step_min_only" and adaptive_step_min is None:
+                routing_errors.append("adaptive_layer_scope_step_min_only_requires_step_min")
         return cls(
             tau=tau,
             thresh_type=thresh_type,
@@ -321,6 +331,7 @@ class SolAttnPolicy:
             adaptive_step_max=adaptive_step_max,
             adaptive_layer_min=adaptive_layer_min,
             adaptive_layer_max=adaptive_layer_max,
+            adaptive_layer_range_scope=adaptive_layer_range_scope,
             dense_first_steps=_read_env_int(
                 env,
                 "MINIMAX_H3_A6000_SOL_ATTN_DENSE_FIRST_STEPS",
@@ -1264,9 +1275,12 @@ def adaptive_routing_guard_reason(policy: SolAttnPolicy, *, step_index: int, lay
         return "step_before_adaptive_min"
     if policy.adaptive_step_max is not None and step_index > policy.adaptive_step_max:
         return "step_after_adaptive_max"
-    if policy.adaptive_layer_min is not None and layer_index < policy.adaptive_layer_min:
+    enforce_layer_range = True
+    if policy.adaptive_layer_range_scope == "step_min_only":
+        enforce_layer_range = policy.adaptive_step_min is not None and step_index == policy.adaptive_step_min
+    if enforce_layer_range and policy.adaptive_layer_min is not None and layer_index < policy.adaptive_layer_min:
         return "layer_before_adaptive_min"
-    if policy.adaptive_layer_max is not None and layer_index > policy.adaptive_layer_max:
+    if enforce_layer_range and policy.adaptive_layer_max is not None and layer_index > policy.adaptive_layer_max:
         return "layer_after_adaptive_max"
     return None
 
@@ -1490,6 +1504,7 @@ def sol_attn_h3_sparse_candidate(
             "adaptive_step_max": requested_policy.adaptive_step_max,
             "adaptive_layer_min": requested_policy.adaptive_layer_min,
             "adaptive_layer_max": requested_policy.adaptive_layer_max,
+            "adaptive_layer_range_scope": requested_policy.adaptive_layer_range_scope,
         }
     if telemetry.materialize_copy_count:
         density = {**density, "diagnostic_materialized_qkv": True}

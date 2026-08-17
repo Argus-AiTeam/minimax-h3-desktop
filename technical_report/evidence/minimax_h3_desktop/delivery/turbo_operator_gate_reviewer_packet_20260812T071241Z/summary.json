@@ -1,0 +1,127 @@
+{
+  "agent_subjective_listening_performed": false,
+  "audio_semantics_certified": false,
+  "automatable_delivery_gates_complete": true,
+  "automatable_delivery_gates_scope": "bounded Turbo operator-gate packet plus existing CPU/static/export/publication/deployment evidence; this does not close the operator subjective listening/semantic AV-sync gate and does not override DLO/DMD/Sol-Attn lane limits",
+  "av_sync_certified": false,
+  "bf16_fidelity_claim": "rejected_not_fidelity_lane",
+  "claim_boundaries": [
+    "Turbo remains practical_disclosed_approx and is not BF16-exact/fidelity evidence.",
+    "The 8-step schedule is the practical default candidate; 4-step remains ultra-fast/quality-cost experimental.",
+    "Automated structural AV/audio-envelope/contact-sheet evidence is not a substitute for human auditory listening or semantic AV-sync certification.",
+    "The agent did not listen to the MP4s and did not certify subjective audio semantics, AV sync, or broad semantic AV quality.",
+    "The known visual failure p03-object_temporal_consistency-seed1-4step remains a failure unless a future regenerated artifact replaces it.",
+    "This packet records existing deployment/export/publication/private-sync evidence and does not run GPU, Docker, model loading, public release, tag, force push, or history rewrite."
+  ],
+  "created_at_utc": "20260812T071241Z",
+  "deployment_release_audit_status": {
+    "clean_room_lifecycle": {
+      "claim_boundary": "local clean-room lifecycle verifier only; no new speedup, quality, BF16 fidelity, Sol-Attn, Turbo, DLO, DMD, GPU, Docker-run, model-load, or publication claim",
+      "path": "technical_report/evidence/minimax_h3_desktop/delivery/local_lifecycle_clean_room_20260812T014824Z/lifecycle/stages/05_lifecycle_summary.json",
+      "publication_audit_status": "pass",
+      "status": "pass"
+    },
+    "current_export_publication_audit": {
+      "export_file_count": 89,
+      "path": "technical_report/evidence/minimax_h3_desktop/delivery/formal_n10_cpu_sync_export_audit_20260812T065502Z/summary.json",
+      "publication_audit_status": "pass",
+      "publication_issue_count": 0,
+      "push_performed": true,
+      "reviewer_status": "accepted_independent_reviewer_passed",
+      "scope": "post-review formal-N10 report-sync export/publication audit plus non-force private-main sync; no GPU, Docker, model-load, new fidelity claim, public release, tag, force-push, or history rewrite action",
+      "status": "pass"
+    },
+    "delivery_summary_final_gates": {
+      "claim_boundary": "CPU/static/export/audit gates only; no GPU, Docker-run, model-load, speed, fidelity, or quality claim is created by these gates.",
+      "cpu_static_gate_status": "pass",
+      "decisive_export_audit_status": "pass",
+      "formal_n10_cpu_sync_export_audit_status": "pass",
+      "status": "pass"
+    },
+    "private_github_sync": {
+      "branch": "main",
+      "no_public_release_or_tag": true,
+      "path": "technical_report/evidence/minimax_h3_desktop/delivery/private_github_sync_push_20260812T065721Z/summary.json",
+      "push_mode": "non_force",
+      "push_status": "success",
+      "remote_sync_counts": {
+        "local_only": 0,
+        "origin_only": 0,
+        "raw": "0\t0"
+      }
+    }
+  },
+  "human_auditory_or_semantic_gate": "operator_action_required",
+  "independent_reviewer_verdict": {
+    "frontier_summary": "Turbo human-review artifact now unambiguously maps all 24 playable MP4s to prompt/seed/schedule and gives the operator a bounded listening/AV-sync rubric while preserving non-certification of subjective quality.",
+    "mapped_status": "accepted_independent_reviewer_passed",
+    "remaining_work": [
+      "<operator human auditory/semantic AV-sync review for Turbo certification>"
+    ],
+    "source_mission_id": "f19b9f331f3b",
+    "source_path": "<private-path>",
+    "source_producer_role": "reviewer",
+    "source_round": 1,
+    "source_status": "done",
+    "verdict_excerpt_path": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_reviewer_packet_20260812T071241Z/reviewer_verdict.json"
+  },
+  "no_agent_subjective_listening_claim": true,
+  "packet_files": {
+    "media_listening_manifest": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_reviewer_packet_20260812T071241Z/media_listening_manifest.json",
+    "reviewer_packet": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_reviewer_packet_20260812T071241Z/reviewer_packet.md",
+    "reviewer_verdict": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_reviewer_packet_20260812T071241Z/reviewer_verdict.json",
+    "summary": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_reviewer_packet_20260812T071241Z/summary.json",
+    "packet_consistency_check": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_reviewer_packet_20260812T071241Z/packet_consistency_check_20260812T072314Z.json"
+  },
+  "latest_engineer_consistency_check": {
+    "path": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_reviewer_packet_20260812T071241Z/packet_consistency_check_20260812T072314Z.json",
+    "status": "pass",
+    "ready_for_independent_reviewer": true,
+    "this_check_is_not_a_reviewer_acceptance": true,
+    "agent_subjective_listening_performed": false,
+    "human_auditory_semantic_av_sync_review_remaining": "operator_action_required"
+  },
+  "reviewer_status": "accepted_independent_reviewer_passed",
+  "schema_version": "argus-ir04-turbo-operator-gate-reviewer-packet-v1",
+  "semantic_av_quality_certified": false,
+  "source_evidence": {
+    "audio_energy_envelopes": "technical_report/evidence/minimax_h3_desktop/turbo_merged/quality_suite_runs/gpu3_turbo_quality_20260810T005611Z/audio_energy_envelopes.json",
+    "baseline_seed0_quality_comparison": "technical_report/evidence/minimax_h3_desktop/turbo_merged/quality_suite_runs/gpu3_turbo_quality_20260810T005611Z/baseline_seed0_quality_comparison.json",
+    "clean_room_lifecycle_summary": "technical_report/evidence/minimax_h3_desktop/delivery/local_lifecycle_clean_room_20260812T014824Z/lifecycle/stages/05_lifecycle_summary.json",
+    "current_export_publication_audit_summary": "technical_report/evidence/minimax_h3_desktop/delivery/formal_n10_cpu_sync_export_audit_20260812T065502Z/summary.json",
+    "delivery_summary": "technical_report/evidence/minimax_h3_desktop/delivery/argus_ir04_delivery_summary.json",
+    "final_technical_report": "technical_report/final_technical_report.md",
+    "human_review_operator_gate": "technical_report/evidence/minimax_h3_desktop/turbo_merged/quality_suite_runs/gpu3_turbo_quality_20260810T005611Z/human_review.md",
+    "independent_reviewer_verdict_source": "<private-path>",
+    "performance_report": "technical_report/minimax_h3_a6000_performance.md",
+    "private_github_sync_summary": "technical_report/evidence/minimax_h3_desktop/delivery/private_github_sync_push_20260812T065721Z/summary.json",
+    "quality_suite_analysis": "technical_report/evidence/minimax_h3_desktop/turbo_merged/quality_suite_runs/gpu3_turbo_quality_20260810T005611Z/quality_suite_analysis.json",
+    "quality_suite_plan": "technical_report/evidence/minimax_h3_desktop/turbo_merged/quality_suite_runs/gpu3_turbo_quality_20260810T005611Z/quality_suite_plan.json"
+  },
+  "status": "pass",
+  "turbo_quality_automatable_evidence": {
+    "all_cases_structural_av_pass": true,
+    "audio_proxy_scope": "decode and energy/envelope proxies only; no listening-based semantic audio judgment",
+    "case_count": 24,
+    "contact_image_count_total": 30,
+    "human_review_path": "technical_report/evidence/minimax_h3_desktop/turbo_merged/quality_suite_runs/gpu3_turbo_quality_20260810T005611Z/human_review.md",
+    "media_files_present_and_nontrivial": true,
+    "operator_listening_manifest": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_reviewer_packet_20260812T071241Z/media_listening_manifest.json",
+    "pair_count": 12,
+    "practical_default_candidate": "8-step",
+    "review_contact_sheet_count": 6,
+    "run_dir": "technical_report/evidence/minimax_h3_desktop/turbo_merged/quality_suite_runs/gpu3_turbo_quality_20260810T005611Z",
+    "schedule_counts": {
+      "4-step experimental": 12,
+      "8-step default candidate": 12
+    },
+    "status": "structural_av_suite_pass_semantic_quality_not_certified",
+    "ultra_fast_quality_cost_experimental": "4-step",
+    "visual_review_summary": {
+      "4_step_visual_pass": "11/12",
+      "8_step_visual_pass": "12/12",
+      "known_4step_visual_failure_case": "p03-object_temporal_consistency-seed1-4step"
+    }
+  },
+  "turbo_track": "practical_disclosed_approx"
+}

@@ -1,0 +1,24 @@
+{
+  "4": {
+    "audio_cosine": 0.4118406135095135,
+    "audio_rms_baseline": 0.06778160172011273,
+    "audio_rms_turbo": 0.03315401650882744,
+    "audio_values": 333824,
+    "comparison": "same_physical_gpu3_same_prompt_seed_turbo_vs_50step_bf16",
+    "frames_compared": 124,
+    "video_mae": 36.55561153350338,
+    "video_mse": 3473.0880501039564,
+    "video_psnr_db": 12.723645671368926
+  },
+  "8": {
+    "audio_cosine": 0.8952344581116269,
+    "audio_rms_baseline": 0.06778160172011273,
+    "audio_rms_turbo": 0.048958173744363696,
+    "audio_values": 333824,
+    "comparison": "same_physical_gpu3_same_prompt_seed_turbo_vs_50step_bf16",
+    "frames_compared": 124,
+    "video_mae": 32.447742762104156,
+    "video_mse": 2946.248375431184,
+    "video_psnr_db": 13.438110048065415
+  }
+}

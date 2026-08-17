@@ -1,0 +1,29 @@
+{
+  "boundary_covered": {
+    "no_agent_subjective_listening_claim": true,
+    "operator_human_auditory_semantic_av_sync_review_remains_pending": true,
+    "operator_listening_packet_completeness": true,
+    "turbo_8step_4step_lane_separation": true
+  },
+  "created_at_utc": "20260812T071241Z",
+  "explicit_boundary_reason": "The bounded delivery artifact is complete: the latest Turbo run pointer resolves to `gpu3_turbo_quality_20260810T005611Z`; `human_review.md` provides an exact playback table for all 24 cases matching `quality_suite_plan.json`; every referenced MP4 exists and is non-trivial; and the artifact includes prompt/seed/schedule labels, playback commands, the 8-step default vs 4-step experimental boundary, the `p03-object_temporal_consistency-seed1-4step` visual-fail caveat, an audio-semantics/AV-sync pass-fail rubric, and explicit no-agent-listening/no-subjective-certification language. Spot-checked reports already preserve the pending human-auditory/semantic AV boundary. No GPU/model work or subjective quality claim was made.",
+  "frontier_disposition": "continue",
+  "frontier_summary": "Turbo human-review artifact now unambiguously maps all 24 playable MP4s to prompt/seed/schedule and gives the operator a bounded listening/AV-sync rubric while preserving non-certification of subjective quality.",
+  "mapped_reviewer_status_for_this_packet": "accepted_independent_reviewer_passed",
+  "remaining_work": [
+    "<operator human auditory/semantic AV-sync review for Turbo certification>"
+  ],
+  "resolved_obligations": [
+    "<operator listening packet completeness",
+    "no-agent-listening boundary",
+    "8-step/4-step Turbo lane separation>"
+  ],
+  "schema_version": "argus-ir04-independent-reviewer-verdict-reference-v1",
+  "source_handoff_path": "<private-path>",
+  "source_kind": "round_reviewed_handoff",
+  "source_mission_id": "f19b9f331f3b",
+  "source_producer_role": "reviewer",
+  "source_review_status": "done",
+  "source_round": 1,
+  "uncertainty": "<actual human listening/semantic AV-sync remains pending>"
+}

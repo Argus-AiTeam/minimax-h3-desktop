@@ -61,7 +61,11 @@ def test_contract_and_three_dry_run_lane_manifests_validate() -> None:
     manifests_by_id = {_load(path)["lane_id"]: _load(path) for path in MANIFESTS}
     long_manifests = [item for item in manifests_by_id.values() if item["production"]["is_long"]]
     assert manifests_by_id["final-av-30s-1344x768-24fps-v1"]["measurement_status"] == "dry_run_no_new_measurement"
-    assert manifests_by_id["final-av-60s-1344x768-24fps-v1"]["measurement_status"] == "unmeasured"
+    assert manifests_by_id["final-av-60s-1344x768-24fps-v1"]["measurement_status"] == "dry_run_no_new_measurement"
+    observed_60s = manifests_by_id["final-av-60s-1344x768-24fps-v1"]["observed_result"]
+    assert observed_60s["status"] == "descriptive_n1_no_promotion"
+    assert observed_60s["promotion"] is False
+    assert observed_60s["final_video_frames"] == 1440
     assert {item["production"]["generation_mode"] for item in long_manifests} == {"extension"}
     assert {item["production"]["native_context_supported"] for item in long_manifests} == {False}
 

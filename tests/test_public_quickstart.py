@@ -12,6 +12,7 @@ SCRIPTS = (
     ROOT / "scripts" / "run_turbo_demo.sh",
 )
 EXAMPLE = ROOT / "examples" / "a6000-turbo-8step-sci-fi"
+FL2VA_EXAMPLE = ROOT / "examples" / "a6000-turbo-8step-niulai-inspired"
 
 
 def test_public_scripts_are_valid_and_dry_run_without_side_effects() -> None:
@@ -43,11 +44,28 @@ def test_public_example_metadata_matches_files() -> None:
     assert metadata["workload"]["audio_channels"] == 2
 
 
+def test_public_fl2va_showcase_metadata_matches_files() -> None:
+    metadata = json.loads((FL2VA_EXAMPLE / "metadata.json").read_text(encoding="utf-8"))
+    assert metadata["workload"]["task"] == "fl2va"
+    assert metadata["workload"]["decoded_video_frames"] == 124
+    assert metadata["workload"]["audio_channels"] == 2
+    assert metadata["reference"]["included_in_public_release"] is False
+    assert metadata["selection"]["candidate_seeds"] == [17, 42, 137]
+    assert metadata["selection"]["selected_seed"] == 42
+    assert metadata["validation"]["structural_av_contract_pass"] is True
+    for record in metadata["files"].values():
+        path = FL2VA_EXAMPLE / record["path"]
+        assert path.stat().st_size == record["bytes"]
+        assert hashlib.sha256(path.read_bytes()).hexdigest() == record["sha256"]
+
+
 def test_readmes_use_a6000_evidence_and_link_the_example() -> None:
     zh = (ROOT / "README.md").read_text(encoding="utf-8")
     en = (ROOT / "README_EN.md").read_text(encoding="utf-8")
     for text in (zh, en):
         assert "orbital-shipyard-turbo-8step.mp4" in text
+        assert "niulai-inspired-forest-awakening-turbo-8step.mp4" in text
+        assert "305.386" in text
         assert "1792.202" in text
         assert "290.998" in text
         assert "6.159" in text
@@ -65,6 +83,9 @@ def test_generation_runner_keeps_single_gpu_and_weights_read_only() -> None:
     assert '--network none' in script
     assert '-v "$MODEL_DIR":/models/Turbo/FL2VA:ro' in script
     assert "torch.cuda.device_count() == 1" in script
+    assert "INPUT_REFERENCE" in script
+    assert '"task":"fl2va"' in script
+    assert "input_reference=@/evidence/input_reference.png" in script
     assert "selected GPU" in script and "already has a compute process" in script
 
 

@@ -1,0 +1,89 @@
+{
+  "accepted_prior_reviewer_source_for_current_record": {
+    "repo_verdict_path": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/reviewer_verdict.json",
+    "repo_verdict_status": "accepted_current_stage_delivery_reviewer_passed",
+    "sealed_handoff_kind": "round_reviewed_handoff",
+    "sealed_handoff_new_obligations": [
+      "<none>"
+    ],
+    "sealed_handoff_path": "<private-path>",
+    "sealed_handoff_producer_role": "reviewer",
+    "sealed_handoff_remaining_work": [
+      "<operator human auditory listening and semantic AV-sync review>"
+    ],
+    "sealed_handoff_review_status": "done",
+    "sealed_handoff_summary": "Current-stage delivery Reviewer evidence is now complete for the automatable Turbo operator-gate boundary; the only residual Turbo quality-certification gate is operator human auditory/semantic AV-sync review."
+  },
+  "canonicalized_at_utc": "20260812T080918Z",
+  "created_at_utc": "20260812T075720Z",
+  "evidence_crosswalk": {
+    "final_report_boundary": {
+      "operator_listening_pending_phrase_present": true,
+      "path": "technical_report/final_technical_report.md",
+      "semantic_av_not_certified_phrase_present": true
+    },
+    "formal_sync_export_publication_private_sync": {
+      "export_audit_summary": "technical_report/evidence/minimax_h3_desktop/delivery/formal_n10_cpu_sync_export_audit_20260812T065502Z/summary.json",
+      "formal_sync_status": "pass",
+      "no_public_release_or_tag": true,
+      "private_push_mode": "non_force",
+      "private_push_status": "success",
+      "private_sync_summary": "technical_report/evidence/minimax_h3_desktop/delivery/private_github_sync_push_20260812T065721Z/summary.json",
+      "publication_issue_count": 0,
+      "push_performed": true
+    },
+    "latest_canonical_operator_gate_packet": {
+      "accepted_for_current_stage_closing": true,
+      "path": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z",
+      "reviewer_status": "accepted_current_stage_delivery_reviewer_passed",
+      "status": "accepted_current_stage_delivery_boundary"
+    },
+    "manager_visibility_resolution": {
+      "path": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/manager_visibility_resolution.json",
+      "status": "pass_canonical_latest_closeout_packet_has_complete_reviewer_verdict"
+    },
+    "package_manifest": {
+      "canonical_closeout_packet_included_after_regeneration": true,
+      "path": "technical_report/evidence/minimax_h3_desktop/delivery/package_manifest.json"
+    },
+    "strict_delivery_summary": {
+      "final_gates_status": "pass",
+      "path": "technical_report/evidence/minimax_h3_desktop/delivery/argus_ir04_delivery_summary.json",
+      "status": "pass_strict_evidence_grounded"
+    },
+    "turbo_operator_listening_manifest": {
+      "all_cases_structural_av_pass": true,
+      "all_media_files_nontrivial": true,
+      "all_media_files_present": true,
+      "case_count": 24,
+      "path": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/media_listening_manifest.json",
+      "subjective_status": "operator_action_required_for_all_cases"
+    }
+  },
+  "fresh_packet_reviewer_verdict_status": "accepted_current_stage_delivery_reviewer_passed",
+  "manager_recognition_fields": {
+    "agent_subjective_listening_performed": false,
+    "automatable_delivery_evidence_complete": true,
+    "av_sync_certified": false,
+    "current_manager_visible_packet_has_complete_reviewer_verdict": true,
+    "current_manager_visible_packet_has_valid_sealed_reviewer_handoff_crosswalk": true,
+    "engineer_can_complete_remaining_gate": false,
+    "no_automatable_delivery_evidence_missing": true,
+    "only_remaining_gate": "operator_human_auditory_listening_and_semantic_av_sync_review_for_Turbo_quality_certification",
+    "remaining_gate_is_operator_only": true,
+    "semantic_av_quality_certified": false
+  },
+  "non_claims": [
+    "This closeout crosswalk rehosts an already sealed independent Reviewer decision; it does not create a new engineer self-approval.",
+    "No agent subjective listening was performed or simulated.",
+    "No semantic audio, human auditory quality, or semantic AV-sync certification is made.",
+    "No GPU, Docker, model-load, benchmark, Turbo rerun, public release, tag, force-push, or history rewrite action is introduced.",
+    "Turbo remains practical_disclosed_approx and is not BF16 fidelity evidence.",
+    "Sol-Attn formal N>=10 remains limited to the formal matched 5-step opt-in lane and is not BF16 fidelity or human-auditory quality certification.",
+    "DLO remains below noise for formal promotion; DMD/DMD2 remain research-only blocked."
+  ],
+  "packet_dir": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z",
+  "purpose": "Make the Manager-facing current-stage closeout boundary explicit without rerunning benchmarks or simulating operator listening; this packet is canonical and contains a complete Reviewer verdict.",
+  "schema_version": "argus-ir04-manager-stage-closeout-crosswalk-v2",
+  "status": "pass_canonical_latest_closeout_packet_has_reviewer_verdict"
+}

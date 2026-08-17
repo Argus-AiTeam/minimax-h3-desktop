@@ -1,0 +1,511 @@
+{
+  "automatic_red_flags": {
+    "candidate": [
+      "near_frozen_transition_fraction"
+    ],
+    "reference": [
+      "near_frozen_transition_fraction"
+    ]
+  },
+  "candidate_evidence": "${PWD}/technical_report/evidence/minimax_h3_desktop/long_video/final-av-60s-r9-current-vs-r10-step3-sol-attn-n1-20260816T164226Z/r10_adaptive_tau1_5_step3_diag",
+  "candidate_expected_adaptive_step_min": 3,
+  "candidate_expected_tau": 1.5,
+  "candidate_profile": "r10_adaptive_tau1_5_step3_diag",
+  "claim_boundary": "Matched N=1 60-second final-AV extension-lane r10_adaptive_tau1_5_step3_diag versus retained r9_current_sol_attn route/config gate only. Output is extension/chunked, not native long context; Turbo 8-step is practical/disclosed approximate, not BF16 fidelity; no formal speedup, human-quality, public-comparison, or SOTA claim.",
+  "classification": "descriptive_no_promotion_r10_adaptive_tau1_5_step3_diag_60s_automatic_proxy_red_flags",
+  "created_utc": "2026-08-16T18:32:26Z",
+  "failed_gates": [
+    "reference_no_automatic_proxy_flags",
+    "candidate_no_automatic_proxy_flags"
+  ],
+  "gates": {
+    "both_final_av_complete": true,
+    "candidate_adaptive_profile_seen": true,
+    "candidate_adaptive_step_min_expected_seen": true,
+    "candidate_adaptive_tau1_5_diag_seen": true,
+    "candidate_guard_counts_match_step_min": true,
+    "candidate_guarded_profile_exercised": true,
+    "candidate_no_automatic_proxy_flags": false,
+    "candidate_no_raw_tensor_export": true,
+    "candidate_no_worse_automatic_proxy_flags": true,
+    "candidate_sol_attn_telemetry_present": true,
+    "candidate_sparse_stride_calls_valid": true,
+    "candidate_warm_e2e_not_slower": true,
+    "candidate_zero_fallback_materialization_input_copy": true,
+    "objective_5pct_noninferiority_core_metrics": true,
+    "reference_no_automatic_proxy_flags": false,
+    "reference_no_raw_tensor_export": true,
+    "reference_retained_tau1_diag_seen": true,
+    "reference_sol_attn_telemetry_present": true,
+    "reference_sparse_stride_calls_valid": true,
+    "reference_zero_fallback_materialization_input_copy": true,
+    "same_extension_generation_mode": true,
+    "same_physical_gpu": true,
+    "same_sparse_call_count": true,
+    "same_timing_boundary": true,
+    "same_workload_fingerprint": true
+  },
+  "generation_mode": "extension",
+  "n1_route_gate_language_only": true,
+  "native_context_supported": false,
+  "no_promotion_reason": "bounded_60s_n1_scope_or_failed_gate",
+  "objective_proxy_comparison": {
+    "failed_metrics": [],
+    "metrics": {
+      "background_consistency": {
+        "candidate_over_dense": 1.09375,
+        "candidate_value": 0.6684027777777778,
+        "dense_value": 0.6111111111111112,
+        "higher_is_better": true,
+        "pass_5pct_noninferiority": true
+      },
+      "camera_consistency": {
+        "candidate_over_dense": 0.9591565349544073,
+        "candidate_value": 0.796875,
+        "dense_value": 0.8308080808080808,
+        "higher_is_better": true,
+        "pass_5pct_noninferiority": true
+      },
+      "motion": {
+        "candidate_over_dense": 1.2680904048276422,
+        "candidate_value": 0.009294572004573025,
+        "dense_value": 0.007329581526039806,
+        "higher_is_better": true,
+        "pass_5pct_noninferiority": true
+      },
+      "subject_identity_consistency": {
+        "candidate_over_dense": 1.09375,
+        "candidate_value": 0.6684027777777778,
+        "dense_value": 0.6111111111111112,
+        "higher_is_better": true,
+        "pass_5pct_noninferiority": true
+      }
+    },
+    "relative_margin_percent": 5.0,
+    "status": "pass"
+  },
+  "principal_variable": "retained r9_current_sol_attn adaptive_routing=0 tau=1.0 diag versus r10_adaptive_tau1_5_step3_diag adaptive_routing=1 tau=1.5 diag",
+  "promote_to_n3_recommended_pending_reviewer": false,
+  "reference_evidence": "${PWD}/technical_report/evidence/minimax_h3_desktop/long_video/final-av-60s-r9-current-vs-r10-step3-sol-attn-n1-20260816T164226Z/r9_current_sol_attn",
+  "resources": {
+    "candidate": {
+      "failures": {
+        "status": "measured",
+        "unit": "count",
+        "value": 0
+      },
+      "peak_gpu_memory_mib": {
+        "status": "measured",
+        "unit": "MiB",
+        "value": 27946.0
+      },
+      "peak_host_memory_gib": {
+        "status": "measured",
+        "unit": "GiB",
+        "value": 249.81538009643555
+      },
+      "peak_power_w": {
+        "status": "measured",
+        "unit": "W",
+        "value": 302.3
+      }
+    },
+    "reference": {
+      "failures": {
+        "status": "measured",
+        "unit": "count",
+        "value": 0
+      },
+      "peak_gpu_memory_mib": {
+        "status": "measured",
+        "unit": "MiB",
+        "value": 27946.0
+      },
+      "peak_host_memory_gib": {
+        "status": "measured",
+        "unit": "GiB",
+        "value": 248.49892044067383
+      },
+      "peak_power_w": {
+        "status": "measured",
+        "unit": "W",
+        "value": 299.84
+      }
+    }
+  },
+  "reviewer_acceptance_status": "accepted_independent_reviewer_passed_reconciled_wrapper_metadata_failure",
+  "reviewer_reconciliation": {
+    "reason": "Independent reviewer process exited 0 and stdout contains parseable 'VERDICT: accept'; wrapper failed after reviewer completion in post-processing due malformed awk expression `/^VERDICT:{print $2; exit}` (unterminated regexp), after copying stdout to the evidence-local Markdown verdict.",
+    "reconciled_from_wrapper_failure": true,
+    "source_reviewer_process_exit_code": 0,
+    "source_reviewer_task_id": "final-av-60s-r10-step3-descriptive-n1-artifact-reviewer-retry1-20260816T183534Z",
+    "source_reviewer_tool_run_id": "final-av-60s-r10-step3-descriptive-n1-artifact-reviewer-retry1-20260816T183534Z-1786905339341339565",
+    "source_wrapper_exit_code": 1
+  },
+  "reviewer_verdict": "accept",
+  "reviewer_verdict_json": "${PWD}/technical_report/evidence/minimax_h3_desktop/long_video/final-av-60s-r9-current-vs-r10-step3-sol-attn-n1-20260816T164226Z/reviewer_verdict.json",
+  "reviewer_verdict_path": "${PWD}/technical_report/evidence/minimax_h3_desktop/long_video/final-av-60s-r9-current-vs-r10-step3-sol-attn-n1-20260816T164226Z/reviewer_verdict.md",
+  "same_gpu_workload_timing_boundary_proof": {
+    "candidate_physical_gpu_uuids": [
+      "GPU-b3425477-0877-24de-c5b8-1549ab47cd4b"
+    ],
+    "candidate_timing_boundary": "final_av_60s_extension_warm_after_one_excluded_warmup_v1",
+    "candidate_workload_fingerprint": "0a4ffd6b8d872ef7b9c93da6d9864e836719195f6530550196f683adcbe6b6b1",
+    "chunk_count": 12,
+    "duration_label": "60s",
+    "effective_audio_samples_per_channel": 1920000,
+    "final_frames": 1440,
+    "lane_id": "final-av-60s-1344x768-24fps-v1",
+    "reference_physical_gpu_uuids": [
+      "GPU-b3425477-0877-24de-c5b8-1549ab47cd4b"
+    ],
+    "reference_timing_boundary": "final_av_60s_extension_warm_after_one_excluded_warmup_v1",
+    "reference_workload_fingerprint": "0a4ffd6b8d872ef7b9c93da6d9864e836719195f6530550196f683adcbe6b6b1"
+  },
+  "sample_count": 1,
+  "schema_version": "minimax-h3-final-av-60s-r9-current-vs-r10-guarded-adaptive-step3-sol-attn-n1-decision-v1",
+  "sol_attn_telemetry_summary": {
+    "candidate": {
+      "adaptive_guard_active_count": 2496,
+      "adaptive_guard_counts_by_step": {
+        "0": {
+          "active": 0,
+          "inactive": 624,
+          "reasons": {
+            "step_before_adaptive_min": 624
+          }
+        },
+        "1": {
+          "active": 0,
+          "inactive": 624,
+          "reasons": {
+            "step_before_adaptive_min": 624
+          }
+        },
+        "2": {
+          "active": 0,
+          "inactive": 624,
+          "reasons": {
+            "step_before_adaptive_min": 624
+          }
+        },
+        "3": {
+          "active": 624,
+          "inactive": 0,
+          "reasons": {
+            "active": 624
+          }
+        },
+        "4": {
+          "active": 624,
+          "inactive": 0,
+          "reasons": {
+            "active": 624
+          }
+        },
+        "5": {
+          "active": 624,
+          "inactive": 0,
+          "reasons": {
+            "active": 624
+          }
+        },
+        "6": {
+          "active": 624,
+          "inactive": 0,
+          "reasons": {
+            "active": 624
+          }
+        }
+      },
+      "adaptive_guard_inactive_count": 1872,
+      "adaptive_guard_reason_counts": {
+        "active": 2496,
+        "step_before_adaptive_min": 1872
+      },
+      "adaptive_guard_requested_count": 4368,
+      "adaptive_layer_max_values": [],
+      "adaptive_layer_min_values": [],
+      "adaptive_profiles": [
+        "r10_adaptive_tau1_5_step3_diag"
+      ],
+      "adaptive_routing_values": [
+        false,
+        true
+      ],
+      "adaptive_step_max_values": [],
+      "adaptive_step_min_values": [
+        3
+      ],
+      "decline_reasons": {
+        "dense_first_layers": 182,
+        "non_h3_dit_attention_prefix": 182
+      },
+      "denoise_gpu_latency_ms": 2277703.31640625,
+      "denoise_timed_calls": 91,
+      "dense_calls": 364,
+      "density_first": [
+        {
+          "adaptive_candidate_tau": 1.5,
+          "adaptive_candidate_thresh_type": "diag",
+          "adaptive_guard_active": false,
+          "adaptive_guard_reason": "step_before_adaptive_min",
+          "adaptive_layer_max": null,
+          "adaptive_layer_min": null,
+          "adaptive_profile": "r10_adaptive_tau1_5_step3_diag",
+          "adaptive_routing": false,
+          "adaptive_routing_requested": true,
+          "adaptive_step_max": null,
+          "adaptive_step_min": 3,
+          "block_size": 64,
+          "blocks": 594,
+          "exact_block_pairs_lower_bound": 8282,
+          "exact_density_lower_bound": 0.023472661519799567,
+          "kind": "static_exact_block_lower_bound",
+          "layer_index": 2,
+          "prefix_tokens": 686,
+          "sink_end": 686,
+          "sink_end_block": 11,
+          "sink_start": 0,
+          "sink_start_block": 0,
+          "skip_full_prefix_blocks": true,
+          "skipped_full_prefix_query_blocks_estimate": 10,
+          "step_index": 0,
+          "stride_aware_value": true,
+          "tau": 1.0,
+          "thresh_type": "diag",
+          "total_block_pairs": 352836,
+          "valid_tokens": 37982,
+          "video_tokens": 37296
+        },
+        {
+          "adaptive_candidate_tau": 1.5,
+          "adaptive_candidate_thresh_type": "diag",
+          "adaptive_guard_active": false,
+          "adaptive_guard_reason": "step_before_adaptive_min",
+          "adaptive_layer_max": null,
+          "adaptive_layer_min": null,
+          "adaptive_profile": "r10_adaptive_tau1_5_step3_diag",
+          "adaptive_routing": false,
+          "adaptive_routing_requested": true,
+          "adaptive_step_max": null,
+          "adaptive_step_min": 3,
+          "block_size": 64,
+          "blocks": 594,
+          "exact_block_pairs_lower_bound": 8282,
+          "exact_density_lower_bound": 0.023472661519799567,
+          "kind": "static_exact_block_lower_bound",
+          "layer_index": 3,
+          "prefix_tokens": 686,
+          "sink_end": 686,
+          "sink_end_block": 11,
+          "sink_start": 0,
+          "sink_start_block": 0,
+          "skip_full_prefix_blocks": true,
+          "skipped_full_prefix_query_blocks_estimate": 10,
+          "step_index": 0,
+          "stride_aware_value": true,
+          "tau": 1.0,
+          "thresh_type": "diag",
+          "total_block_pairs": 352836,
+          "valid_tokens": 37982,
+          "video_tokens": 37296
+        },
+        {
+          "adaptive_candidate_tau": 1.5,
+          "adaptive_candidate_thresh_type": "diag",
+          "adaptive_guard_active": false,
+          "adaptive_guard_reason": "step_before_adaptive_min",
+          "adaptive_layer_max": null,
+          "adaptive_layer_min": null,
+          "adaptive_profile": "r10_adaptive_tau1_5_step3_diag",
+          "adaptive_routing": false,
+          "adaptive_routing_requested": true,
+          "adaptive_step_max": null,
+          "adaptive_step_min": 3,
+          "block_size": 64,
+          "blocks": 594,
+          "exact_block_pairs_lower_bound": 8282,
+          "exact_density_lower_bound": 0.023472661519799567,
+          "kind": "static_exact_block_lower_bound",
+          "layer_index": 4,
+          "prefix_tokens": 686,
+          "sink_end": 686,
+          "sink_end_block": 11,
+          "sink_start": 0,
+          "sink_start_block": 0,
+          "skip_full_prefix_blocks": true,
+          "skipped_full_prefix_query_blocks_estimate": 10,
+          "step_index": 0,
+          "stride_aware_value": true,
+          "tau": 1.0,
+          "thresh_type": "diag",
+          "total_block_pairs": 352836,
+          "valid_tokens": 37982,
+          "video_tokens": 37296
+        }
+      ],
+      "density_sample_count": 4368,
+      "diagnostic_raw_tensor_exported": false,
+      "fallback_calls": 0,
+      "fallback_reasons": {},
+      "input_copy_bytes": 0,
+      "input_copy_events": 0,
+      "layer_index_values_sample": [
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17
+      ],
+      "materialize_copy_bytes": 0,
+      "materialize_copy_count": 0,
+      "sparse_attention_gpu_latency_ms": 780929.0689620972,
+      "sparse_attention_timed_calls": 4368,
+      "sparse_calls": 4368,
+      "sparse_candidate_calls": 4368,
+      "step_index_values": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "stride_aware_value_calls": 4368,
+      "stride_aware_value_density_count": 4368,
+      "tau_values": [
+        1.0,
+        1.5
+      ],
+      "thresh_type_values": [
+        "diag"
+      ]
+    },
+    "reference": {
+      "adaptive_routing_values": [
+        false
+      ],
+      "decline_reasons": {
+        "dense_first_layers": 182,
+        "non_h3_dit_attention_prefix": 182
+      },
+      "denoise_gpu_latency_ms": 2408381.703125,
+      "denoise_timed_calls": 91,
+      "dense_calls": 364,
+      "density_first": [
+        {
+          "adaptive_routing": false,
+          "block_size": 64,
+          "blocks": 594,
+          "exact_block_pairs_lower_bound": 8282,
+          "exact_density_lower_bound": 0.023472661519799567,
+          "kind": "static_exact_block_lower_bound",
+          "layer_index": 2,
+          "prefix_tokens": 686,
+          "sink_end": 686,
+          "sink_end_block": 11,
+          "sink_start": 0,
+          "sink_start_block": 0,
+          "skip_full_prefix_blocks": true,
+          "skipped_full_prefix_query_blocks_estimate": 10,
+          "step_index": 0,
+          "stride_aware_value": true,
+          "tau": 1.0,
+          "thresh_type": "diag",
+          "total_block_pairs": 352836,
+          "valid_tokens": 37982,
+          "video_tokens": 37296
+        },
+        {
+          "adaptive_routing": false,
+          "block_size": 64,
+          "blocks": 594,
+          "exact_block_pairs_lower_bound": 8282,
+          "exact_density_lower_bound": 0.023472661519799567,
+          "kind": "static_exact_block_lower_bound",
+          "layer_index": 3,
+          "prefix_tokens": 686,
+          "sink_end": 686,
+          "sink_end_block": 11,
+          "sink_start": 0,
+          "sink_start_block": 0,
+          "skip_full_prefix_blocks": true,
+          "skipped_full_prefix_query_blocks_estimate": 10,
+          "step_index": 0,
+          "stride_aware_value": true,
+          "tau": 1.0,
+          "thresh_type": "diag",
+          "total_block_pairs": 352836,
+          "valid_tokens": 37982,
+          "video_tokens": 37296
+        },
+        {
+          "adaptive_routing": false,
+          "block_size": 64,
+          "blocks": 594,
+          "exact_block_pairs_lower_bound": 8282,
+          "exact_density_lower_bound": 0.023472661519799567,
+          "kind": "static_exact_block_lower_bound",
+          "layer_index": 4,
+          "prefix_tokens": 686,
+          "sink_end": 686,
+          "sink_end_block": 11,
+          "sink_start": 0,
+          "sink_start_block": 0,
+          "skip_full_prefix_blocks": true,
+          "skipped_full_prefix_query_blocks_estimate": 10,
+          "step_index": 0,
+          "stride_aware_value": true,
+          "tau": 1.0,
+          "thresh_type": "diag",
+          "total_block_pairs": 352836,
+          "valid_tokens": 37982,
+          "video_tokens": 37296
+        }
+      ],
+      "density_sample_count": 4368,
+      "diagnostic_raw_tensor_exported": false,
+      "fallback_calls": 0,
+      "fallback_reasons": {},
+      "input_copy_bytes": 0,
+      "input_copy_events": 0,
+      "materialize_copy_bytes": 0,
+      "materialize_copy_count": 0,
+      "sparse_attention_gpu_latency_ms": 911931.72605896,
+      "sparse_attention_timed_calls": 4368,
+      "sparse_calls": 4368,
+      "sparse_candidate_calls": 4368,
+      "stride_aware_value_calls": 4368,
+      "stride_aware_value_density_count": 4368,
+      "tau_values": [
+        1.0
+      ],
+      "thresh_type_values": [
+        "diag"
+      ]
+    }
+  },
+  "speedup_claimed": false,
+  "status": "descriptive",
+  "timing": {
+    "candidate_cold_e2e_seconds": 3161.089931675,
+    "candidate_warm_e2e_seconds": 2682.0082711140276,
+    "cold_e2e_delta_percent_n1_not_speedup": 3.957463089373666,
+    "reference_cold_e2e_seconds": 3291.343641429,
+    "reference_warm_e2e_seconds": 2802.9906916909968,
+    "warm_e2e_delta_percent_n1_not_speedup": 4.316190593696996
+  }
+}

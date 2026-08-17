@@ -1,0 +1,49 @@
+{
+  "boundary": {
+    "agent_subjective_listening_performed": false,
+    "automatable_delivery_gates_complete": true,
+    "human_auditory_listening": "operator_action_required",
+    "no_automatable_delivery_evidence_missing_in_current_record": true,
+    "semantic_av_quality_certified": false,
+    "semantic_av_sync_certification": "operator_action_required_not_agent_certified",
+    "turbo_track": "practical_disclosed_approx"
+  },
+  "canonicalized_at_utc": "20260812T080918Z",
+  "checks": {
+    "canonical_packet_accepted": true,
+    "canonical_packet_has_manager_reviewer_handoff_crosswalk": true,
+    "canonical_packet_has_reviewer_verdict": true,
+    "delivery_summary_final_gates_pass_after_regeneration": true,
+    "delivery_summary_operator_gate_reviewer_status_accepted_after_regeneration": true,
+    "delivery_summary_strict_pass_after_regeneration": true,
+    "final_report_operator_listening_pending": true,
+    "final_report_semantic_av_not_certified": true,
+    "formal_sync_export_publication_private_sync_pass": true,
+    "latest_pointer_targets_this_closeout_packet": true,
+    "package_manifest_canonical_packet_included_after_regeneration": true,
+    "prior_turbo_manifest_24_cases": true,
+    "prior_turbo_manifest_no_subjective_certification": true,
+    "private_github_sync_non_force_private_no_tag": true,
+    "reviewer_verdict_independent": true,
+    "sealed_reviewer_handoff_done": true,
+    "sealed_reviewer_handoff_no_new_obligations": true
+  },
+  "created_at_utc": "20260812T075720Z",
+  "evidence_paths": {
+    "canonical_closeout_packet": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z",
+    "canonical_closeout_reviewer_verdict": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/reviewer_verdict.json",
+    "delivery_summary": "technical_report/evidence/minimax_h3_desktop/delivery/argus_ir04_delivery_summary.json",
+    "final_technical_report": "technical_report/final_technical_report.md",
+    "formal_sync_export_audit": "technical_report/evidence/minimax_h3_desktop/delivery/formal_n10_cpu_sync_export_audit_20260812T065502Z/summary.json",
+    "latest_pointer": "technical_report/evidence/minimax_h3_desktop/delivery/LATEST_TURBO_OPERATOR_GATE_REVIEWER_PACKET",
+    "manager_reviewer_handoff_crosswalk": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/manager_reviewer_handoff_crosswalk.json",
+    "manager_visibility_resolution": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/manager_visibility_resolution.json",
+    "package_manifest": "technical_report/evidence/minimax_h3_desktop/delivery/package_manifest.json",
+    "private_github_sync": "technical_report/evidence/minimax_h3_desktop/delivery/private_github_sync_push_20260812T065721Z/summary.json",
+    "sealed_current_stage_reviewer_handoff": "<private-path>"
+  },
+  "not_a_reviewer_acceptance": true,
+  "ready_for_manager_recognition": true,
+  "schema_version": "argus-ir04-current-stage-closeout-consistency-v2",
+  "status": "pass"
+}

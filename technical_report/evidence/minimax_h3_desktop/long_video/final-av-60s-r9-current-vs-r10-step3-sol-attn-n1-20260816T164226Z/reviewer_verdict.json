@@ -1,0 +1,43 @@
+{
+  "automatic_proxy_red_flags_preserved": {
+    "candidate": [
+      "near_frozen_transition_fraction"
+    ],
+    "reference": [
+      "near_frozen_transition_fraction"
+    ]
+  },
+  "claim_boundary": "Accepted only the bounded N=1 descriptive/no-promotion classification of r10_adaptive_tau1_5_step3_diag versus retained r9_current_sol_attn for the 60-second extension/chunked final-AV lane; no formal speedup, N=3/N>=10 promotion, BF16 fidelity, native long context, human or product quality, public comparison, or SOTA claim.",
+  "classification_accepted": "descriptive_no_promotion_r10_adaptive_tau1_5_step3_diag_60s_automatic_proxy_red_flags",
+  "created_utc": "2026-08-16T18:40:24Z",
+  "evidence_root": "${PWD}/technical_report/evidence/minimax_h3_desktop/long_video/final-av-60s-r9-current-vs-r10-step3-sol-attn-n1-20260816T164226Z",
+  "explicit_non_acceptances": [
+    "no formal speedup claim",
+    "no N=3 or N>=10 promotion",
+    "no native long-context claim",
+    "no BF16 fidelity claim",
+    "no human semantic/audio/AV quality certification",
+    "no product-readiness, public-comparison, or SOTA claim"
+  ],
+  "promotion_recommended": false,
+  "reconciled_from_wrapper_failure": true,
+  "reconciliation_reason": "Independent reviewer process exited 0 and stdout contains parseable 'VERDICT: accept'; wrapper failed after reviewer completion in post-processing due malformed awk expression `/^VERDICT:{print $2; exit}` (unterminated regexp), after copying stdout to the evidence-local Markdown verdict.",
+  "reviewer_output_markdown": "${PWD}/technical_report/evidence/minimax_h3_desktop/long_video/final-av-60s-r9-current-vs-r10-step3-sol-attn-n1-20260816T164226Z/reviewer_verdict.md",
+  "reviewer_stderr_excerpt": "Warning: No project session found with id 'final-av-60s-r10-step3-descriptive-n1-artifact-reviewer-retry1-20260816T183534Z'; creating a new session with that id.",
+  "schema_version": "minimax-h3-final-av-60s-r10-step3-descriptive-n1-reviewer-verdict-v1",
+  "scope": "Bounded N=1 matched 60-second final-AV extension-lane r10 guarded-adaptive step-min=3 descriptive/no-promotion classification artifact-only review",
+  "source_reviewer_process_exit_code": 0,
+  "source_reviewer_status_path": "${PWD}/.argus_subagents/final-av-60s-r10-step3-descriptive-n1-artifact-reviewer-retry1-20260816T183534Z/status.json",
+  "source_reviewer_stderr": "${PWD}/.argus_subagents/final-av-60s-r10-step3-descriptive-n1-artifact-reviewer-retry1-20260816T183534Z/reviewer_verdict.stderr.log",
+  "source_reviewer_stdout": "${PWD}/.argus_subagents/final-av-60s-r10-step3-descriptive-n1-artifact-reviewer-retry1-20260816T183534Z/reviewer_verdict.stdout.md",
+  "source_reviewer_task_id": "final-av-60s-r10-step3-descriptive-n1-artifact-reviewer-retry1-20260816T183534Z",
+  "source_reviewer_tool_run_id": "final-av-60s-r10-step3-descriptive-n1-artifact-reviewer-retry1-20260816T183534Z-1786905339341339565",
+  "source_wrapper_exit_code": 1,
+  "source_wrapper_exit_code_path": "${PWD}/.argus_subagents/final-av-60s-r10-step3-descriptive-n1-artifact-reviewer-retry1-20260816T183534Z_logs/exit_code.final-av-60s-r10-step3-descriptive-n1-artifact-reviewer-retry1-20260816T183534Z-1786905339341339565",
+  "source_wrapper_parent_stderr": "${PWD}/.argus_subagents/final-av-60s-r10-step3-descriptive-n1-artifact-reviewer-retry1-20260816T183534Z_logs/stderr.log",
+  "source_wrapper_status_state_before_reconciliation": "running",
+  "speedup_claimed": false,
+  "subagent_tool_terminal_state_observed": "error",
+  "verdict": "accept",
+  "wrapper_parent_stderr_excerpt": "awk: cmd. line:1: /^VERDICT:{print $2; exit}\nawk: cmd. line:1:  ^ unterminated regexp"
+}

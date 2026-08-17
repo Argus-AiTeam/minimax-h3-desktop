@@ -8,6 +8,8 @@ import sys
 import tempfile
 from pathlib import Path
 
+import pytest
+
 ROOT = Path(__file__).resolve().parents[3]
 PORT = ROOT / "ports" / "minimax_h3_a6000"
 SRC = PORT / "src"
@@ -18,6 +20,8 @@ from minimax_h3_a6000.patch_builder import env_switch_report, write_patch  # noq
 
 def test_patch_apply_check_against_locked_vllm_omni_tree():
     runtime = ROOT / "runtime" / "single_a6000_bf16" / "src" / "vllm-omni"
+    if not runtime.is_dir():
+        pytest.skip("sanitized release intentionally excludes the vendored vLLM-Omni source tree")
     patch = PORT / "patches" / "vllm_omni_h3_a6000_opt_in.patch"
     proc = subprocess.run(
         ["git", "-C", str(runtime), "apply", "--check", str(patch)],
@@ -39,6 +43,7 @@ def test_patch_builder_copies_without_runtime_write():
     assert "MINIMAX_H3_A6000_ENABLE_SOL_ATTN=0" in report
     assert "MINIMAX_H3_A6000_ENABLE_TELEMETRY=0" in report
     assert "MINIMAX_H3_A6000_TELEMETRY_JSON=" in report
+    assert "MINIMAX_H3_A6000_VIDEO_VAE_GRAPH_SAFE_REVERT=0" in report
     assert "MINIMAX_H3_A6000_ENABLE_FUSED_ADALN_MODULATE=0" in report
     assert "MINIMAX_H3_A6000_ENABLE_FUSED_ADALN_GATE=0" in report
     assert "MINIMAX_H3_A6000_ABLATION_DISABLE_INDEXED_MODULATE=0" in report
@@ -57,6 +62,20 @@ def test_patch_builder_copies_without_runtime_write():
     assert "MINIMAX_H3_A6000_SOL_ATTN_DIAGNOSTIC_MATERIALIZE=0" in report
     assert "MINIMAX_H3_A6000_SOL_ATTN_MATERIALIZE_MAX_BYTES=67108864" in report
     assert not any(line.endswith("=1") for line in report.splitlines())
+
+
+def test_vae_graph_safe_revert_path_is_default_off_and_constant_resident_static():
+    source_path = ROOT / "runtime" / "single_a6000_bf16" / "src" / "vllm-omni" / "vllm_omni" / "diffusion" / "models" / "minimax_h3" / "vae.py"
+    if not source_path.is_file():
+        pytest.skip("sanitized release intentionally excludes the vendored vLLM-Omni source tree")
+    source = source_path.read_text()
+    assert "MINIMAX_H3_A6000_VIDEO_VAE_GRAPH_SAFE_REVERT" in source
+    assert "_A6000GraphSafeNormalize" in source
+    assert "processor.transform_rev = _A6000GraphSafeNormalize" in source
+    assert "torch.tensor(self.mean, device=self.device" in source
+    call_body = source.split("    def __call__(self, tensor: torch.Tensor) -> torch.Tensor:", 1)[1].split("\n\ndef _configure_video_vae_graph_safe_revert", 1)[0]
+    assert "torch.as_tensor" not in call_body
+    assert "torch.compile" not in source
 
 
 def test_static_guards_no_cuda_probe_or_kernel_compile_at_package_import():

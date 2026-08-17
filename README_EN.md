@@ -1,36 +1,117 @@
 <h1 align="center">MiniMax-H3 on a Single RTX A6000</h1>
 
 <p align="center">
-  <strong>Full FL2VA · 1344×768 · synchronized video and stereo audio · up to 11.98× Turbo · 30s r10 formal N=10</strong>
+  <strong>Full FL2VA on one 48 GB A6000, generating 1344×768 video with synchronized stereo audio</strong><br>
+  <sub>6.159× practical default · 11.978× fastest measured lane · 30s formal +4.326% · 60s E2E demonstrated</sub>
 </p>
 
 <p align="center">
-  <a href="CURRENT_WORK.md"><strong>Current Work / 当前工作</strong></a> ·
-  <a href="RESEARCH_DASHBOARD.md"><strong>Live Dashboard / 研究实时看板</strong></a> ·
-  <a href="benchmark_contract/v1/README.md"><strong>Benchmark Contract v1</strong></a> ·
+  <a href="CURRENT_WORK.md"><strong>Current Work</strong></a> ·
+  <a href="RESEARCH_DASHBOARD.md"><strong>Live Dashboard</strong></a> ·
+  <a href="benchmark_contract/v1/README.md"><strong>Benchmark Contract</strong></a> ·
   <a href="README.md">中文</a> ·
-  <a href="#generated-result">Generated result</a> ·
+  <a href="#generated-result">Watch the result</a> ·
   <a href="#quick-start">Quick start</a> ·
-  <a href="#measured-a6000-performance">Performance</a> ·
+  <a href="#results-at-a-glance">Metrics</a> ·
   <a href="technical_report/minimax_h3_a6000_performance.md">Full report</a>
 </p>
 
 <p align="center">
-  <img alt="GPU RTX A6000" src="https://img.shields.io/badge/GPU-RTX%20A6000%2048GB-76B900?logo=nvidia&logoColor=white">
-  <img alt="CUDA SM86" src="https://img.shields.io/badge/CUDA-SM86-76B900?logo=nvidia&logoColor=white">
-  <img alt="Resolution 1344x768" src="https://img.shields.io/badge/output-1344%C3%97768%20%2B%20stereo%20audio-4C8BF5">
+  <img alt="GPU RTX A6000" src="https://img.shields.io/badge/GPU-1%C3%97RTX%20A6000%2048GB-76B900?logo=nvidia&logoColor=white">
+  <img alt="Turbo speed" src="https://img.shields.io/badge/Turbo%208--step-6.159%C3%97-00A67E">
+  <img alt="Fastest measured lane" src="https://img.shields.io/badge/Turbo%204--step-11.978%C3%97-F59F00">
+  <img alt="30 second result" src="https://img.shields.io/badge/30s%20formal-%2B4.326%25-4C8BF5">
+  <img alt="60 second E2E" src="https://img.shields.io/badge/60s%20final--AV-E2E%20complete-845EF7">
+  <img alt="Resolution 1344x768" src="https://img.shields.io/badge/output-1344%C3%97768%20%2B%20stereo-E64980">
   <img alt="License Apache 2.0" src="https://img.shields.io/badge/code-Apache--2.0-blue">
 </p>
 
-> **Long-video work:** the current focus is 720p-class 30/60-second audiovisual production on one RTX A6000. The 30-second final-AV extension/chunked r10 formal N=10 lane now has a bounded accepted result (warm E2E median **1333.575 s** vs retained r9 **1394.006 s**, median improvement **4.326%**). This is not native long context, BF16 fidelity, human semantic/audio quality, product readiness, public-comparison, or SOTA evidence; 60 seconds remains unaccepted. See [`CURRENT_WORK.md`](CURRENT_WORK.md) for accepted evidence, negative results, active hypotheses, and the next experiment. The canonical workloads, timing hierarchy, quality gates, and fail-closed claim validator are in [`benchmark_contract/v1/README.md`](benchmark_contract/v1/README.md).
+> [!IMPORTANT]
+> **Strongest accepted long-video result:** on one RTX A6000, the matched formal N=10 30-second final-AV `r10_adaptive_tau1_5_step3_diag` lane reached a **1333.575-second** warm E2E median versus **1394.006 seconds** for retained r9, a **4.326% improvement**. The full 60-second path also ran end to end: r10 N=1 took **2682.008 seconds** versus **2802.991 seconds** for r9. That **4.316% is a single-sample research signal**, not a formal speedup, because the automatic quality gate blocked promotion.
 
-This project runs the complete MiniMax-H3 FL2VA pipeline on **one real NVIDIA RTX A6000 48 GB (SM86)**. It does not substitute a smaller model and does not report a multi-GPU server as a desktop result. The repository includes a reproducible BF16 baseline, practical Turbo deployment, default-off Sol-Attn work, build/run scripts, tests, and compact evidence.
+This project runs the complete MiniMax-H3 FL2VA pipeline on **one real NVIDIA RTX A6000 48 GB (SM86)**. It does not substitute a smaller model or report a multi-GPU server as a desktop result. Every promoted number uses a frozen control on the same physical GPU. Candidates that miss performance or quality gates remain visibly rejected instead of being marketed as wins.
+
+<p align="center">
+  <a href="examples/a6000-turbo-8step-niulai-inspired/niulai-inspired-forest-awakening-turbo-8step.mp4">
+    <img src="examples/a6000-turbo-8step-niulai-inspired/hero-frame.jpg" alt="Forest Awakening — MiniMax-H3 FL2VA generated on one RTX A6000">
+  </a><br>
+  <strong>Latest FL2VA hero showcase · Forest Awakening</strong><br>
+  <sub>Unofficial original shot generated from the operator-supplied reference · click to play</sub>
+</p>
+
+## Results at a glance
+
+| Capability | Measured result | Interpretation |
+|---|---:|---|
+| BF16 fidelity short clip | **1792.202 s**, warm N=10 median | Same-card fidelity denominator |
+| Turbo 8-step short clip | **290.998 s, 6.159×** | Recommended practical default |
+| Turbo 4-step short clip | **149.619 s, 11.978×** | Faster, with a retained visual failure case |
+| Sol-Attn r8 short clip | **15.203%** median HTTP-time improvement, 10/10 pairs | Real sparse calls, not a toy benchmark |
+| 30-second r10 final AV | **1333.575 vs 1394.006 s, +4.326%** | Independently reviewed formal N=10 result |
+| 60-second r10 final AV | **2682.008 vs 2802.991 s, N=1 +4.316% signal** | Complete 1440-frame/stereo demonstration; descriptive only |
+| Latest VAE cap=4 candidate | **1302.506 vs 1331.377 s, N=1 +2.168% signal** | VAE was ~14.1% faster, but quality failed; rejected |
+
+> **Scope:** 30/60-second outputs use an extension/chunked workflow, not native long context. Turbo, Sol-Attn, and VAE batching are `practical_disclosed_approx`, not BF16 fidelity. N=1 deltas are route-gating signals, never formal speedup claims.
+
+## From model to final audiovisual output
+
+```mermaid
+flowchart LR
+    A[Official MiniMax-H3<br/>complete FL2VA] --> B{Execution lane}
+    B -->|Fidelity| C[BF16 · 50 steps<br/>1792.202 s]
+    B -->|Practical| D[Offline-merged Turbo LoRA<br/>8 / 4 steps]
+    D --> E[One A6000<br/>DLO + read-only weights]
+    E --> F[Default-off r10 Sol-Attn<br/>guarded adaptive routing]
+    F --> G[Native 5.17s clip]
+    F --> H[6 / 12 chunks<br/>30s / 60s extension]
+    G --> I[H.264 video + 32 kHz stereo]
+    H --> I
+    I --> J[Full-frame/full-audio decode<br/>resource + quality gates]
+    J -->|Reviewer pass| K[Accepted evidence]
+    J -->|Insufficient quality or gain| L[Rejected / retained as evidence]
+
+    classDef accepted fill:#D3F9D8,stroke:#2B8A3E,color:#1B4332;
+    classDef practical fill:#E7F5FF,stroke:#1971C2,color:#0B3D66;
+    classDef rejected fill:#FFF3BF,stroke:#F08C00,color:#5F3B00;
+    class C,K accepted;
+    class D,E,F,G,H,I,J practical;
+    class L rejected;
+```
 
 ---
 
 ## Generated result
 
-This clip was generated specifically for this repository on one RTX A6000. It is not copied from the Mac project or another benchmark.
+### Hero showcase: from a reference image to an original moving shot
+
+<a href="examples/a6000-turbo-8step-niulai-inspired/niulai-inspired-forest-awakening-turbo-8step.mp4">
+  <img src="examples/a6000-turbo-8step-niulai-inspired/hero-frame.jpg" alt="MiniMax-H3 A6000 FL2VA Forest Awakening hero frame">
+</a>
+
+<p align="center">
+  <strong>Forest Awakening / 雨后新生</strong><br>
+  <sub>Click the hero image to play the complete 1344×768, 24 FPS, 32 kHz stereo video</sub>
+</p>
+
+<a href="examples/a6000-turbo-8step-niulai-inspired/niulai-inspired-forest-awakening-turbo-8step.mp4">
+  <img src="examples/a6000-turbo-8step-niulai-inspired/contact-sheet.jpg" alt="Forest Awakening six-frame generated sequence">
+</a>
+
+- **[Watch or download the complete FL2VA video](examples/a6000-turbo-8step-niulai-inspired/niulai-inspired-forest-awakening-turbo-8step.mp4)**
+- [Full prompt](examples/a6000-turbo-8step-niulai-inspired/prompt.txt) · [generation, selection, and validation metadata](examples/a6000-turbo-8step-niulai-inspired/metadata.json)
+- Input: an operator-supplied local image associated with *Niu Lai*; its SHA256 is recorded, but the source image is **not redistributed**
+- Selection: all three 8-step seeds completed before seed 42 was selected; this is not merely the first random output
+- Measured request time: **305.386 seconds (about 5 min 5 s)**
+- Measured resources: **27,410 MiB** peak GPU memory, **301.16 W** peak power, **79°C** peak temperature
+- Validation: **124/124 frames**, 32 kHz stereo, 166,912 samples/channel, and **zero** transitions below the strict `<0.05` frozen-frame threshold
+- Visual review: both bovine identities, colors, and horn silhouettes remain stable; the seedling, gesture, and progressive volumetric light form a readable one-shot story
+
+> [!NOTE]
+> This is an **unofficial original demonstration** generated from the operator-supplied reference. It is not a clip from, official recreation of, or collaboration with the film *Niu Lai*. MiniMax-H3 generated the new camera motion, lighting, seedling narrative, and ambience. Automated checks certify complete video and active stereo, not operator subjective listening.
+
+### Text-only showcase: orbital shipyard
+
+This second clip was generated specifically for this repository on one RTX A6000. It is not copied from the Mac project or another benchmark.
 
 <a href="examples/a6000-turbo-8step-sci-fi/orbital-shipyard-turbo-8step.mp4">
   <img src="examples/a6000-turbo-8step-sci-fi/contact-sheet.jpg" alt="MiniMax-H3 A6000 orbital shipyard six-frame preview">
@@ -72,8 +153,9 @@ Frozen workload: **full FL2VA, 1344×768, 124 frames, 24 FPS, 5.166667 seconds, 
 | BF16 baseline | 26,836 MiB | 204.84 GiB | 302.23 W | 84°C |
 | Turbo formal timing | 26,836 MiB | 195.16 GiB | 301.08 W | 83°C |
 | README science-fiction demo session | 26,664 MiB | 175.95 GiB | 301.09 W | 83°C |
+| Forest Awakening three-candidate FL2VA session | 27,410 MiB | 185.95 GiB | 301.16 W | 79°C |
 
-The 8-step schedule is the practical recommendation: it delivered a stable 6.159× N=10 result and passed 12/12 visual cases in the 24-case suite. The 4-step schedule reached 11.978× but passed 11/12 visual cases; a known teapot sample had visibly malformed geometry. The operator completed human playback/listening review and gave an overall positive acceptance, while the known 4-step failure remains disclosed.
+The 8-step schedule is the practical recommendation: it delivered a stable 6.159× N=10 result and passed 12/12 visual cases in the 24-case suite. The 4-step schedule reached 11.978× but passed 11/12 visual cases; a known teapot sample had visibly malformed geometry. The operator completed human playback/listening review and gave an overall positive acceptance, while the known 4-step failure remains disclosed. The public release includes the [review matrix and six aggregate contact sheets](technical_report/evidence/minimax_h3_desktop/turbo_merged/quality_suite_runs/gpu3_turbo_quality_20260810T005611Z/human_review.md) supporting those visual counts; the compact release tree intentionally omits the full set of 24 raw quality-suite MP4s.
 
 ### 30-second final-AV extension/chunked formal r10
 
@@ -83,9 +165,24 @@ This is a practical approximate long-video lane on one A6000. It is not cross-co
 |---|---|---:|---:|---:|---|
 | `r10_adaptive_tau1_5_step3_diag` | six-chunk `extension` / chunked final AV | 10 | **1333.575 s** | retained `r9_current_sol_attn` **1394.006 s** | **4.326%** median warm-E2E improvement; complete 720-frame / 960,000-sample-per-channel final AV accounting |
 
-The r10 result only states that guarded adaptive step-min=3 Sol-Attn improved the matched formal N=10 30-second final-AV extension/chunked practical lane versus retained r9. It explicitly excludes native long context, BF16 fidelity, human semantic/audio quality, product readiness, public comparison, and SOTA. The 60-second lane is still unaccepted.
+The r10 result only states that guarded adaptive step-min=3 Sol-Attn improved the matched formal N=10 30-second final-AV extension/chunked practical lane versus retained r9. It explicitly excludes native long context, BF16 fidelity, human semantic/audio quality, product readiness, public comparison, and SOTA.
 
-See [`technical_report/minimax_h3_a6000_performance.md`](technical_report/minimax_h3_a6000_performance.md) for statistics, variability, quality scope, and evidence paths.
+### Latest research frontier: measurable signals, strict rejection
+
+| New route | Reference → Candidate | Measured signal | Decision |
+|---|---:|---:|---|
+| 60s r10 guarded adaptive | 2802.991 → **2682.008 s** | N=1 **4.316%** | Complete 1440-frame / 1,920,000-sample-per-channel output; frozen-transition proxy flag, descriptive/no-promotion |
+| VAE full spatial tile batching | 1335.018 → **1299.728 s** | E2E **2.643%**; VAE 202.720 → **167.802 s** | Initial N=1 route gate passed; still a default-off practical approximate candidate, not formal evidence |
+| VAE bounded tile batch cap=4 | 1331.377 → **1302.506 s** | E2E **2.168%**; VAE 202.424 → **173.886 s** | Subject/background proxies regressed by about 10%; rejected, no N=3 |
+| DLO async sync-prefetch | 1335.021 → **1334.684 s** | E2E **0.025%** | Group-first host enqueue fell from 297.799 s to 0.0088 s, but it was not critical-path gain; rejected |
+
+- [60-second N=1 decision and scope](technical_report/evidence/minimax_h3_desktop/long_video/final-av-60s-r9-current-vs-r10-step3-sol-attn-n1-20260816T164226Z/RUN_REPORT.md)
+- [VAE full spatial batching N=1](technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-vae-spatial-tile-batching-n1-lease-20260817T033717Z/RUN_REPORT.md)
+- [VAE bounded cap=4 terminal rejection](technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-vae-tile-batch-cap-4-n1-20260817T110844Z/RUN_REPORT.md)
+
+> **Report freshness:** the consolidated performance report is an accepted-results snapshot from 2026-08-16. The 2026-08-17 frontier rows above are governed by the directly linked per-run `RUN_REPORT.md` / decision packets and have not been repackaged as new accepted aggregate results.
+
+See [`technical_report/minimax_h3_a6000_performance.md`](technical_report/minimax_h3_a6000_performance.md) for accepted statistics, variability, quality scope, and evidence paths.
 
 ---
 
@@ -97,11 +194,13 @@ See [`technical_report/minimax_h3_a6000_performance.md`](technical_report/minima
 - [x] Warm N=10 BF16 dense baseline
 - [x] Same-device paired N=10 Turbo 4-step and 8-step measurements
 - [x] 24-case Turbo suite: 3 prompts × 4 seeds × 2 schedules
-- [x] A newly generated, directly viewable A6000 demo
+- [x] Directly viewable A6000 science-fiction T2VA and Forest Awakening reference-image FL2VA demos
 - [x] DLO capacity and 50-step candidate analysis
 - [x] SM86 exact-kernel candidates with drift checks
 - [x] Sol-Attn r8 real H3 metadata plumbing, sparse execution, N=3 route gate, and formal N=10
 - [x] 30-second final-AV extension/chunked r10 formal N=10 timing/structural result (bounded; not native/BF16/human-quality/product evidence)
+- [x] Complete 60-second final-AV extension/chunked N=1 output: 1440 frames and 32 kHz stereo; descriptive acceptance, no formal speedup claim
+- [x] Fail-closed VAE spatial/bounded tile batching, CUDA Graph, DLO async prefetch, Cache-DiT, and regional-compile experiments, including negative evidence
 - [x] CPU/static tests, sanitized export, publication audit, and compact evidence reports
 
 ---
@@ -198,6 +297,17 @@ OUTPUT_DIR="$PWD/out/neon-robot" \
 bash scripts/run_turbo_demo.sh
 ```
 
+Enable FL2VA with a local first-frame reference (the source image is never copied into the model directory):
+
+```bash
+I_ACCEPT_MINIMAX_H3_LICENSE=YES \
+GPU_INDEX=0 \
+INPUT_REFERENCE="$PWD/my-reference.png" \
+PROMPT_FILE="$PWD/my-prompt.txt" \
+OUTPUT_DIR="$PWD/out/reference-animation" \
+bash scripts/run_turbo_demo.sh
+```
+
 The runner refuses a busy GPU, exposes exactly one card, mounts weights read-only, starts the API in a network-disabled container, creates the MP4, validates video and 32 kHz stereo audio, records timing/hash/resource metadata, and removes the temporary container.
 
 ---
@@ -238,8 +348,14 @@ The later `MINIMAX_H3_A6000_SOL_ATTN_PAIR_VALUE_HALVES` path remains default-off
 | SwiGLU end-to-end | not deployed | no retained E2E benefit |
 | Toy Sol-Attn | rejected | sparse microbenchmark was slower than dense |
 | DMD/DMD2 | research-only blocked | no legal, first-source, reproducible H3 recipe/checkpoint |
+| r11/r12 more aggressive adaptive routing | rejected | N=1 signals were only 1.135% / 0.358%, and objective quality proxies failed |
+| Cache-DiT high/high_warmup2 | rejected | no actual cache reuse; warm E2E had no gain or regressed by 0.031% |
+| VAE CUDA Graph | rejected | bit-exact, but 32.865 → 32.945 s was slightly slower |
+| VAE bounded tile batch cap=4 | rejected | 2.168% E2E signal, but subject/background proxies missed the 5% non-inferiority gate |
+| DLO async sync-prefetch | rejected | major telemetry change, but only 0.025% E2E gain versus the 1% promotion threshold |
+| Regional `torch.compile` | no-go | graph breaks/recompiles led to timeout and no candidate media; source-grounded signal was also below threshold |
 
-Negative evidence remains visible so kernel microbenchmarks cannot be mistaken for full-model speedups.
+Negative evidence remains visible so cherry-picked runs, post-hoc thresholds, and kernel/telemetry microbenchmarks cannot be mistaken for full-model speedups.
 
 ---
 

@@ -11,7 +11,9 @@ TAG=${TAG:-argus/minimax-h3-vllm-omni:8e2e9b6b53e8-r9-sol-attn-overlay}
 EVIDENCE_DIR=${EVIDENCE_DIR:-technical_report/evidence/minimax_h3_desktop/sol_engine_port/r9_overlay_image}
 DOCKERFILE=ports/minimax_h3_a6000/integration/r9/Dockerfile
 PATCH=ports/minimax_h3_a6000/patches/vllm_omni_h3_a6000_opt_in.patch
+CACHE_PATCH=ports/minimax_h3_a6000/patches/vllm_omni_h3_cachedit_telemetry.patch
 HELPER=ports/minimax_h3_a6000/integration/r9/dual_install_patch_files.py
+CACHE_HELPER=ports/minimax_h3_a6000/integration/r9/install_cachedit_telemetry_patch.py
 DRY_RUN=0
 
 usage() {
@@ -45,8 +47,16 @@ if [[ ! -f "$PATCH" ]]; then
   echo "missing Sol-Attn patch artifact: $PATCH" >&2
   exit 2
 fi
+if [[ ! -f "$CACHE_PATCH" ]]; then
+  echo "missing Cache-DiT telemetry patch artifact: $CACHE_PATCH" >&2
+  exit 2
+fi
 if [[ ! -f "$HELPER" ]]; then
   echo "missing r9 patch install helper: $HELPER" >&2
+  exit 2
+fi
+if [[ ! -f "$CACHE_HELPER" ]]; then
+  echo "missing r9 Cache-DiT telemetry install helper: $CACHE_HELPER" >&2
   exit 2
 fi
 
@@ -58,6 +68,7 @@ base_image=$BASE_IMAGE
 tag=$TAG
 dockerfile=$DOCKERFILE
 patch=$PATCH
+cache_patch=$CACHE_PATCH
 evidence_dir=$EVIDENCE_DIR
 required_preflight=non-dry first verifies the pinned base image with docker image inspect and records r9_base_image_blocker.json on absence
 EOF_DRY_RUN
@@ -73,7 +84,10 @@ rm -f \
   "$EVIDENCE_DIR/r9_image_iid.txt" \
   "$EVIDENCE_DIR/r9_image_inspect.json" \
   "$EVIDENCE_DIR/r9_image_identity_summary.txt" \
-  "$EVIDENCE_DIR/r9_base_image_blocker.json"
+  "$EVIDENCE_DIR/r9_base_image_blocker.json" \
+  "$EVIDENCE_DIR/r9_cachedit_telemetry_changed_files.txt" \
+  "$EVIDENCE_DIR/r9_cachedit_telemetry_source_hashes.json" \
+  "$EVIDENCE_DIR/r9_cachedit_telemetry_source_hashes.sha256"
 if ! docker image inspect "$BASE_IMAGE" > "$EVIDENCE_DIR/r9_base_image_inspect.json" 2> "$EVIDENCE_DIR/r9_base_image_inspect.stderr"; then
   python3 - "$EVIDENCE_DIR/r9_base_image_blocker.json" "$BASE_IMAGE" "$EVIDENCE_DIR/r9_base_image_inspect.stderr" <<'PY'
 from __future__ import annotations
@@ -124,7 +138,9 @@ inputs = [
     pathlib.Path("ports/minimax_h3_a6000/integration/r9/Dockerfile"),
     pathlib.Path("ports/minimax_h3_a6000/integration/r9/build_r9_overlay_image.sh"),
     pathlib.Path("ports/minimax_h3_a6000/integration/r9/dual_install_patch_files.py"),
+    pathlib.Path("ports/minimax_h3_a6000/integration/r9/install_cachedit_telemetry_patch.py"),
     pathlib.Path("ports/minimax_h3_a6000/patches/vllm_omni_h3_a6000_opt_in.patch"),
+    pathlib.Path("ports/minimax_h3_a6000/patches/vllm_omni_h3_cachedit_telemetry.patch"),
     pathlib.Path("ports/minimax_h3_a6000/NOTICE"),
     pathlib.Path("ports/minimax_h3_a6000/UPSTREAM.md"),
 ]
@@ -157,8 +173,13 @@ import hashlib, pathlib
 print(hashlib.sha256(pathlib.Path('ports/minimax_h3_a6000/patches/vllm_omni_h3_a6000_opt_in.patch').read_bytes()).hexdigest())
 PY
 )
-printf 'base_image=%s\ntag=%s\ndockerfile=%s\npatch=%s\npatch_sha256=%s\nnetwork=none\ngpu_flags=none\npull=false\n' \
-  "$BASE_IMAGE" "$TAG" "$DOCKERFILE" "$PATCH" "$patch_sha" > "$EVIDENCE_DIR/r9_build_params.env"
+cache_patch_sha=$(python3 - <<'PY'
+import hashlib, pathlib
+print(hashlib.sha256(pathlib.Path('ports/minimax_h3_a6000/patches/vllm_omni_h3_cachedit_telemetry.patch').read_bytes()).hexdigest())
+PY
+)
+printf 'base_image=%s\ntag=%s\ndockerfile=%s\npatch=%s\npatch_sha256=%s\ncache_patch=%s\ncache_patch_sha256=%s\nnetwork=none\ngpu_flags=none\npull=false\n' \
+  "$BASE_IMAGE" "$TAG" "$DOCKERFILE" "$PATCH" "$patch_sha" "$CACHE_PATCH" "$cache_patch_sha" > "$EVIDENCE_DIR/r9_build_params.env"
 
 # Build only; deliberately no container execution and no GPU flag in this script.
 DOCKER_BUILDKIT=${DOCKER_BUILDKIT:-1} docker build --pull=false --network=none \

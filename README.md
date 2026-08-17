@@ -1,36 +1,117 @@
 <h1 align="center">MiniMax-H3 on a Single RTX A6000</h1>
 
 <p align="center">
-  <strong>完整 FL2VA · 1344×768 · 同步视频与立体声音频 · Turbo 最高 11.98× · 30秒 r10 formal N=10</strong>
+  <strong>完整 FL2VA，一张 48GB A6000，直接生成 1344×768 同步音视频</strong><br>
+  <sub>6.159× practical default · 11.978× fastest measured lane · 30s formal +4.326% · 60s E2E demonstrated</sub>
 </p>
 
 <p align="center">
-  <a href="CURRENT_WORK.md"><strong>当前工作 / Current Work</strong></a> ·
-  <a href="RESEARCH_DASHBOARD.md"><strong>研究实时看板 / Live Dashboard</strong></a> ·
-  <a href="benchmark_contract/v1/README.md"><strong>Benchmark Contract v1</strong></a> ·
+  <a href="CURRENT_WORK.md"><strong>当前工作</strong></a> ·
+  <a href="RESEARCH_DASHBOARD.md"><strong>研究看板</strong></a> ·
+  <a href="benchmark_contract/v1/README.md"><strong>Benchmark Contract</strong></a> ·
   <a href="README_EN.md">English</a> ·
-  <a href="#实际生成效果">生成效果</a> ·
+  <a href="#实际生成效果">观看效果</a> ·
   <a href="#5-分钟快速开始">快速开始</a> ·
-  <a href="#a6000-实测性能">实测性能</a> ·
+  <a href="#一眼看懂量化成绩">量化成绩</a> ·
   <a href="technical_report/minimax_h3_a6000_performance.md">完整报告</a>
 </p>
 
 <p align="center">
-  <img alt="GPU RTX A6000" src="https://img.shields.io/badge/GPU-RTX%20A6000%2048GB-76B900?logo=nvidia&logoColor=white">
-  <img alt="CUDA SM86" src="https://img.shields.io/badge/CUDA-SM86-76B900?logo=nvidia&logoColor=white">
-  <img alt="Resolution 1344x768" src="https://img.shields.io/badge/output-1344%C3%97768%20%2B%20stereo%20audio-4C8BF5">
+  <img alt="GPU RTX A6000" src="https://img.shields.io/badge/GPU-1%C3%97RTX%20A6000%2048GB-76B900?logo=nvidia&logoColor=white">
+  <img alt="Turbo speed" src="https://img.shields.io/badge/Turbo%208--step-6.159%C3%97-00A67E">
+  <img alt="Fastest measured lane" src="https://img.shields.io/badge/Turbo%204--step-11.978%C3%97-F59F00">
+  <img alt="30 second result" src="https://img.shields.io/badge/30s%20formal-%2B4.326%25-4C8BF5">
+  <img alt="60 second E2E" src="https://img.shields.io/badge/60s%20final--AV-E2E%20complete-845EF7">
+  <img alt="Resolution 1344x768" src="https://img.shields.io/badge/output-1344%C3%97768%20%2B%20stereo-E64980">
   <img alt="License Apache 2.0" src="https://img.shields.io/badge/code-Apache--2.0-blue">
 </p>
 
-> **长视频研发状态：** 当前聚焦单张 RTX A6000 的 720p 级 30/60 秒音视频生产；30 秒 final-AV extension/chunked r10 formal N=10 已有有界验收结果（warm E2E median **1333.575 s** vs retained r9 **1394.006 s**，median improvement **4.326%**）。这不是原生长上下文、BF16 fidelity、人类语义/音频质量、产品就绪、公开对比或 SOTA 结论；60 秒仍未验收。已验收数据、负结果、待检验假设与下一实验见 [`CURRENT_WORK.md`](CURRENT_WORK.md)。规范工作负载、计时层级、质量门槛与 claim-boundary validator 见 [`benchmark_contract/v1/README.md`](benchmark_contract/v1/README.md)。
+> [!IMPORTANT]
+> **当前最强正式长视频结果：**单张 RTX A6000 上，30 秒 final-AV `r10_adaptive_tau1_5_step3_diag` matched formal N=10 的 warm E2E median 为 **1333.575 秒**，对照 retained r9 为 **1394.006 秒**，改善 **4.326%**。60 秒完整链路也已真实跑通，r10 N=1 为 **2682.008 秒**、r9 为 **2802.991 秒**；这个 **4.316% 仅是单样本研发信号**，因自动质量红旗而没有晋级为 formal speedup。
 
-**不需要 A100/H100，也没有把多卡服务器结果冒充桌面结果。** 本项目在一张真实的 **NVIDIA RTX A6000 48GB（SM86）**上跑通完整 MiniMax-H3 FL2VA，并提供可复现的 BF16 baseline、Turbo practical 路线、默认关闭的 Sol-Attn 实验实现、部署脚本、测试和原始证据摘要。
+**不需要 A100/H100，也没有把多卡服务器结果冒充桌面结果。** 本项目在一张真实的 **NVIDIA RTX A6000 48GB（SM86）**上跑通完整 MiniMax-H3 FL2VA，并交付 BF16 基线、Turbo practical 路线、真实 Sol-Attn sparse execution、30/60 秒 final-AV、部署脚本、测试和可审计证据。所有加速都使用同一物理 GPU 的冻结对照；没有通过质量门禁的候选会公开标记为 rejected，而不会包装成结果。
+
+<p align="center">
+  <a href="examples/a6000-turbo-8step-niulai-inspired/niulai-inspired-forest-awakening-turbo-8step.mp4">
+    <img src="examples/a6000-turbo-8step-niulai-inspired/hero-frame.jpg" alt="Forest Awakening — MiniMax-H3 FL2VA generated on one RTX A6000">
+  </a><br>
+  <strong>最新 FL2VA 主视觉 · 《雨后新生》</strong><br>
+  <sub>根据操作者提供参考图生成的非官方原创镜头 · 点击图片播放完整视频</sub>
+</p>
+
+## 一眼看懂量化成绩
+
+| 能力 | 实测结果 | 你可以怎么理解 |
+|---|---:|---|
+| BF16 fidelity 短片 | **1792.202 秒**，warm N=10 median | 同卡保真分母 |
+| Turbo 8-step 短片 | **290.998 秒，6.159×** | 当前推荐 practical 默认路线 |
+| Turbo 4-step 短片 | **149.619 秒，11.978×** | 更快，但保留已知视觉失败样本 |
+| Sol-Attn r8 短片 | **15.203%** median HTTP-time improvement，10/10 pairs | 真实 sparse calls，不是 toy benchmark |
+| 30 秒 r10 final-AV | **1333.575 vs 1394.006 秒，+4.326%** | 已通过独立 Reviewer 的 formal N=10 结果 |
+| 60 秒 r10 final-AV | **2682.008 vs 2802.991 秒，N=1 +4.316% 信号** | 完整 1440 帧/立体声演示；描述性、未晋级 |
+| 最新 VAE cap=4 候选 | **1302.506 vs 1331.377 秒，N=1 +2.168% 信号** | VAE 快约 14.1%，但质量门禁失败，已拒绝 |
+
+> **口径边界：**30/60 秒输出采用 extension/chunked 生产方式，不是原生长上下文；Turbo、Sol-Attn 和 VAE batching 属于 `practical_disclosed_approx`，不能写成 BF16 fidelity。N=1 数字只用于决定是否继续实验，不是正式 speedup。
+
+## 从模型到最终音视频
+
+```mermaid
+flowchart LR
+    A[官方 MiniMax-H3<br/>完整 FL2VA] --> B{运行档位}
+    B -->|Fidelity| C[BF16 · 50 steps<br/>1792.202 s]
+    B -->|Practical| D[离线合并 Turbo LoRA<br/>8 / 4 steps]
+    D --> E[单张 A6000<br/>DLO + 只读权重]
+    E --> F[默认关闭的 r10 Sol-Attn<br/>guarded adaptive routing]
+    F --> G[5.17s 原生短片]
+    F --> H[6 / 12 chunks<br/>30s / 60s extension]
+    G --> I[H.264 视频 + 32 kHz 立体声]
+    H --> I
+    I --> J[全帧/全音频解码<br/>资源与质量门禁]
+    J -->|通过 Reviewer| K[Accepted evidence]
+    J -->|质量或收益不足| L[Rejected / retained as evidence]
+
+    classDef accepted fill:#D3F9D8,stroke:#2B8A3E,color:#1B4332;
+    classDef practical fill:#E7F5FF,stroke:#1971C2,color:#0B3D66;
+    classDef rejected fill:#FFF3BF,stroke:#F08C00,color:#5F3B00;
+    class C,K accepted;
+    class D,E,F,G,H,I,J practical;
+    class L rejected;
+```
 
 ---
 
 ## 实际生成效果
 
-下面的视频是本仓库使用单张 RTX A6000 新生成的 **Turbo 8-step practical** 示例，不是引用其他项目的数据或媒体。
+### 主视觉：从参考图到原创动态镜头
+
+<a href="examples/a6000-turbo-8step-niulai-inspired/niulai-inspired-forest-awakening-turbo-8step.mp4">
+  <img src="examples/a6000-turbo-8step-niulai-inspired/hero-frame.jpg" alt="MiniMax-H3 A6000 FL2VA Forest Awakening hero frame">
+</a>
+
+<p align="center">
+  <strong>《雨后新生 / Forest Awakening》</strong><br>
+  <sub>点击主视觉即可播放 1344×768、24 FPS、32 kHz stereo 完整视频</sub>
+</p>
+
+<a href="examples/a6000-turbo-8step-niulai-inspired/niulai-inspired-forest-awakening-turbo-8step.mp4">
+  <img src="examples/a6000-turbo-8step-niulai-inspired/contact-sheet.jpg" alt="Forest Awakening six-frame generated sequence">
+</a>
+
+- **[观看或下载完整 FL2VA 视频](examples/a6000-turbo-8step-niulai-inspired/niulai-inspired-forest-awakening-turbo-8step.mp4)**
+- [完整提示词](examples/a6000-turbo-8step-niulai-inspired/prompt.txt) · [生成、择优与验证元数据](examples/a6000-turbo-8step-niulai-inspired/metadata.json)
+- 输入：操作者提供的本地《牛来》画面参考；源图 SHA256 已记录但**不在仓库中再分发**
+- 生成：3 个 8-step seeds 全部完成后比较，选择 seed 42；没有只展示第一个随机样本
+- 实测请求耗时：**305.386 秒（约 5 分 5 秒）**
+- 实测资源：峰值显存 **27,410 MiB**、峰值功耗 **301.16 W**、峰值温度 **79°C**
+- 输出验证：**124/124 帧**、32 kHz 双声道、每声道 166,912 samples、冻结转场 `<0.05` 计数为 **0**
+- 视觉检查：两只牛的配色、角型、左右身份保持稳定；幼苗、手势和渐强体积光形成完整的单镜头叙事
+
+> [!NOTE]
+> 这是根据操作者提供参考图生成的**非官方原创演示**，不是电影《牛来》的片段、官方复刻或合作内容。新镜头运动、光影、幼苗叙事和环境音由 MiniMax-H3 生成；自动检查证明视频/音频结构完整，但不冒充操作者的主观听感认证。
+
+### 完全文本生成：轨道船坞
+
+下面的视频同样由本仓库在单张 RTX A6000 上生成，不是引用其他项目的数据或媒体。
 
 <a href="examples/a6000-turbo-8step-sci-fi/orbital-shipyard-turbo-8step.mp4">
   <img src="examples/a6000-turbo-8step-sci-fi/contact-sheet.jpg" alt="MiniMax-H3 A6000 orbital shipyard six-frame preview">
@@ -72,12 +153,14 @@ as coherent blue plasma thrusters ignite ...
 | BF16 baseline | 26,836 MiB | 204.84 GiB | 302.23 W | 84°C |
 | Turbo formal timing | 26,836 MiB | 195.16 GiB | 301.08 W | 83°C |
 | 本 README 科幻示例会话 | 26,664 MiB | 175.95 GiB | 301.09 W | 83°C |
+| 《雨后新生》FL2VA 三候选会话 | 27,410 MiB | 185.95 GiB | 301.16 W | 79°C |
 
 ### 怎么理解这些数字
 
 - **8-step** 是目前推荐选项：N=10 稳定达到 6.159×，24-case 质量套件中视觉 12/12 通过。
 - **4-step** 更快，但 24-case 套件中视觉 11/12，通过率较低；一个茶壶样本出现明显几何变形，因此不作为默认路线。
 - 操作者已完成人工观看/听感审阅并给出整体正向验收；已知 4-step 失败样本仍保留，不因整体评价而删除。
+- [公开 review matrix 与六张汇总联系表](technical_report/evidence/minimax_h3_desktop/turbo_merged/quality_suite_runs/gpu3_turbo_quality_20260810T005611Z/human_review.md)支持 8-step 12/12、4-step 11/12 的视觉计数；24 个原始质量套件 MP4 因发布体积没有全部复制到精简 release tree。
 - BF16 与 Turbo 分轨：Turbo 使用静态合并 LoRA，是 `practical_disclosed_approx`，不是无损 BF16 fidelity。
 
 ### 30 秒 final-AV extension/chunked formal r10
@@ -88,9 +171,24 @@ as coherent blue plasma thrusters ignite ...
 |---|---|---:|---:|---:|---|
 | `r10_adaptive_tau1_5_step3_diag` | six-chunk `extension` / chunked final-AV | 10 | **1333.575 s** | retained `r9_current_sol_attn` **1394.006 s** | **4.326%** median warm-E2E improvement；720 帧、960,000 samples/channel 完整核算 |
 
-该 r10 结果只说明 matched formal N=10 30 秒 final-AV extension/chunked lane 中，guarded adaptive step-min=3 Sol-Attn 相对 retained r9 有有界 warm-E2E 改善。它明确排除原生长上下文、BF16 fidelity、人类语义/音频质量、产品就绪、公开对比和 SOTA。60 秒路线仍未验收。
+该 r10 结果只说明 matched formal N=10 30 秒 final-AV extension/chunked lane 中，guarded adaptive step-min=3 Sol-Attn 相对 retained r9 有有界 warm-E2E 改善。它明确排除原生长上下文、BF16 fidelity、人类语义/音频质量、产品就绪、公开对比和 SOTA。
 
-完整统计、CV、质量与资源边界见 [`technical_report/minimax_h3_a6000_performance.md`](technical_report/minimax_h3_a6000_performance.md)。
+### 最新研发前沿：有信号，也有严格拒绝
+
+| 新路线 | Reference → Candidate | 实测信号 | 决策 |
+|---|---:|---:|---|
+| 60 秒 r10 guarded adaptive | 2802.991 → **2682.008 秒** | N=1 **4.316%** | 完整 1440 帧、1,920,000 samples/channel；自动冻结转场 proxy 红旗，descriptive/no-promotion |
+| VAE 全量 spatial tile batching | 1335.018 → **1299.728 秒** | E2E **2.643%**；VAE 202.720 → **167.802 秒** | 初始 N=1 route gate 通过，仍是默认关闭的 practical approximate 候选，未形成 formal 结果 |
+| VAE 有界 tile batch cap=4 | 1331.377 → **1302.506 秒** | E2E **2.168%**；VAE 202.424 → **173.886 秒** | subject/background proxy 约下降 10%，严格拒绝，不启动 N=3 |
+| DLO async sync-prefetch | 1335.021 → **1334.684 秒** | E2E **0.025%** | 虽将 group-first host enqueue 从 297.799 秒降至 0.0088 秒，但不在关键路径，拒绝 |
+
+- [60 秒 N=1 决策与边界](technical_report/evidence/minimax_h3_desktop/long_video/final-av-60s-r9-current-vs-r10-step3-sol-attn-n1-20260816T164226Z/RUN_REPORT.md)
+- [VAE 全量 spatial batching N=1](technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-vae-spatial-tile-batching-n1-lease-20260817T033717Z/RUN_REPORT.md)
+- [VAE bounded cap=4 最终拒绝包](technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-vae-tile-batch-cap-4-n1-20260817T110844Z/RUN_REPORT.md)
+
+> **报告新鲜度：**聚合性能报告是 2026-08-16 的 accepted-results 快照；上表中的 2026-08-17 frontier 结果以三个直接链接的 per-run `RUN_REPORT.md` / decision 为准，尚未被包装成新的 accepted 聚合结论。
+
+完整 accepted 统计、CV、质量与资源边界见 [`technical_report/minimax_h3_a6000_performance.md`](technical_report/minimax_h3_a6000_performance.md)。
 
 ---
 
@@ -102,11 +200,13 @@ as coherent blue plasma thrusters ignite ...
 - [x] BF16 dense warm N=10 baseline
 - [x] Turbo 4-step 与 8-step，同卡 paired N=10
 - [x] 3 prompts × 4 seeds × 2 schedules 的 24-case Turbo 质量套件
-- [x] 可直接观看的 A6000 科幻示例视频
+- [x] 可直接观看的 A6000 科幻 T2VA 与《雨后新生》参考图 FL2VA 示例视频
 - [x] DLO resident-layer 容量与 50-step 候选评估
 - [x] SM86 exact Triton kernel 候选与输出漂移检查
 - [x] Sol-Attn r8 真实 H3 metadata plumbing、sparse execution、N=3 route gate 和 formal N=10
 - [x] 30 秒 final-AV extension/chunked r10 formal N=10 timing/structural 结果（有界，不是 native/BF16/human-quality/product claim）
+- [x] 60 秒 final-AV extension/chunked N=1 完整输出：1440 帧、32 kHz stereo；描述性验收，不宣称 formal speedup
+- [x] VAE spatial/bounded tile batching、CUDA Graph、DLO async prefetch、Cache-DiT 与 regional compile 的 fail-closed 实验和负结果
 - [x] CPU/static tests、sanitized export、publication audit 与证据报告
 
 ---
@@ -216,6 +316,17 @@ OUTPUT_DIR="$PWD/out/neon-robot" \
 bash scripts/run_turbo_demo.sh
 ```
 
+使用本地首帧参考图启用 FL2VA（源图不会复制进模型目录）：
+
+```bash
+I_ACCEPT_MINIMAX_H3_LICENSE=YES \
+GPU_INDEX=0 \
+INPUT_REFERENCE="$PWD/my-reference.png" \
+PROMPT_FILE="$PWD/my-prompt.txt" \
+OUTPUT_DIR="$PWD/out/reference-animation" \
+bash scripts/run_turbo_demo.sh
+```
+
 脚本会自动：
 
 - 确认目标 GPU 没有其他 compute process；
@@ -265,8 +376,14 @@ Formal N=10 matched-workload 结果：
 | SwiGLU E2E | 不部署 | 没有可保留的端到端收益 |
 | toy Sol-Attn | 拒绝 | sparse microbenchmark 比 dense 慢 |
 | DMD/DMD2 | research-only blocked | 没有合法、第一方、可复现的 H3 recipe/checkpoint |
+| r11/r12 更激进 adaptive routing | 拒绝 | N=1 仅有 1.135% / 0.358% 信号，objective quality proxy 未通过 |
+| Cache-DiT high/high_warmup2 | 拒绝 | 没有实际 cache reuse，warm E2E 无收益或略慢 0.031% |
+| VAE CUDA Graph | 拒绝 | bit-exact，但 32.865 → 32.945 秒，略慢 |
+| VAE bounded tile batch cap=4 | 拒绝 | E2E 有 2.168% 信号，但 subject/background proxy 超出 5% non-inferiority 门槛 |
+| DLO async sync-prefetch | 拒绝 | telemetry 大幅改善，但 E2E 仅 0.025%，低于 1% 晋级门槛 |
+| Regional `torch.compile` | no-go | graph breaks/recompiles 后超时，无 candidate 媒体；源码信号模型也低于门槛 |
 
-我们保留负结果，避免只展示成功样本或把 kernel microbenchmark 写成完整模型加速。
+我们保留负结果，避免只展示成功样本、事后改变门槛，或把 kernel/telemetry microbenchmark 写成完整模型加速。
 
 ---
 

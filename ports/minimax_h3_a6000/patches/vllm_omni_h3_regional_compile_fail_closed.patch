@@ -1,0 +1,198 @@
+diff --git a/vllm_omni/diffusion/compile.py b/vllm_omni/diffusion/compile.py
+index 227d4f33..cae52815 100644
+--- a/vllm_omni/diffusion/compile.py
++++ b/vllm_omni/diffusion/compile.py
+@@ -1,5 +1,8 @@
+ # SPDX-License-Identifier: Apache-2.0
+ # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
++import atexit
++import json
++import os
+ from typing import Any
+ 
+ import torch
+@@ -8,6 +11,84 @@ from vllm.logger import init_logger
+ 
+ logger = init_logger(__name__)
+ 
++_REGIONAL_COMPILE_MODULES: list[nn.Module] = []
++_REGIONAL_COMPILE_ATEXIT_REGISTERED = False
++
++
++def _env_flag(name: str, default: bool = False) -> bool:
++    value = os.environ.get(name)
++    if value is None:
++        return default
++    return value.strip().lower() in {"1", "true", "yes", "on"}
++
++
++def _regional_compile_telemetry_record(module: nn.Module) -> dict[str, Any]:
++    return {
++        "module_name": getattr(module, "_regional_compile_name", None),
++        "module_class": getattr(module, "_regional_compile_class", module.__class__.__name__),
++        "status": getattr(module, "_regional_compile_status", "unknown"),
++        "dynamic": getattr(module, "_regional_compile_dynamic", None),
++        "fail_closed": getattr(module, "_regional_compile_fail_closed", None),
++        "runtime_fallback_count": getattr(module, "_regional_compile_runtime_fallback_count", 0),
++        "fallback_reason": getattr(module, "_regional_compile_fallback_reason", None),
++    }
++
++
++def _write_regional_compile_telemetry() -> None:
++    path = os.environ.get("VLLM_OMNI_REGIONAL_COMPILE_TELEMETRY_JSON")
++    if not path or not _REGIONAL_COMPILE_MODULES:
++        return
++    records = [_regional_compile_telemetry_record(module) for module in _REGIONAL_COMPILE_MODULES]
++    payload = {
++        "schema_version": "vllm_omni_regional_compile_telemetry_v1",
++        "module_count": len(records),
++        "runtime_fallback_count": sum(int(record.get("runtime_fallback_count") or 0) for record in records),
++        "fallback_modules": [record for record in records if int(record.get("runtime_fallback_count") or 0) > 0],
++        "modules": records,
++    }
++    try:
++        with open(path, "w", encoding="utf-8") as f:
++            json.dump(payload, f, indent=2, sort_keys=True)
++            f.write("\n")
++    except Exception as exc:  # noqa: BLE001 - best-effort shutdown telemetry only.
++        logger.warning("Regional compile telemetry write failed for %s: %s", path, exc)
++
++
++def _register_regional_compile_telemetry_writer() -> None:
++    global _REGIONAL_COMPILE_ATEXIT_REGISTERED
++    if _REGIONAL_COMPILE_ATEXIT_REGISTERED:
++        return
++    atexit.register(_write_regional_compile_telemetry)
++    _REGIONAL_COMPILE_ATEXIT_REGISTERED = True
++
++
++def _make_fail_closed_forward(
++    *,
++    name: str,
++    module: nn.Module,
++    original_forward: Any,
++    compiled_forward: Any,
++) -> Any:
++    def _fail_closed_forward(*args: Any, **kwargs: Any) -> Any:
++        try:
++            return compiled_forward(*args, **kwargs)
++        except Exception as exc:  # noqa: BLE001 - compile fallback must catch backend/runtime failures.
++            module._regional_compile_status = "runtime_fallback_to_eager"
++            module._regional_compile_runtime_fallback_count = int(
++                getattr(module, "_regional_compile_runtime_fallback_count", 0)
++            ) + 1
++            module._regional_compile_fallback_reason = repr(exc)
++            module.forward = original_forward
++            logger.warning(
++                "Regional compiled forward for %s failed at runtime; restored eager forward: %s",
++                name,
++                exc,
++            )
++            return original_forward(*args, **kwargs)
++
++    _fail_closed_forward._regional_compile_safe_wrapper = True  # type: ignore[attr-defined]
++    return _fail_closed_forward
++
+ 
+ def _matches_repeated_block(
+     name: str,
+@@ -31,6 +112,7 @@ def _matches_repeated_block(
+ def regionally_compile(
+     model: nn.Module,
+     *compile_args: Any,
++    fail_closed: bool | None = None,
+     **compile_kwargs: Any,
+ ) -> nn.Module:
+     """
+@@ -39,6 +121,8 @@ def regionally_compile(
+     Args:
+         model: The PyTorch model instance to compile
+         *compile_args: Positional arguments forwarded to torch.compile
++        fail_closed: if true, runtime compile/backend failures restore eager block
++            forward and retry once instead of aborting the request.
+         **compile_kwargs: Keyword arguments forwarded to torch.compile
+ 
+     Returns:
+@@ -52,31 +136,55 @@ def regionally_compile(
+         return model
+ 
+     repeated_block_attrs = getattr(model, "_layerwise_offload_blocks_attrs", [])
++    if fail_closed is None:
++        fail_closed = _env_flag("VLLM_OMNI_REGIONAL_COMPILE_FAIL_CLOSED", False)
+ 
+     # Build all compiled callables before mutating the model. This keeps setup
+     # failures atomic: callers can safely continue with the uncompiled model if
+     # torch.compile raises synchronously for any repeated block.
+-    compiled_forwards: list[tuple[nn.Module, Any]] = []
++    compiled_forwards: list[tuple[str, nn.Module, Any, Any]] = []
+     for name, submod in model.named_modules():
+         if _matches_repeated_block(name, submod, repeated_blocks, repeated_block_attrs):
+             # Compile the block compute while keeping nn.Module.__call__ hooks
+             # outside the compiled graph.
++            original_forward = submod.forward
+             compiled_forwards.append(
+                 (
++                    name,
+                     submod,
+-                    torch.compile(submod.forward, *compile_args, **compile_kwargs),
++                    original_forward,
++                    torch.compile(original_forward, *compile_args, **compile_kwargs),
+                 )
+             )
+ 
+     if not compiled_forwards:
+         logger.warning(f"Regional compilation skipped because {repeated_blocks} classes are not found in the model.")
+     else:
+-        for submod, compiled_forward in compiled_forwards:
+-            submod.forward = compiled_forward
++        _register_regional_compile_telemetry_writer()
++        for name, submod, original_forward, compiled_forward in compiled_forwards:
++            submod._regional_compile_name = name
++            submod._regional_compile_class = submod.__class__.__name__
++            submod._regional_compile_status = "configured_lazy"
++            submod._regional_compile_dynamic = compile_kwargs.get("dynamic")
++            submod._regional_compile_fail_closed = bool(fail_closed)
++            submod._regional_compile_runtime_fallback_count = 0
++            submod._regional_compile_fallback_reason = None
++            _REGIONAL_COMPILE_MODULES.append(submod)
++            submod.forward = (
++                _make_fail_closed_forward(
++                    name=name,
++                    module=submod,
++                    original_forward=original_forward,
++                    compiled_forward=compiled_forward,
++                )
++                if fail_closed
++                else compiled_forward
++            )
+         logger.info(
+-            "Regional compilation applied to %d module(s) for repeated blocks %s.",
++            "Regional compilation applied to %d module(s) for repeated blocks %s (fail_closed=%s).",
+             len(compiled_forwards),
+             repeated_blocks,
++            fail_closed,
+         )
+ 
+     return model
+diff --git a/vllm_omni/diffusion/worker/diffusion_model_runner.py b/vllm_omni/diffusion/worker/diffusion_model_runner.py
+index ade91162..ecacbf24 100644
+--- a/vllm_omni/diffusion/worker/diffusion_model_runner.py
++++ b/vllm_omni/diffusion/worker/diffusion_model_runner.py
+@@ -167,7 +167,7 @@ class DiffusionModelRunner(OmniConnectorModelRunnerMixin):
+                 model.compile(dynamic=compile_dynamic)
+                 compiled_model = model
+             else:
+-                compiled_model = regionally_compile(model, dynamic=compile_dynamic)
++                compiled_model = regionally_compile(model, dynamic=compile_dynamic, fail_closed=True)
+             setattr(self.pipeline, attr_name, compiled_model)
+         except Exception as e:
+             logger.warning(
+@@ -182,7 +182,7 @@ class DiffusionModelRunner(OmniConnectorModelRunnerMixin):
+ 
+         logger.info(
+             "Model runner: %s configured for lazy %s torch.compile with dynamic=%s; "
+-            "compilation errors may surface on the first request.",
++            "regional block compile failures are fail-closed to eager when possible.",
+             attr_name,
+             compile_granularity,
+             compile_dynamic,

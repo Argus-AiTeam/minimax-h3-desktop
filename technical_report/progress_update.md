@@ -1,6 +1,6 @@
 # MiniMax-H3 A6000 验证进度
 
-> 更新时间：2026-08-16T16:25:00+00:00
+> 更新时间：2026-08-16T20:00:31Z
 > 仅汇总已落盘证据；实验中或缺失结果明确标记，不估算。
 
 ## 固定工作负载与边界
@@ -29,6 +29,16 @@
 - Resources：candidate median peak GPU **27946 MiB**，host **250.03582000732422 GiB**，power **300.32 W**，failures **0**。
 - Boundary：只接受 matched formal N>=10 30 秒 final-AV extension/chunked practical-lane timing/structural claim；不接受 native long context、BF16 fidelity、人类语义/音频/AV质量、产品就绪、公开对比或 SOTA。
 
+## Final-AV 30s r11 step-min=2 N=1 gate（拒绝/不晋级）
+
+- Evidence：`long_video/final-av-30s-r10-vs-r11-step2-sol-attn-chain-20260816T185549Z/`；subagent terminal=`done`/exit_code=0。
+- 决策：`n1/decision.json` classification=`reject_r11_adaptive_tau1_5_step2_diag_30s_long_lane_slower_or_proxy_regression`；`n1_route_status.json` status=`reject`、`n1_pass_for_n3=false`；未生成 `n3/decision.json`，不启动 N=3。
+- Principal variable：retained r10 `r10_adaptive_tau1_5_step3_diag` vs r11 `r11_adaptive_tau1_5_step2_diag`，仅将 guarded-adaptive Sol-Attn `adaptive_step_min` 从 3 降到 2。
+- Timing（N=1 route gate only，不是 speedup claim）：r10 warm E2E **1333.905 s**；r11 warm E2E **1318.763 s**；单样本 warm delta **1.135%**。
+- Telemetry/proof：same physical GPU/workload/timing boundary；reference/candidate 均 sparse=2352、fallback=0、materialize=0/0 bytes、input_copy=0/0 bytes；final AV 均为 1344×768、720 frames、24 FPS、32 kHz stereo、960000 effective samples/channel。
+- Failed gate：`objective_5pct_noninferiority_core_metrics`；失败指标包括 subject identity、background、camera、motion。尽管 r11 自动 proxy flags 不多于 r10，objective proxy non-inferiority 未通过，因此拒绝 r11 step-min=2 且无 promotion/reviewer/speedup 声明。
+- Wrapper caveat：root `chain_decision.json` 写成 `status=complete` 并带 stale `n3_decision` path；以 `n1_route_status.json`、缺失 `n3/decision.json` 和 subagent stdout 中 GPU lease inner `returncode=17` 为准，分类为 N=1 no-promotion terminal packet。
+
 ## DLO
 
 - 状态：dlo_candidate50_complete；resident_layers=16；warm=1784.069 秒；改善=0.456%；正式 N10 建议=False。
@@ -51,6 +61,6 @@
 
 ## 下一步
 
-1. 发布本次 r10 public status refresh 和 bounded reports；无变化不提交，禁止 force push/tag/release/PR。
-2. 下一实验为 60 秒 final-AV extension/chunked N=1 gate，继续与 true native long-context research 分离。
+1. 保留 r11 step-min=2 N=1 no-promotion packet；不要因单样本 warm delta 或 root wrapper `complete` 字段启动 N=3、N>=10 或 speedup claim。
+2. 如继续优化，需 Planner/Reviewer 重新指定一个不同的 bounded candidate 或独立 60 秒 extension/chunked gate；所有 30/60 秒输出继续与 true native long-context 分离。
 3. 人类语义/音频质量 gate 与产品就绪声明仍未验收，不由结构 AV 或 objective proxies 替代。

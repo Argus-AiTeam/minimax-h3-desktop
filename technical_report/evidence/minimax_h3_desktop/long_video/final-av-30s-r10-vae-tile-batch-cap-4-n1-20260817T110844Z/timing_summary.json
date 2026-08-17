@@ -1,0 +1,12 @@
+{
+  "candidate_cold_e2e_seconds": 1759.970871181,
+  "candidate_video_vae_decode_wall_seconds": 173.88592834194424,
+  "candidate_warm_e2e_seconds": 1302.506433364004,
+  "cold_e2e_delta_percent_n1_not_speedup": 1.8657539242821046,
+  "min_delta_percent_for_n3_promotion": 1.0,
+  "reference_cold_e2e_seconds": 1793.431897182,
+  "reference_video_vae_decode_wall_seconds": 202.42423862492433,
+  "reference_warm_e2e_seconds": 1331.3771141869947,
+  "schema_version": "minimax-h3-final-av-30s-r10-vae-spatial-tile-batching-n1-timing-v1",
+  "warm_e2e_delta_percent_n1_not_speedup": 2.1684825820834925
+}

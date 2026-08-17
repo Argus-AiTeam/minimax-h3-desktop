@@ -1,0 +1,89 @@
+{
+  "accepted_for_current_stage_closing": true,
+  "agent_subjective_listening_performed": false,
+  "audio_semantics_certified": false,
+  "automatable_delivery_gates_complete": true,
+  "automatable_delivery_gates_scope": "current delivery-stage automatable evidence crosswalk: strict delivery summary, final report boundary, CPU/static/export/publication/private-sync gates, Turbo 24-case operator-listening manifest, canonical closeout reviewer_verdict.json, sealed Reviewer handoff crosswalk, and package manifest inclusion after regeneration; no GPU, Docker, model load, subjective listening, public release, tag, or force push is introduced",
+  "av_sync_certified": false,
+  "canonical_latest_delivery_closeout_packet": true,
+  "canonicalized_at_utc": "20260812T080918Z",
+  "created_at_utc": "20260812T075720Z",
+  "current_stage_alignment": {
+    "delivery_summary_accepted_claim_count": 7,
+    "delivery_summary_final_gates_status": "pass",
+    "delivery_summary_status": "pass_strict_evidence_grounded",
+    "formal_sync_export_publication_audit_status": "pass",
+    "formal_sync_publication_issue_count": 0,
+    "operator_listening_manifest_case_count": 24,
+    "private_github_no_public_release_or_tag": true,
+    "private_github_push_mode": "non_force",
+    "private_github_sync_status": "success",
+    "sealed_reviewer_handoff_status": "done"
+  },
+  "engineer_consistency_check": {
+    "path": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/stage_closeout_consistency_check_20260812T075720Z.json",
+    "status": "pass",
+    "this_check_is_not_a_reviewer_acceptance": true
+  },
+  "exact_manager_hold_repair": "The timestamp-latest closeout packet now directly contains reviewer_verdict.json with status accepted_current_stage_delivery_reviewer_passed and manager_reviewer_handoff_crosswalk.json linking that verdict to the sealed independent Reviewer handoff. The LATEST_TURBO_OPERATOR_GATE_REVIEWER_PACKET pointer resolves to this closeout packet, eliminating the previous request-only/latest-packet ambiguity.",
+  "human_auditory_or_semantic_gate": "operator_action_required",
+  "human_auditory_semantic_av_sync_review_remaining": "operator_action_required_uncertified",
+  "manager_recognition_repair": {
+    "crosswalk_path": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/manager_reviewer_handoff_crosswalk.json",
+    "diagnosis": "A newer closeout directory contained a reviewer_verdict_request.json but no reviewer_verdict.json; a Manager using latest closeout artifacts could miss the accepted Reviewer evidence in the previous stage-closing packet.",
+    "sealed_reviewer_handoff_source": {
+      "frontier_disposition": "continue",
+      "kind": "round_reviewed_handoff",
+      "mission_id": "a0499db4322d",
+      "path": "<private-path>",
+      "producer_role": "reviewer",
+      "review_status": "done",
+      "round": 1
+    },
+    "status": "pass"
+  },
+  "no_agent_subjective_listening_claim": true,
+  "packet_files": {
+    "manager_reviewer_handoff_crosswalk": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/manager_reviewer_handoff_crosswalk.json",
+    "manager_stage_closeout_crosswalk": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/manager_stage_closeout_crosswalk.json",
+    "manager_visibility_resolution": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/manager_visibility_resolution.json",
+    "media_listening_manifest": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/media_listening_manifest.json",
+    "reviewer_packet": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/reviewer_packet.md",
+    "reviewer_verdict": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/reviewer_verdict.json",
+    "reviewer_verdict_request_historical": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/reviewer_verdict_request.json",
+    "stage_closeout_consistency_check": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/stage_closeout_consistency_check_20260812T075720Z.json",
+    "summary": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/summary.json"
+  },
+  "remaining_operator_only_blocker_after_reviewer_acceptance": "operator human auditory listening and semantic AV-sync review for Turbo quality certification",
+  "reviewer_acceptance_obtained": true,
+  "reviewer_required_for_stage_closing": true,
+  "reviewer_status": "accepted_current_stage_delivery_reviewer_passed",
+  "schema_version": "argus-ir04-current-stage-closeout-packet-v2",
+  "semantic_av_quality_certified": false,
+  "status": "accepted_current_stage_delivery_boundary",
+  "turbo_quality_automatable_evidence": {
+    "all_cases_structural_av_pass": true,
+    "audio_proxy_scope": "decode and energy/envelope proxies only; no listening-based semantic audio judgment",
+    "case_count": 24,
+    "contact_image_count_total": 30,
+    "human_review_path": "technical_report/evidence/minimax_h3_desktop/turbo_merged/quality_suite_runs/gpu3_turbo_quality_20260810T005611Z/human_review.md",
+    "media_files_present_and_nontrivial": true,
+    "operator_listening_manifest": "technical_report/evidence/minimax_h3_desktop/delivery/turbo_operator_gate_stage_closeout_packet_20260812T075720Z/media_listening_manifest.json",
+    "pair_count": 12,
+    "practical_default_candidate": "8-step",
+    "review_contact_sheet_count": 6,
+    "run_dir": "technical_report/evidence/minimax_h3_desktop/turbo_merged/quality_suite_runs/gpu3_turbo_quality_20260810T005611Z",
+    "schedule_counts": {
+      "4-step experimental": 12,
+      "8-step default candidate": 12
+    },
+    "status": "structural_av_suite_pass_semantic_quality_not_certified",
+    "ultra_fast_quality_cost_experimental": "4-step",
+    "visual_review_summary": {
+      "4_step_visual_pass": "11/12",
+      "8_step_visual_pass": "12/12",
+      "known_4step_visual_failure_case": "p03-object_temporal_consistency-seed1-4step"
+    }
+  },
+  "turbo_track": "practical_disclosed_approx"
+}

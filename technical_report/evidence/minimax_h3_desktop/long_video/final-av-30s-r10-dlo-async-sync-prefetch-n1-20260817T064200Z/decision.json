@@ -1,0 +1,130 @@
+{
+  "candidate_evidence": "${PWD}/technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-dlo-async-sync-prefetch-n1-20260817T064200Z/r10_adaptive_tau1_5_step3_diag_dlo_async_sync_prefetch",
+  "candidate_mode": "r10_adaptive_tau1_5_step3_diag_dlo_async_sync_prefetch",
+  "claim_boundary": "Matched N=1 30-second final-AV extension-lane exact/lossless DLO async sync-prefetch gate only. Output is six-chunk extension/chunked, not native long context; no BF16 fidelity, formal speedup, human/product quality, public comparison, SOTA, N=3, N>=10, publication, commit, or push claim.",
+  "classification": "reject_no_promotion_matched_n1_dlo_async_sync_prefetch_gate_failed",
+  "created_utc": "2026-08-17T07:45:23Z",
+  "default_off": true,
+  "formal_speedup_claimed": false,
+  "gates": {
+    "candidate_final_av_complete": true,
+    "candidate_sol_attn_invariants_pass": true,
+    "candidate_validation_pass": true,
+    "dlo_async_sync_prefetch_telemetry_pass": true,
+    "objective_noninferiority_pass": true,
+    "reference_final_av_complete": true,
+    "reference_sol_attn_invariants_pass": true,
+    "reference_validation_pass": true,
+    "same_generation_extension": true,
+    "same_gpu": true,
+    "same_timing_boundary": true,
+    "same_workload": true,
+    "warm_e2e_delta_meets_min_pct": false
+  },
+  "objective_noninferiority": {
+    "failed_metrics": [],
+    "metrics": {
+      "background_consistency": {
+        "candidate_over_reference": 1.0,
+        "candidate_value": 0.7100694444444444,
+        "higher_is_better": true,
+        "pass_5pct_noninferiority": true,
+        "reference_value": 0.7100694444444444
+      },
+      "camera_consistency": {
+        "candidate_over_reference": 1.0,
+        "candidate_value": 0.873263888888889,
+        "higher_is_better": true,
+        "pass_5pct_noninferiority": true,
+        "reference_value": 0.873263888888889
+      },
+      "motion": {
+        "candidate_over_reference": 1.0,
+        "candidate_value": 0.010376921870052083,
+        "higher_is_better": true,
+        "pass_5pct_noninferiority": true,
+        "reference_value": 0.010376921870052083
+      },
+      "subject_identity_consistency": {
+        "candidate_over_reference": 1.0,
+        "candidate_value": 0.7100694444444444,
+        "higher_is_better": true,
+        "pass_5pct_noninferiority": true,
+        "reference_value": 0.7100694444444444
+      }
+    },
+    "relative_margin_percent": 5.0,
+    "status": "pass"
+  },
+  "principal_variable": "MINIMAX_H3_A6000_DLO_ASYNC_SYNC_PREFETCH=0 versus =1",
+  "promote_to_n3": false,
+  "reference_evidence": "${PWD}/technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-dlo-async-sync-prefetch-n1-20260817T064200Z/r10_adaptive_tau1_5_step3_diag_dlo_sync_prefetch_blocking",
+  "reference_mode": "r10_adaptive_tau1_5_step3_diag_dlo_sync_prefetch_blocking",
+  "reviewer_acceptance_status": "not_applicable_rejected_before_review",
+  "schema_version": "minimax-h3-final-av-30s-r10-dlo-async-sync-prefetch-n1-decision-v1",
+  "sol_attn": {
+    "candidate": {
+      "fallback_zero": true,
+      "input_copy_zero": true,
+      "materialize_zero": true,
+      "r10_profile_seen": true,
+      "raw_tensor_export_false": true,
+      "sparse_calls_positive": true,
+      "status": "pass",
+      "telemetry_present": true
+    },
+    "reference": {
+      "fallback_zero": true,
+      "input_copy_zero": true,
+      "materialize_zero": true,
+      "r10_profile_seen": true,
+      "raw_tensor_export_false": true,
+      "sparse_calls_positive": true,
+      "status": "pass",
+      "telemetry_present": true
+    }
+  },
+  "source_profile_evidence": "${PWD}/technical_report/evidence/minimax_h3_desktop/long_video/final-av-30s-r10-dlo-offload-profile-n1-20260817T060150Z-emptydumpfix",
+  "speedup_claimed": false,
+  "status": "reject",
+  "telemetry": {
+    "candidate": {
+      "actual_non_blocking_copy_count": 2551,
+      "async_sync_prefetch_copy_count": 99,
+      "group_first_sync_prefetch_h2d_device_seconds": 4.145359706878662,
+      "group_first_sync_prefetch_host_enqueue_seconds": 0.008767565246671438,
+      "h2d_copy_host_enqueue_seconds_total": 0.5030989932711236,
+      "offload_placeholder_host_seconds_total": 0.2399134340812452,
+      "prefetch_count": 2563,
+      "present": true,
+      "repoint_host_seconds_total": 0.24700751883210614,
+      "wait_event_count": 2551,
+      "wait_event_device_seconds_total": 17.746856291104923
+    },
+    "gate": {
+      "candidate_async_sync_prefetch_copy_count_positive": true,
+      "candidate_group_first_host_enqueue_below_reference": true,
+      "reference_async_sync_prefetch_copy_count_zero": true,
+      "status": "pass"
+    },
+    "reference": {
+      "actual_non_blocking_copy_count": 2452,
+      "async_sync_prefetch_copy_count": 0,
+      "group_first_sync_prefetch_h2d_device_seconds": 4.164319931030273,
+      "group_first_sync_prefetch_host_enqueue_seconds": 297.79910262086196,
+      "h2d_copy_host_enqueue_seconds_total": 298.33123884297675,
+      "offload_placeholder_host_seconds_total": 0.24164560268400237,
+      "prefetch_count": 2563,
+      "present": true,
+      "repoint_host_seconds_total": 0.2504075232427567,
+      "wait_event_count": 2551,
+      "wait_event_device_seconds_total": 13.531242444242235
+    }
+  },
+  "timing": {
+    "candidate_warm_e2e_seconds": 1334.6841007440235,
+    "min_delta_percent": 1.0,
+    "reference_warm_e2e_seconds": 1335.020644018019,
+    "warm_delta_percent": 0.025208844185565123
+  }
+}
