@@ -55,28 +55,17 @@ This project runs the complete MiniMax-H3 FL2VA pipeline on **one real NVIDIA RT
 
 ## From model to final audiovisual output
 
-```mermaid
-flowchart LR
-    A[Official MiniMax-H3<br/>complete FL2VA] --> B{Execution lane}
-    B -->|Fidelity| C[BF16 · 50 steps<br/>1792.202 s]
-    B -->|Practical| D[Offline-merged Turbo LoRA<br/>8 / 4 steps]
-    D --> E[One A6000<br/>DLO + read-only weights]
-    E --> F[Default-off r10 Sol-Attn<br/>guarded adaptive routing]
-    F --> G[Native 5.17s clip]
-    F --> H[6 / 12 chunks<br/>30s / 60s extension]
-    G --> I[H.264 video + 32 kHz stereo]
-    H --> I
-    I --> J[Full-frame/full-audio decode<br/>resource + quality gates]
-    J -->|Reviewer pass| K[Accepted evidence]
-    J -->|Insufficient quality or gain| L[Rejected / retained as evidence]
+<p align="center">
+  <a href="docs/assets/minimax-h3-a6000-pipeline.svg">
+    <img src="docs/assets/minimax-h3-a6000-pipeline.svg" alt="MiniMax-H3 single RTX A6000 model-to-verified-audiovisual architecture">
+  </a>
+</p>
 
-    classDef accepted fill:#D3F9D8,stroke:#2B8A3E,color:#1B4332;
-    classDef practical fill:#E7F5FF,stroke:#1971C2,color:#0B3D66;
-    classDef rejected fill:#FFF3BF,stroke:#F08C00,color:#5F3B00;
-    class C,K accepted;
-    class D,E,F,G,H,I,J practical;
-    class L rejected;
-```
+<p align="center">
+  <sub>Complete FL2VA → fidelity/practical split → one A6000 + DLO → guarded r10 Sol-Attn → 5.17s / 30s / 60s outputs → A/V assembly and verification</sub>
+</p>
+
+> Green denotes formally accepted evidence, amber a practical lane, violet descriptive/no-promotion evidence, and coral a rejected route retained for auditability. The 30/60-second lanes remain extension/chunked, never native long context.
 
 ---
 

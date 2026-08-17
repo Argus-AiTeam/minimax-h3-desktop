@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import subprocess
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -59,12 +60,25 @@ def test_public_fl2va_showcase_metadata_matches_files() -> None:
         assert hashlib.sha256(path.read_bytes()).hexdigest() == record["sha256"]
 
 
+def test_public_architecture_svg_is_self_contained_and_readable() -> None:
+    svg = ROOT / "docs" / "assets" / "minimax-h3-a6000-pipeline.svg"
+    parsed = ET.parse(svg)
+    root = parsed.getroot()
+    text = svg.read_text(encoding="utf-8")
+    assert root.attrib["viewBox"] == "0 0 1600 900"
+    assert "MODEL TO VERIFIED AUDIOVISUAL OUTPUT" in text
+    assert "1792.202" in text and "4.326" in text and "4.316" in text
+    assert "foreignObject" not in text and "<script" not in text and "<image" not in text
+    assert "href=" not in text and "https://" not in text
+
+
 def test_readmes_use_a6000_evidence_and_link_the_example() -> None:
     zh = (ROOT / "README.md").read_text(encoding="utf-8")
     en = (ROOT / "README_EN.md").read_text(encoding="utf-8")
     for text in (zh, en):
         assert "orbital-shipyard-turbo-8step.mp4" in text
         assert "niulai-inspired-forest-awakening-turbo-8step.mp4" in text
+        assert "docs/assets/minimax-h3-a6000-pipeline.svg" in text
         assert "305.386" in text
         assert "1792.202" in text
         assert "290.998" in text

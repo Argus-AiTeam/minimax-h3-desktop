@@ -5,7 +5,7 @@
     "virtual environments, caches, pycache, PID files, raw logs, non-curated generated media/audio, Docker layers, archives, and credentials",
     "Git remotes, tags, releases, and publication actions"
   ],
-  "file_count": 215,
+  "file_count": 216,
   "files": [
     {
       "path": ".argus_release_tree",
@@ -45,14 +45,14 @@
     },
     {
       "path": "README.md",
-      "sha256": "382344e625b4c99ff10abc07a820fd3c1ec54a446d881455ac9bea8a1b8f2197",
-      "size_bytes": 23855,
+      "sha256": "d9eb27f6cf21fbfd3b7a8e8bd99b19fc408238e2cb4e11089c4b0c7db71ab742",
+      "size_bytes": 23577,
       "source": "README.md"
     },
     {
       "path": "README_EN.md",
-      "sha256": "aa2fc6b57792b71b1cd51a344ca65f7df5b99a99e3f2d396db7f8cd51488897e",
-      "size_bytes": 23643,
+      "sha256": "f40e90a68c35af00e9ae57f7f74abc926fc7541ebd5c75fbb67faf695bb3fe7a",
+      "size_bytes": 23356,
       "source": "README_EN.md"
     },
     {
@@ -132,6 +132,12 @@
       "sha256": "a1d8ed8814b7d007fd3e9261516181673f4dc74a3ab3b2ba5e05e6f36a936778",
       "size_bytes": 16030,
       "source": "code/pytest.py"
+    },
+    {
+      "path": "docs/assets/minimax-h3-a6000-pipeline.svg",
+      "sha256": "3394ef83fd2cc716a8139f0c527c2c69dee64037f297db2bfb4e63fee5997eab",
+      "size_bytes": 16907,
+      "source": "docs/assets/minimax-h3-a6000-pipeline.svg"
     },
     {
       "path": "examples/a6000-turbo-8step-niulai-inspired/contact-sheet.jpg",
@@ -597,8 +603,8 @@
     },
     {
       "path": "release/github_release_manifest.json",
-      "sha256": "25387631741750fc6571a58b825133a20d29432e00a17ef517e2f814a7be6bea",
-      "size_bytes": 15015,
+      "sha256": "061425ac786570eda8d48311dd5bb532f2912e06e056836fb523f65d18a929b0",
+      "size_bytes": 15086,
       "source": "release/github_release_manifest.json"
     },
     {
@@ -1209,8 +1215,8 @@
     },
     {
       "path": "tests/test_public_quickstart.py",
-      "sha256": "4a7c2678e1796c307b302960d6b49fb9897329a1e97c1929e8e8f47d8a49bbac",
-      "size_bytes": 4175,
+      "sha256": "05eae167343e67fccbd92b2dc61b1af0dc6d28ab7c7438f71f3ceb15fa748c78",
+      "size_bytes": 4849,
       "source": "tests/test_public_quickstart.py"
     },
     {

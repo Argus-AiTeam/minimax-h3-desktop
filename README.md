@@ -55,28 +55,17 @@
 
 ## 从模型到最终音视频
 
-```mermaid
-flowchart LR
-    A[官方 MiniMax-H3<br/>完整 FL2VA] --> B{运行档位}
-    B -->|Fidelity| C[BF16 · 50 steps<br/>1792.202 s]
-    B -->|Practical| D[离线合并 Turbo LoRA<br/>8 / 4 steps]
-    D --> E[单张 A6000<br/>DLO + 只读权重]
-    E --> F[默认关闭的 r10 Sol-Attn<br/>guarded adaptive routing]
-    F --> G[5.17s 原生短片]
-    F --> H[6 / 12 chunks<br/>30s / 60s extension]
-    G --> I[H.264 视频 + 32 kHz 立体声]
-    H --> I
-    I --> J[全帧/全音频解码<br/>资源与质量门禁]
-    J -->|通过 Reviewer| K[Accepted evidence]
-    J -->|质量或收益不足| L[Rejected / retained as evidence]
+<p align="center">
+  <a href="docs/assets/minimax-h3-a6000-pipeline.svg">
+    <img src="docs/assets/minimax-h3-a6000-pipeline.svg" alt="MiniMax-H3 single RTX A6000 model-to-verified-audiovisual architecture">
+  </a>
+</p>
 
-    classDef accepted fill:#D3F9D8,stroke:#2B8A3E,color:#1B4332;
-    classDef practical fill:#E7F5FF,stroke:#1971C2,color:#0B3D66;
-    classDef rejected fill:#FFF3BF,stroke:#F08C00,color:#5F3B00;
-    class C,K accepted;
-    class D,E,F,G,H,I,J practical;
-    class L rejected;
-```
+<p align="center">
+  <sub>完整 FL2VA → fidelity/practical 分轨 → 单张 A6000 + DLO → guarded r10 Sol-Attn → 5.17s / 30s / 60s 输出 → A/V 组装与验证门禁</sub>
+</p>
+
+> 图中的绿色是正式 accepted evidence，琥珀色是 practical 路线，紫色是 descriptive/no-promotion，珊瑚色表示 rejected 但保留证据。30/60 秒始终标记为 extension/chunked，不冒充 native long context。
 
 ---
 

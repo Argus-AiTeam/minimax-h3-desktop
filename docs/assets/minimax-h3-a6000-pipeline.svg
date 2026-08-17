@@ -1,0 +1,260 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+  <title id="title">MODEL TO VERIFIED AUDIOVISUAL OUTPUT</title>
+  <desc id="desc">Architecture infographic for MiniMax-H3 on one RTX A6000. It shows the official complete MiniMax-H3 FL2VA model, lane selection, the BF16 fidelity denominator, practical Turbo LoRA merge lanes, one RTX A6000 with DLO and read-only weights, default-off guarded r10 Sol-Attn, native short output, extension chunked 30s and 60s outputs, final audiovisual assembly, verification, accepted evidence, and rejected or retained evidence. The boundary note states that 30s and 60s outputs are extension chunked rather than native long context, practical lanes are not BF16 fidelity, and there is no SOTA or product claim.</desc>
+
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#04111d"/>
+      <stop offset="0.46" stop-color="#08281f"/>
+      <stop offset="1" stop-color="#071322"/>
+    </linearGradient>
+    <radialGradient id="goldGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#ffd879" stop-opacity="0.55"/>
+      <stop offset="0.42" stop-color="#e3a93f" stop-opacity="0.15"/>
+      <stop offset="1" stop-color="#e3a93f" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="emeraldGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#58f08f" stop-opacity="0.35"/>
+      <stop offset="0.50" stop-color="#24b872" stop-opacity="0.11"/>
+      <stop offset="1" stop-color="#24b872" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="cyanGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#5ee7ff" stop-opacity="0.32"/>
+      <stop offset="0.54" stop-color="#1aa6c8" stop-opacity="0.10"/>
+      <stop offset="1" stop-color="#1aa6c8" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="cardBase" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0c2230" stop-opacity="0.96"/>
+      <stop offset="1" stop-color="#071722" stop-opacity="0.94"/>
+    </linearGradient>
+    <linearGradient id="hardwareFill" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0f2d2b"/>
+      <stop offset="0.50" stop-color="#102331"/>
+      <stop offset="1" stop-color="#071721"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="14" stdDeviation="14" flood-color="#000000" flood-opacity="0.42"/>
+    </filter>
+    <filter id="softGlow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <marker id="arrowCyan" markerWidth="16" markerHeight="16" refX="12" refY="8" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M2,2 L14,8 L2,14 Z" fill="#66e7ff"/>
+    </marker>
+    <marker id="arrowGold" markerWidth="16" markerHeight="16" refX="12" refY="8" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M2,2 L14,8 L2,14 Z" fill="#ffd166"/>
+    </marker>
+    <marker id="arrowGreen" markerWidth="16" markerHeight="16" refX="12" refY="8" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M2,2 L14,8 L2,14 Z" fill="#6ef2a2"/>
+    </marker>
+    <marker id="arrowViolet" markerWidth="16" markerHeight="16" refX="12" refY="8" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M2,2 L14,8 L2,14 Z" fill="#bca8ff"/>
+    </marker>
+    <marker id="arrowCoral" markerWidth="16" markerHeight="16" refX="12" refY="8" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M2,2 L14,8 L2,14 Z" fill="#ff7f67"/>
+    </marker>
+    <style>
+      .bg-line { fill: none; stroke: rgba(158, 255, 202, 0.08); stroke-width: 2; }
+      .beam { fill: none; stroke-linecap: round; opacity: 0.22; }
+      .tree { stroke: rgba(1, 11, 18, 0.55); stroke-width: 18; stroke-linecap: round; }
+      .leaf { fill: rgba(63, 181, 105, 0.10); }
+      .title { fill: #f7fff6; font-family: Arial, Helvetica, sans-serif; font-size: 34px; font-weight: 900; letter-spacing: 1.2px; }
+      .subtitle { fill: #b9d8d2; font-family: Arial, Helvetica, sans-serif; font-size: 18px; font-weight: 700; }
+      .card { fill: url(#cardBase); stroke-width: 2.5; filter: url(#shadow); }
+      .neutral { stroke: #61dfff; }
+      .accepted { stroke: #66f29a; }
+      .practical { stroke: #f4bd5d; }
+      .violet { stroke: #bca8ff; }
+      .rejected { stroke: #ff7f67; }
+      .hardware { fill: url(#hardwareFill); stroke: #77e6c8; }
+      .card-title { fill: #ffffff; font-family: Arial, Helvetica, sans-serif; font-size: 22px; font-weight: 900; }
+      .card-title-tight { fill: #ffffff; font-family: Arial, Helvetica, sans-serif; font-size: 21px; font-weight: 900; }
+      .card-sub { fill: #cce3df; font-family: Arial, Helvetica, sans-serif; font-size: 18px; font-weight: 700; }
+      .small { fill: #aec9c6; font-family: Arial, Helvetica, sans-serif; font-size: 18px; font-weight: 600; }
+      .metric { fill: #ffffff; font-family: Arial, Helvetica, sans-serif; font-size: 24px; font-weight: 900; }
+      .metric2 { fill: #ffffff; font-family: Arial, Helvetica, sans-serif; font-size: 20px; font-weight: 900; }
+      .metric-tight { fill: #ffffff; font-family: Arial, Helvetica, sans-serif; font-size: 19px; font-weight: 900; }
+      .pillText { fill: #06141b; font-family: Arial, Helvetica, sans-serif; font-size: 16px; font-weight: 900; letter-spacing: 0.3px; }
+      .pillDarkText { fill: #ffffff; font-family: Arial, Helvetica, sans-serif; font-size: 16px; font-weight: 900; letter-spacing: 0.2px; }
+      .arrow { fill: none; stroke-linecap: round; stroke-linejoin: round; stroke-width: 4.5; }
+      .arrow-thin { fill: none; stroke-linecap: round; stroke-linejoin: round; stroke-width: 3.4; }
+      .legend { fill: #d7eee9; font-family: Arial, Helvetica, sans-serif; font-size: 16px; font-weight: 800; }
+      .note { fill: #f2e2bf; font-family: Arial, Helvetica, sans-serif; font-size: 18px; font-weight: 800; }
+      .iconStroke { fill: none; stroke-linecap: round; stroke-linejoin: round; stroke-width: 4; }
+    </style>
+  </defs>
+
+  <rect width="1600" height="900" fill="url(#bg)"/>
+  <circle cx="1190" cy="95" r="280" fill="url(#cyanGlow)"/>
+  <circle cx="735" cy="220" r="330" fill="url(#emeraldGlow)"/>
+  <circle cx="1080" cy="60" r="250" fill="url(#goldGlow)"/>
+  <circle cx="260" cy="720" r="340" fill="url(#emeraldGlow)" opacity="0.55"/>
+  <path class="beam" d="M1135 -40 C1085 130 1015 250 945 420" stroke="#ffd879" stroke-width="34"/>
+  <path class="beam" d="M1265 -35 C1175 160 1085 315 965 515" stroke="#74f0c0" stroke-width="24"/>
+  <path class="beam" d="M1520 70 C1310 190 1210 330 1120 520" stroke="#62dfff" stroke-width="18" opacity="0.16"/>
+  <path class="tree" d="M170 20 C155 160 185 275 158 415 C133 548 144 680 120 890"/>
+  <path class="tree" d="M1440 -10 C1420 145 1465 288 1430 435 C1395 585 1415 725 1370 910"/>
+  <path class="tree" d="M1515 130 C1495 260 1520 375 1498 500 C1474 640 1490 770 1465 905" opacity="0.7"/>
+  <circle class="leaf" cx="145" cy="102" r="70"/>
+  <circle class="leaf" cx="220" cy="195" r="55"/>
+  <circle class="leaf" cx="1375" cy="120" r="86"/>
+  <circle class="leaf" cx="1485" cy="250" r="64"/>
+  <path class="bg-line" d="M60 448 C315 388 520 478 760 422 C1010 362 1230 448 1540 386"/>
+  <path class="bg-line" d="M70 486 C360 542 570 460 850 510 C1080 552 1260 486 1530 548"/>
+
+  <text x="800" y="52" text-anchor="middle" class="title">MODEL TO VERIFIED AUDIOVISUAL OUTPUT</text>
+  <text x="800" y="84" text-anchor="middle" class="subtitle">MiniMax-H3 / 1x RTX A6000 | Evidence-first lanes: BF16 fidelity vs practical approximation</text>
+
+  <g id="connectors" opacity="0.96">
+    <path d="M350 198 L388 198" class="arrow" stroke="#66e7ff" marker-end="url(#arrowCyan)"/>
+    <path d="M595 180 C612 150 612 150 625 150" class="arrow" stroke="#66f29a" marker-end="url(#arrowGreen)"/>
+    <path d="M595 218 C615 285 610 345 625 345" class="arrow" stroke="#ffd166" marker-end="url(#arrowGold)"/>
+    <path d="M945 158 C965 158 958 226 980 236" class="arrow-thin" stroke="#66f29a" marker-end="url(#arrowGreen)"/>
+    <path d="M945 350 C965 350 960 292 980 292" class="arrow" stroke="#ffd166" marker-end="url(#arrowGold)"/>
+    <path d="M1250 260 L1290 260" class="arrow" stroke="#66e7ff" marker-end="url(#arrowCyan)"/>
+    <path d="M1420 350 L1420 450 L225 450" class="arrow-thin" stroke="#66e7ff"/>
+    <path d="M225 450 L225 508" class="arrow-thin" stroke="#66e7ff" marker-end="url(#arrowCyan)"/>
+    <path d="M600 450 L600 508" class="arrow-thin" stroke="#66f29a" marker-end="url(#arrowGreen)"/>
+    <path d="M985 450 L985 508" class="arrow-thin" stroke="#bca8ff" marker-end="url(#arrowViolet)"/>
+    <circle cx="225" cy="450" r="7" fill="#66e7ff"/>
+    <circle cx="600" cy="450" r="7" fill="#66f29a"/>
+    <circle cx="985" cy="450" r="7" fill="#bca8ff"/>
+    <circle cx="1420" cy="450" r="7" fill="#ffd166"/>
+    <path d="M390 588 C620 588 910 565 1195 565" class="arrow-thin" stroke="#66e7ff" marker-end="url(#arrowCyan)" opacity="0.78"/>
+    <path d="M775 588 C930 588 1055 580 1195 580" class="arrow-thin" stroke="#66f29a" marker-end="url(#arrowGreen)" opacity="0.88"/>
+    <path d="M1160 588 C1174 588 1185 590 1195 595" class="arrow-thin" stroke="#bca8ff" marker-end="url(#arrowViolet)" opacity="0.92"/>
+    <path d="M1370 650 L1370 670" class="arrow" stroke="#66e7ff" marker-end="url(#arrowCyan)"/>
+    <path d="M1310 770 C1205 785 1110 786 945 795" class="arrow-thin" stroke="#66f29a" marker-end="url(#arrowGreen)"/>
+    <path d="M1400 770 C1390 783 1375 789 1352 795" class="arrow-thin" stroke="#ff7f67" marker-end="url(#arrowCoral)"/>
+  </g>
+
+  <g id="official-model">
+    <rect x="50" y="125" width="300" height="145" rx="24" class="card neutral"/>
+    <circle cx="94" cy="172" r="24" fill="#163b46" stroke="#68e7ff" stroke-width="3"/>
+    <path d="M82 172 h24 M94 160 v24" class="iconStroke" stroke="#68e7ff"/>
+    <text x="130" y="160" class="card-title">Official complete</text>
+    <text x="130" y="188" class="card-sub">MiniMax-H3 FL2VA</text>
+    <text x="78" y="228" class="small">Video + audio path</text>
+    <text x="78" y="253" class="small">Read-only official weights</text>
+  </g>
+
+  <g id="lane-selection">
+    <rect x="390" y="145" width="205" height="110" rx="24" class="card neutral"/>
+    <text x="492" y="184" text-anchor="middle" class="card-title">Lane select</text>
+    <text x="492" y="214" text-anchor="middle" class="card-sub">Fidelity / practical</text>
+    <text x="492" y="238" text-anchor="middle" class="small">evidence split</text>
+  </g>
+
+  <g id="bf16-card">
+    <rect x="625" y="95" width="320" height="130" rx="24" class="card accepted"/>
+    <rect x="647" y="116" width="104" height="28" rx="14" fill="#66f29a"/>
+    <text x="699" y="136" text-anchor="middle" class="pillText">ACCEPTED</text>
+    <text x="647" y="171" class="card-title">BF16 fidelity</text>
+    <text x="647" y="199" class="metric">50 steps / 1792.202s</text>
+    <text x="647" y="219" class="small">Accepted denominator</text>
+  </g>
+
+  <g id="turbo-card">
+    <rect x="625" y="265" width="320" height="170" rx="24" class="card practical"/>
+    <rect x="647" y="287" width="108" height="28" rx="14" fill="#f4bd5d"/>
+    <text x="701" y="307" text-anchor="middle" class="pillText">PRACTICAL</text>
+    <text x="647" y="341" class="card-title">Offline Turbo LoRA</text>
+    <text x="647" y="373" class="metric-tight">8-step / 290.998s / 6.159x</text>
+    <text x="647" y="401" class="metric-tight">4-step / 149.619s / 11.978x</text>
+    <rect x="647" y="407" width="174" height="26" rx="13" fill="#ff7f67"/>
+    <text x="734" y="426" text-anchor="middle" class="pillDarkText">4-step quality risk</text>
+  </g>
+
+  <g id="a6000-card">
+    <rect x="980" y="170" width="270" height="175" rx="28" class="card hardware"/>
+    <rect x="1004" y="200" width="84" height="62" rx="10" fill="#07131c" stroke="#77e6c8" stroke-width="3"/>
+    <path d="M1020 220 h52 M1020 240 h52 M1100 220 h42 M1100 244 h42" class="iconStroke" stroke="#77e6c8"/>
+    <circle cx="1158" cy="232" r="11" fill="#77e6c8" opacity="0.85"/>
+    <text x="1004" y="292" class="card-title">1x RTX A6000 48GB</text>
+    <text x="1004" y="320" class="card-sub">DLO + read-only weights</text>
+    <text x="1004" y="340" class="small">One visible GPU</text>
+  </g>
+
+  <g id="sol-card">
+    <rect x="1290" y="165" width="260" height="185" rx="28" class="card practical"/>
+    <rect x="1312" y="190" width="126" height="28" rx="14" fill="#f4bd5d"/>
+    <text x="1375" y="210" text-anchor="middle" class="pillText">DEFAULT OFF</text>
+    <text x="1312" y="241" class="card-title-tight">guarded r10 Sol-Attn</text>
+    <path d="M1318 282 C1347 249 1394 249 1424 282 C1453 315 1500 315 1530 282" class="iconStroke" stroke="#ffd166"/>
+    <text x="1312" y="323" class="card-sub">adaptive / step-min=3</text>
+    <text x="1312" y="345" class="small">guarded metadata / fallback</text>
+  </g>
+
+  <g id="native-short">
+    <rect x="60" y="515" width="330" height="140" rx="24" class="card neutral"/>
+    <text x="84" y="554" class="card-title">Native short</text>
+    <text x="84" y="587" class="metric2">5.17s / 124 frames</text>
+    <text x="84" y="619" class="card-sub">1344x768 / 24 FPS</text>
+    <text x="84" y="644" class="small">T2VA / FL2VA demo output</text>
+  </g>
+
+  <g id="thirty-sec">
+    <rect x="425" y="515" width="350" height="140" rx="24" class="card accepted"/>
+    <rect x="449" y="537" width="88" height="28" rx="14" fill="#66f29a"/>
+    <text x="493" y="557" text-anchor="middle" class="pillText">FORMAL</text>
+    <text x="449" y="590" class="card-title">30s extension/chunked</text>
+    <text x="449" y="622" class="metric2">6 chunks / N=10 / +4.326%</text>
+    <text x="449" y="647" class="small">accepted / not native long context</text>
+  </g>
+
+  <g id="sixty-sec">
+    <rect x="810" y="515" width="350" height="140" rx="24" class="card violet"/>
+    <rect x="834" y="537" width="132" height="28" rx="14" fill="#bca8ff"/>
+    <text x="900" y="557" text-anchor="middle" class="pillText">DESCRIPTIVE</text>
+    <text x="834" y="590" class="card-title">60s extension/chunked</text>
+    <text x="834" y="622" class="metric2">12 chunks / N=1 / +4.316%</text>
+    <text x="834" y="647" class="small">no promotion / quality red flag</text>
+  </g>
+
+  <g id="assembly">
+    <rect x="1195" y="485" width="350" height="165" rx="28" class="card neutral"/>
+    <text x="1220" y="524" class="card-title">A/V assembly</text>
+    <path d="M1220 548 h74 v46 h-74 z M1310 548 h64 M1310 571 h106 M1310 594 h86" class="iconStroke" stroke="#66e7ff"/>
+    <text x="1220" y="621" class="metric2">H.264 / 1344x768 / 24 FPS</text>
+    <text x="1220" y="644" class="card-sub">+ 32 kHz stereo audio</text>
+  </g>
+
+  <g id="verification">
+    <rect x="1195" y="670" width="350" height="100" rx="24" class="card accepted"/>
+    <text x="1220" y="710" class="card-title">Verification gate</text>
+    <text x="1220" y="739" class="card-sub">full-frame + full-audio decode</text>
+    <text x="1220" y="763" class="small">resources / quality proxy / reviewer</text>
+  </g>
+
+  <g id="boundary-legend">
+    <rect x="60" y="705" width="660" height="185" rx="24" fill="#071722" fill-opacity="0.82" stroke="#2c6b5e" stroke-width="2"/>
+    <text x="84" y="738" class="card-title">Boundary</text>
+    <text x="84" y="767" class="note">30/60s = extension/chunked, not native long context.</text>
+    <text x="84" y="793" class="note">Practical lanes != BF16 fidelity; no SOTA or product claim.</text>
+    <text x="84" y="819" class="note">Single physical RTX A6000 evidence map.</text>
+    <rect x="84" y="838" width="22" height="22" rx="6" fill="#66f29a"/>
+    <text x="118" y="855" class="legend">green = accepted</text>
+    <rect x="292" y="838" width="22" height="22" rx="6" fill="#f4bd5d"/>
+    <text x="326" y="855" class="legend">amber = practical</text>
+    <rect x="510" y="838" width="22" height="22" rx="6" fill="#bca8ff"/>
+    <text x="544" y="855" class="legend">violet = descriptive</text>
+    <rect x="84" y="864" width="22" height="22" rx="6" fill="#ff7f67"/>
+    <text x="118" y="881" class="legend">coral = rejected / retained evidence</text>
+  </g>
+
+  <g id="accepted-evidence">
+    <rect x="755" y="795" width="365" height="80" rx="22" class="card accepted"/>
+    <text x="780" y="828" class="card-title">Accepted evidence</text>
+    <text x="780" y="858" class="small">formal accepted result package</text>
+  </g>
+
+  <g id="rejected-evidence">
+    <rect x="1170" y="795" width="365" height="80" rx="22" class="card rejected"/>
+    <text x="1195" y="828" class="card-title">Rejected / retained</text>
+    <text x="1195" y="858" class="small">quality or weak gain; evidence kept</text>
+  </g>
+</svg>
